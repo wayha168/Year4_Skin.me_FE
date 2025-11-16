@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axiosConfig";
@@ -131,7 +132,7 @@ const FavoritePage = () => {
                       {product.description || "No description available."}
                     </p>
                     <p className="product-price">${Number(product.price ?? 0).toFixed(2)}</p>
-
+                  
                     <div className="add_to_card_and_remove">
                       <p
                         className="remove_favorite"

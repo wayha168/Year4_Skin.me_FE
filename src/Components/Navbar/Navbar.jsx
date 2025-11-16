@@ -144,7 +144,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             <Link
               to="/bag_page"
               onClick={handleBagClick}
-              className="icons nav-icon "
+              className="icons nav-icon bag"
             >
               <i className="fa-solid fa-bag-shopping" />
             </Link>

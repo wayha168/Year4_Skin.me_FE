@@ -77,9 +77,9 @@
 }
 
 .auth-button {
-  border-radius: 9999px;
+  border-radius: 10px;
   font-weight: 600;
-  font-size: 25px;
+  font-size: 1.8rem;
   border: none;
   cursor: pointer;
 }
@@ -88,7 +88,9 @@
 
 
 .auth-button.login-button{
+    font-size: 1.4rem;
     margin-top: 0.4rem;
+    margin-left: 1.5rem;
     padding: 1rem 2rem;
     text-align: center;
     background: transparent;
@@ -112,6 +114,7 @@
 
 /* SIGNUP BUTTON */
 .auth-button.signup-button {
+  font-size: 1.4rem;  
   margin-top: 6px;
   background-color: #eb61a2;
   padding: 1.1rem 2rem;
@@ -166,12 +169,6 @@
 }
 
 /* Make sure heart and bag icons inherit same style */
-.icons.heart i,
-.icons.bag i,
-.icons.profile i {
-  font-size: 1.4rem;
-}
-
 
 
 .icons.profile {
@@ -191,6 +188,10 @@
 .bag i {
   cursor: pointer;
 }
+.icons.nav-icon.favorite,.icons.nav-icon.bag{
+  margin-right: -1.5rem
+}
+
 
 /* -------------------- MOBILE MENU -------------------- */
 .mobile-toggle {
@@ -371,19 +372,17 @@ dropdown {
     padding-left: 36%
   }
 }
-.icons{
-}
 .auth-button.signup-button {
   white-space: nowrap;
 }
 .auth_button.logout_button{
   background: #eb61a2;
   color: #f3f3f3;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 600;
   font-family: Arial, Helvetica, sans-serif;
   padding: 1rem 1.5rem;
-  border-radius: 30rem;
+  border-radius: 0.5rem;
 }
 .auth_button.logout_button:hover{
   transition: 0.3s;

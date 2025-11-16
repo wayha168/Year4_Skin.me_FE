@@ -30,11 +30,7 @@
 }
 
 /* Grid for products */
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 2rem;
-}
+
 
 /* Individual product card */
 .product-card {
@@ -179,10 +175,6 @@
     padding: 5rem 1.5rem 2rem;
   }
 
-  .products-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1.5rem;
-  }
 
   .product-name {
     font-size: 1.1rem;

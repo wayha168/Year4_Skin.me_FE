@@ -98,7 +98,7 @@ const Products = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="products-section h-auto min-h-screen py-10 px-6 bg-gray-50">
+      <main className="products-section ">
         {/* ===== Filter Section ===== */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
           <h1 className="text-3xl font-semibold text-gray-800">🛍️ Our Products</h1>

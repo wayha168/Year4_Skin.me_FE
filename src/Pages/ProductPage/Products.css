@@ -326,7 +326,7 @@
 .products-grid img:hover {
   transform: scale(1.05);
 }
-/* ===== Favorite Button ===== */
+/* ===== Favorite Button of ===== */
 .products-grid button[aria-label="favorite"] {
   position: absolute;
   top: 0.5rem;

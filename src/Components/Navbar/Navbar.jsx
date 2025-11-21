@@ -2,28 +2,26 @@ import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthContext from "../../Authentication/AuthContext";
 import Loading from "../Loading/Loading";
-import "./Navbar.css";
-import LoginFirst from "../LoginFirst/LoginFirst"; // OOP class for login redirection logic
+import LoginFirst from "../LoginFirst/LoginFirst"; 
 
 const Navbar = ({ alwaysVisible = false }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
 
-  // ---------- UI State ----------
   const [visible, setVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1030);
   const navRef = useRef(null);
 
-  // ---------- Handle Window Resize ----------
+  // Resize handler
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1030);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ---------- Navbar Show/Hide on Scroll (fixed) ----------
+  // Scroll hide/show
   useEffect(() => {
     if (alwaysVisible) return;
 
@@ -39,151 +37,173 @@ const Navbar = ({ alwaysVisible = false }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [alwaysVisible]);
 
-  // ---------- Click Outside Closes Menu ----------
+  // Click outside (close menu)
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (navRef.current && !navRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) {
         setMenuOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ---------- Menu Toggle ----------
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
-  // ---------- Logout ----------
-  const handleLogout = () => logout();
-
-  // ---------- Safe Navigation with Loading ----------
   const safeNavigate = (path, state = null) => {
     setLoading(true);
     if (state) navigate(path, { state });
     else navigate(path);
+
     setMenuOpen(false);
     setTimeout(() => setLoading(false), 500);
   };
 
-  // ---------- Instantiate OOP Login Redirect Handler ----------
   const loginFirst = new LoginFirst(user, safeNavigate);
 
-  // ---------- Redirect Handlers ----------
   const handleFavoriteClick = (e) => {
     e.preventDefault();
-    loginFirst.redirectToFavorites(); // handled by OOP
+    loginFirst.redirectToFavorites();
   };
 
   const handleBagClick = (e) => {
     e.preventDefault();
-    loginFirst.redirectToCart(); // handled by OOP
+    loginFirst.redirectToCart();
   };
 
   return (
     <>
+      {/* NAVBAR */}
       <nav
-        className="navbar-wrapper"
-        style={{ top: visible || alwaysVisible ? "0" : "-100px" }}
+        className={`fixed left-0 w-full bg-[#FFD0ED] shadow-xl transition-all duration-300 z-[9999] h-24 ${
+          visible || alwaysVisible ? "top-0" : "-top-32"
+        }`}
       >
-        <div className="navbar-content" ref={navRef}>
-          {/* ---------- Brand ---------- */}
+        <div
+          ref={navRef}
+          className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-full"
+        >
+          {/* BRAND */}
           <Link
             to="/"
-            className="brand-logo"
             onClick={(e) => {
               e.preventDefault();
               safeNavigate("/");
             }}
+            className="flex flex-col no-underline select-none"
           >
-            <span className="main-brand-name  ">SKIN.ME</span>
-            <span className="brand-tagline">@Home Of Your Care</span>
+            <span className="text-[48px] font-bold text-[#eb61a2] leading-none">
+              SKIN.ME
+            </span>
+            <span className="text-[13px] text-black opacity-80">
+              @Home Of Your Care
+            </span>
           </Link>
 
-          {/* ---------- Hamburger Menu ---------- */}
-          <div className="main-dropdown" onClick={toggleMenu}>
+          {/* HAMBURGER (MOBILE) */}
+          <div
+            className="block lg:hidden text-4xl cursor-pointer absolute top-4 right-6"
+            onClick={toggleMenu}
+          >
             <i className="fa-solid fa-bars"></i>
           </div>
 
-          {/* ---------- Navigation Links ---------- */}
-          <div className={`nav-menu ${menuOpen ? "active" : ""}`}>
+          {/* NAV MENU */}
+          <div
+            className={`flex gap-6 text-[24px] ${
+              menuOpen
+                ? "flex-col absolute right-0 top-24 bg-[#FFD0ED] w-1/2 py-4 lg:flex"
+                : "hidden lg:flex"
+            }`}
+          >
             <Link
               to="/"
               onClick={() => safeNavigate("/")}
-              className="nav-item home"
+              className="text-black opacity-80 hover:opacity-60 text-center"
             >
               Home
             </Link>
+
             <Link
               to="/products"
               onClick={() => safeNavigate("/products")}
-              className="nav-item product"
+              className="text-black opacity-80 hover:opacity-60"
             >
               Products
             </Link>
+
             <Link
               to="/about-us"
               onClick={() => safeNavigate("/about-us")}
-              className="nav-item about_us"
+              className="text-black opacity-80 hover:opacity-60"
             >
               About Us
             </Link>
           </div>
 
-          {/* ---------- Auth / User Menu ---------- */}
-          <div className={`auth-menu ${menuOpen ? "active" : ""}`}>
-            {/* Favorite (uses OOP redirect) */}
+          {/* AUTH + ICONS */}
+          <div
+            className={`flex items-center gap-4 ${
+              menuOpen
+                ? "flex-col absolute right-0 bg-[#FFD0ED] top-[330px] w-full lg:flex-row"
+                : "hidden lg:flex"
+            }`}
+          >
+            {/* HEART */}
             <Link
               to="/favorites"
               onClick={handleFavoriteClick}
-              className="icons nav-icon favorite"
+              className="text-3xl text-gray-700 hover:text-blue-500"
             >
-              <i className="fa-solid fa-heart" />
+              <i className="fa-solid fa-heart"></i>
             </Link>
 
-            {/* Bag (uses OOP redirect) */}
+            {/* BAG */}
             <Link
               to="/bag_page"
               onClick={handleBagClick}
-              className="icons nav-icon bag"
+              className="text-3xl text-gray-700 hover:text-blue-500"
             >
-              <i className="fa-solid fa-bag-shopping" />
+              <i className="fa-solid fa-bag-shopping"></i>
             </Link>
 
-            {/* ---------- User Logged In ---------- */}
-            {user && (
+            {/* USER LOGGED IN */}
+            {user ? (
               <>
                 <Link
                   to="/profile"
                   onClick={() => safeNavigate("/profile")}
-                  className="icons nav-icon"
+                  className="text-3xl text-gray-700 hover:text-blue-500"
                 >
-                  <i className="fa-solid fa-user" />
+                  <i className="fa-solid fa-user"></i>
                 </Link>
+
                 <button
-                  onClick={handleLogout}
-                  className="auth_button logout_button"
+                  onClick={logout}
+                  className="px-6 py-2 bg-[#eb61a2] text-white font-semibold text-lg rounded-lg hover:bg-[#d0578f]"
                 >
                   Logout
                 </button>
               </>
-            )}
-
-            {/* ---------- User Not Logged In ---------- */}
-            {!user && (
+            ) : (
               <>
+                {/* LOGIN (conditionally hidden on mobile) */}
                 {(!isMobile || (isMobile && menuOpen)) && (
                   <Link
                     to="/login"
                     onClick={() => safeNavigate("/login")}
-                    className="auth-button login-button"
+                    className="px-6 py-2 text-[#ed3b8e] border-2 border-[#ed3b8e] rounded-lg font-semibold hover:bg-[#ed3b8e] hover:text-white transition"
                   >
                     Login
                   </Link>
                 )}
+
+                {/* SIGNUP */}
                 <Link
                   to="/signup"
                   onClick={() => safeNavigate("/signup")}
-                  className="auth-button signup-button"
+                  className="px-6 py-2 bg-[#eb61a2] text-white font-bold rounded-lg hover:bg-[#d0578f]"
                 >
                   Sign Up
                 </Link>
@@ -193,7 +213,6 @@ const Navbar = ({ alwaysVisible = false }) => {
         </div>
       </nav>
 
-      {/* ---------- Loading Indicator ---------- */}
       {loading && <Loading />}
     </>
   );

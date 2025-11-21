@@ -1,80 +1,100 @@
-  import React from "react";
-  import "./Footer.css";
+import React from "react";
 
-  import Aba from "../../assets/ABA.png";
-  import Acelida from "../../assets/acelida.png";
-  import Visa from "../../assets/Visa.png";
-  import Paypal from "../../assets/paypal.png";
-  import TIKTOK from "../../assets/tiktok_icon.png";
-  import TWITER from "../../assets/twitter_icon.png";
-  import FACEBOOK from "../../assets/facebook_icon_social.png";
-  import PINTEREST from "../../assets/pinterest_icon.png";
-  import INSTARGRAM from "../../assets/instargram_icon.png";
+import Aba from "../../assets/ABA.png";
+import Acelida from "../../assets/acelida.png";
+import Visa from "../../assets/Visa.png";
+import Paypal from "../../assets/paypal.png";
+import TIKTOK from "../../assets/tiktok_icon.png";
+import TWITER from "../../assets/twitter_icon.png";
+import FACEBOOK from "../../assets/facebook_icon_social.png";
+import PINTEREST from "../../assets/pinterest_icon.png";
+import INSTARGRAM from "../../assets/instargram_icon.png";
 
-  const Footer = () => {
-    return (
-      <div className="wrapp_with_c">
-        <div className="main_green_page_wrapper">
-          {/* SKIN.ME Section */}
-          <div className="logo_card_wrapper">
-            <p className="last_page_skinme_word las_skin_me">SKIN.ME</p>
-            <div className="payment_card_wrapper">
-              <img src={Aba} alt="ABA" />
-              <img src={Visa} alt="Visa" />
-              <img src={Paypal} alt="Paypal" />
-              <img src={Acelida} alt="Acelida" />
-            </div>
-            <div className="new_letters_wrapper">
-              <p className="newletters">NEWSLETTER</p>
-              <p className="subscribe_to_receive">
-                Subscribe to receive updates, access to exclusive deals, and more.
-              </p>
-              <div className="email_and_button_wrapper">
-                <input className="enter_your_email" type="email" placeholder="Enter your email" />
-                <button className="subscribe_button">Subscribe</button>
-              </div>
-            </div>
+const Footer = () => {
+  return (
+    <div className="bg-[#0a3d3f] text-white py-12">
+      {/* MAIN ROW */}
+      <div className="flex justify-around gap-8 mx-4 flex-wrap lg:flex-nowrap">
+
+        {/* SKIN.ME + PAYMENT + NEWSLETTER */}
+        <div className="flex-1 min-w-[250px] flex flex-col max-[579px]:items-center">
+          <p className="text-2xl font-bold mb-4">SKIN.ME</p>
+
+          {/* PAYMENT ICONS */}
+          <div className="flex  flex-wrap gap-3 mb-4">
+            <img src={Aba} alt="ABA" className="w-[50px]" />
+            <img src={Visa} alt="Visa" className="w-[50px]" />
+            <img src={Paypal} alt="Paypal" className="w-[50px]" />
+            <img src={Acelida} alt="Acelida" className="w-[50px]" />
           </div>
 
-          {/* GENERAL */}
-          <div className="general_wrapper">
-            <p className="last_page_skinme_word">GENERAL</p>
-            <div className="payment_card_wrapper general">
-              <p className="word_in_general location">Location</p>
-              <p className="word_in_general privacy_Policy">Privacy Policy</p>
-              <p className="word_in_general cookie">Cookie</p>
+          {/* NEWSLETTER */}
+          <div className="mt-4 max-[579px]:justify-center"> 
+            <div>           
+            <p className="text-lg font-bold max-[579px]:flex  justify-center">NEWSLEER</p>
+            <p className="text-sm mt-1">
+              Subscribe to receive updates, access to exclusive deals, and more.
+            </p>
             </div>
-          </div>
 
-          {/* GET TO KNOW US */}
-          <div className="get_to_know_wrapper">
-            <p className="last_page_skinme_word get_to_know">GET TO KNOW US</p>
-            <div className="payment_card_wrapper general">
-              <p className="word_in_general location">About</p>
-              <p className="word_in_general privacy_Policy">Blog</p>
-              <p className="word_in_general cookie">Email: mrjr@gmail.com</p>
-              <p className="word_in_general cookie">Phone: 098249823</p>
-            </div>
-          </div>
-
-          {/* SOCIAL */}
-          <div className="whole_social_icons_wrapper social">
-            <p className="last_page_skinme_word social">SOCIAL</p>
-            <div className="social_icons_wrapper icons">
-              <img className="social_icons" src={TIKTOK} alt="TikTok" />
-              <img className="social_icons" src={FACEBOOK} alt="Facebook" />
-              <img className="social_icons" src={INSTARGRAM} alt="Instagram" />
-              <img className="social_icons" src={PINTEREST} alt="Pinterest" />
-              <img className="social_icons" src={TWITER} alt="Twitter" />
+            <div className="flex gap-3 mt-3 max-[1030px]:flex-col max-[1030px]:items-start max-[579px]:items-center">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="flex-1 px-3 py-2 rounded-md text-black w-full max-[1030px]:w-[80%]"
+              />
+              <button className="bg-[#fcb8c2] text-black px-5 py-2 rounded-md max-[1030px]:w-[80%]">
+                Subscribe
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="the_last_sentence_wrapper">
-          <p className="the_last_sentent">© SKIN.ME — Only sell you the great product</p>
+        {/* GENERAL */}
+        <div className="flex-1 min-w-[250px] flex flex-col items-start max-[1030px]:items-center text-left max-[1030px]:text-center">
+          <p className="text-2xl font-bold mb-4">GENERAL</p>
+
+          <div className="flex flex-col gap-2">
+            <p>Location</p>
+            <p>Privacy Policy</p>
+            <p>Cookie</p>
+          </div>
         </div>
+
+        {/* GET TO KNOW US */}
+        <div className="flex-1 min-w-[250px] flex flex-col items-start max-[1030px]:items-center text-left max-[1030px]:text-center">
+          <p className="text-2xl font-bold mb-4">GET TO KNOW US</p>
+
+          <div className="flex flex-col gap-2">
+            <p>About</p>
+            <p>Blog</p>
+            <p>Email: mrjr@gmail.com</p>
+            <p>Phone: 098249823</p>
+          </div>
+        </div>
+
+        {/* SOCIAL */}
+        <div className="flex-1 min-w-[250px] flex flex-col items-start max-[1030px]:items-center text-left max-[1030px]:text-center">
+          <p className="text-2xl font-bold mb-4">SOCIAL</p>
+
+          {/* Icons wrapper */}
+          <div className="flex flex-col gap-2 ml-[-4px] max-[1030px]:flex-row max-[1030px]:justify-center max-[1030px]:ml-0">
+            <img src={TIKTOK} className="w-[30px]" alt="TikTok" />
+            <img src={FACEBOOK} className="w-[30px]" alt="Facebook" />
+            <img src={INSTARGRAM} className="w-[30px]" alt="Instagram" />
+            <img src={PINTEREST} className="w-[30px]" alt="Pinterest" />
+            <img src={TWITER} className="w-[30px]" alt="Twitter" />
+          </div>
+        </div>
+
       </div>
-    );
-  };
 
-  export default Footer;
+      {/* BOTTOM TEXT */}
+      <div className="text-center mt-10 text-gray-300 text-sm">
+        © SKIN.ME — Only sell you the great product
+      </div>
+    </div>
+  );
+};
+
+export default Footer;

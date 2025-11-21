@@ -1,10 +1,9 @@
+// MessageWidget.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { FaSmile, FaPaperPlane, FaTimes, FaSpinner } from "react-icons/fa";
 import EmojiPicker from "emoji-picker-react";
 import axiosAuth from "../../api/axiosConfig";
 import useAuthContext from "../../Authentication/AuthContext";
-import "./MessageInput.css";
-import "./MessageButton.css";
 
 const WELCOME_MESSAGE =
   "Hello! This is Skin.me Assistant – your personal skincare advisor. How can I help you today?";
@@ -63,7 +62,6 @@ const MessageWidget = () => {
       if (!aiText) aiText = FALLBACK_ANSWER;
 
       aiText = aiText.replace(/src="\/api\/v1\/images/g, `src="${BACKEND_URL}/api/v1/images`);
-      // .replace(/href="\/products/g, `href="${FRONTEND_URL}/products`);
 
       const assistantMsg = {
         role: "assistant",
@@ -73,7 +71,6 @@ const MessageWidget = () => {
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       console.error("Chat error:", err);
-      // Even if backend fails, provide fallback answer so conversation continues
       const errMsg = {
         role: "assistant",
         text: FALLBACK_ANSWER,
@@ -90,50 +87,90 @@ const MessageWidget = () => {
     setShowEmoji(false);
   };
 
+  // Floating Button
   if (!showInput) {
     return (
-      <div className="message-button-wrapper" onClick={() => setShowInput(true)}>
-        <i className="fa-solid fa-message" />
+      <div
+        className="fixed bottom-5 right-5 w-[4.5rem] h-[4.5rem] bg-gradient-to-br from-pink-400 to-purple-600 text-white rounded-full flex items-center justify-center text-2xl shadow-[0_6px_20px_rgba(0,0,0,0.25)] cursor-pointer z-[999] transition-all duration-200 hover:scale-110 active:scale-105 active:bg-gradient-to-br active:from-pink-300 active:to-purple-500"
+        onClick={() => setShowInput(true)}
+      >
+        <i className="fa-solid fa-message text-white text-2xl" />
       </div>
     );
   }
 
+  // Message Box
   return (
-    <div className="message-box">
-      <div className="message-header">
-        <span className="header-title">
-          <span className="skinme-text-icon">S</span>
+    <div className="fixed bottom-5 right-5 w-[380px] max-h-[80vh] bg-white rounded-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.15)] flex flex-col font-[Segoe_UI,Roboto,sans-serif] z-[1000] overflow-hidden transition-all duration-300">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3.5 bg-gradient-to-br from-pink-400 to-purple-600 text-white font-semibold text-base shadow-[0_4px_10px_rgba(0,0,0,0.1)]">
+        <span className="flex items-center gap-2">
+          <span className="w-[34px] h-[34px] bg-white text-purple-600 font-bold text-lg rounded-full flex items-center justify-center">
+            S
+          </span>
           Skin.me Assistant
         </span>
-        <button onClick={() => setShowInput(false)} className="close-button">
+        <button
+          onClick={() => setShowInput(false)}
+          className="bg-transparent border-none text-white text-lg cursor-pointer p-1 transition-colors duration-200 hover:text-pink-200"
+        >
           <FaTimes />
         </button>
       </div>
 
-      <div className="message-list">
+      {/* Message List */}
+      <div className="flex-1 p-3 overflow-y-auto bg-[#f6f5fa] flex flex-col gap-3">
         {messages.map((msg, i) => (
-          <div key={i} className={`message-bubble ${msg.role === "user" ? "user" : "assistant"}`}>
-            <div className="avatar">
+          <div
+            key={i}
+            className={`flex gap-2.5 max-w-[85%] animate-[fadeIn_0.3s_ease] transition-transform duration-200 hover: ${
+              msg.role === "user"
+                ? "self-end flex-row-reverse origin-bottom-right"
+                : "self-start origin-bottom-left"
+            }`}
+          >
+            {/* Avatar */}
+            <div className="flex-shrink-0">
               {msg.role === "user" ? (
-                <div className="user-avatar">{user?.name?.[0]?.toUpperCase() || "U"}</div>
+                <div className="w-[38px] h-[38px] rounded-full flex items-center justify-center font-bold text-base shadow-[0_2px_6px_rgba(0,0,0,0.1)] bg-pink-400 text-white">
+                  {user?.name?.[0]?.toUpperCase() || "U"}
+                </div>
               ) : (
-                <div className="skinme-text-avatar">S</div>
+                <div className="w-[38px] h-[38px] rounded-full flex items-center justify-center font-bold text-lg shadow-[0_2px_6px_rgba(0,0,0,0.1)] bg-purple-600 text-white">
+                  S
+                </div>
               )}
             </div>
-            <div className="bubble-content">
-              <p className="message-text" dangerouslySetInnerHTML={{ __html: msg.text }} />
-              <small className="message-time">{msg.time}</small>
+
+            {/* Bubble Content */}
+            <div
+              className={`px-4 py-3 rounded-3xl shadow-[0_2px_10px_rgba(0,0,0,0.08)] max-w-full break-words ${
+                msg.role === "user" ? "bg-pink-400 text-white" : "bg-white"
+              }`}
+            >
+              <p
+                className="m-0 text-[15px] leading-relaxed break-words"
+                dangerouslySetInnerHTML={{ __html: msg.text }}
+              />
+              <small
+                className={`block mt-1 text-[11px] opacity-70 text-right ${
+                  msg.role === "user" ? "text-pink-100" : ""
+                }`}
+              >
+                {msg.time}
+              </small>
             </div>
           </div>
         ))}
 
+        {/* Loading State */}
         {loading && (
-          <div className="message-bubble assistant loading">
-            <div className="avatar">
-              <div className="skinme-text-avatar">S</div>
+          <div className="flex gap-2.5 max-w-[85%] animate-[fadeIn_0.3s_ease] self-start origin-bottom-left">
+            <div className="w-[38px] h-[38px] rounded-full flex items-center justify-center font-bold text-lg shadow-[0_2px_6px_rgba(0,0,0,0.1)] bg-purple-600 text-white">
+              S
             </div>
-            <div className="bubble-content">
-              <FaSpinner className="spinner" />
+            <div className="bg-transparent shadow-none flex items-center gap-2 text-gray-600">
+              <FaSpinner className="animate-spin" />
               <span>Answer…</span>
             </div>
           </div>
@@ -142,20 +179,28 @@ const MessageWidget = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="message-input-area">
-        <button onClick={() => setShowEmoji(!showEmoji)} className="emoji-button" disabled={loading}>
+      {/* Input Area */}
+      <div className="flex items-center p-3 bg-white border-t border-gray-200 gap-2 relative">
+        {/* Emoji Button */}
+        <button
+          onClick={() => setShowEmoji(!showEmoji)}
+          className="bg-transparent border-none text-xl cursor-pointer text-purple-600 disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled={loading}
+        >
           <FaSmile />
         </button>
 
+        {/* Emoji Picker */}
         {showEmoji && (
-          <div className="emoji-picker">
+          <div className="absolute bottom-[60px] left-2.5 z-10 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
             <EmojiPicker onEmojiClick={handleEmojiClick} height={350} width={300} />
           </div>
         )}
 
+        {/* Input Field */}
         <input
           type="text"
-          className="message-input"
+          className="flex-1 px-4 py-3 border border-gray-300 rounded-3xl text-sm outline-none transition-all duration-200 focus:border-purple-600 focus:shadow-[0_0_8px_rgba(108,92,231,0.3)]"
           placeholder="Ask about products..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -168,10 +213,29 @@ const MessageWidget = () => {
           disabled={loading}
         />
 
-        <button onClick={handleSend} className="send-button" disabled={loading || !input.trim()}>
-          {loading ? <FaSpinner className="spinner" /> : <FaPaperPlane />}
+        {/* Send Button */}
+        <button
+          onClick={handleSend}
+          className="bg-transparent border-none text-xl cursor-pointer text-purple-600 disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled={loading || !input.trim()}
+        >
+          {loading ? <FaSpinner className="animate-spin" /> : <FaPaperPlane />}
         </button>
       </div>
+
+      {/* Add custom animations to your tailwind.config.js or global CSS */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };

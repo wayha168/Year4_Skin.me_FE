@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import useAuthContext from "./AuthContext";
 import Loading from "../Components/Loading/Loading";
-import "./Signup.css";
 import MainImage from "../assets/product_homepage.png";
 
 const Signup = () => {
@@ -24,32 +23,17 @@ const Signup = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    switch (name) {
-      case "firstName":
-        setFirstName(value);
-        break;
-      case "lastName":
-        setLastName(value);
-        break;
-      case "email":
-        setEmail(value);
-        break;
-      case "password":
-        setPassword(value);
-        break;
-      case "confirmPassword":
-        setConfirmPassword(value);
-        break;
-      default:
-        break;
-    }
+    if (name === "firstName") setFirstName(value);
+    if (name === "lastName") setLastName(value);
+    if (name === "email") setEmail(value);
+    if (name === "password") setPassword(value);
+    if (name === "confirmPassword") setConfirmPassword(value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
-    
+
     if (!firstName.trim() || !lastName.trim()) {
       setFormError("Please fill in your first and last name.");
       return;
@@ -74,108 +58,145 @@ const Signup = () => {
       });
 
       if (userData) {
-        const rolesArray = Array.isArray(userData.roles) ? userData.roles : [userData.role];
-        const isAdmin = rolesArray.includes("ROLE_ADMIN") || rolesArray.includes("ADMIN");
+        const roles = Array.isArray(userData.roles)
+          ? userData.roles
+          : [userData.role];
+
+        const isAdmin =
+          roles.includes("ROLE_ADMIN") || roles.includes("ADMIN");
+
         navigate(redirectTo || (isAdmin ? "/dashboard" : "/"));
       }
     } catch (err) {
-      console.error("Signup failed:", err);
+      console.error(err);
       setFormError(error || "Signup failed. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <section className="signup-section">
-      {popupMessage && <div className="the-login-notification">{popupMessage}</div>}
+    <section className="min-h-screen bg-pink-100 flex items-center justify-center p-6 relative overflow-hidden">
+      {popupMessage && (
+        <div className="absolute top-6 z-50 bg-pink-100 border border-pink-300 text-pink-600 font-semibold px-4 py-2 rounded-lg shadow">
+          {popupMessage}
+        </div>
+      )}
 
-      <img className="main_of_image" src={MainImage} alt="Main visual" />
+      {/* Background Image */}
+      <img
+        src={MainImage}
+        alt="background"
+        className="absolute right-20 top-20 scale-110 opacity-30 max-w-3xl hidden sm:block pointer-events-none"
+      />
 
-      <div className="signup-container">
-        <h1 className="signup-title">Sign Up</h1>
-        {(formError || error) && <p className="error-message">{formError || error}</p>}
+      {/* Card */}
+      <div className="w-full max-w-lg bg-white/90 backdrop-blur-lg shadow-lg rounded-lg p-8 z-20 border border-black/5">
+        <h1 className="text-3xl font-bold text-center text-pink-500 mb-6">
+          Sign Up
+        </h1>
 
-        <form onSubmit={handleSubmit} className="signup-form">
-          <div className="name-row">
-            <div>
-              <label>First Name</label>
+        {(formError || error) && (
+          <p className="bg-red-100 text-red-600 p-3 rounded-md font-semibold text-center mb-3">
+            {formError || error}
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Name Row */}
+          <div className="flex gap-4 flex-col sm:flex-row">
+            <div className="flex flex-col w-full">
+              <label className="text-sm font-semibold text-gray-700">
+                First Name
+              </label>
               <input
                 type="text"
                 name="firstName"
                 value={firstName}
                 onChange={handleInputChange}
                 placeholder="First Name"
-                required
                 disabled={isLoading}
+                className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
               />
             </div>
 
-            <div>
-              <label>Last Name</label>
+            <div className="flex flex-col w-full">
+              <label className="text-sm font-semibold text-gray-700">
+                Last Name
+              </label>
               <input
                 type="text"
                 name="lastName"
                 value={lastName}
                 onChange={handleInputChange}
                 placeholder="Last Name"
-                required
                 disabled={isLoading}
+                className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
               />
             </div>
           </div>
 
-          <div>
-            <label>Email</label>
+          {/* Email */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700">Email</label>
             <input
               type="email"
               name="email"
               value={email}
               onChange={handleInputChange}
               placeholder="Enter your email"
-              required
               disabled={isLoading}
+              className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
             />
           </div>
 
-          <div>
-            <label>Password</label>
+          {/* Password */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700">
+              Password
+            </label>
             <input
               type="password"
               name="password"
               value={password}
               onChange={handleInputChange}
               placeholder="Enter your password"
-              required
               disabled={isLoading}
+              className="border p-2 rounded-md focus:border-ppink-400 focus:ring-2 focus:ring-pink-200 outline-none"
             />
           </div>
 
-          <div>
-            <label>Confirm Password</label>
+          {/* Confirm Password */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700">
+              Confirm Password
+            </label>
             <input
               type="password"
               name="confirmPassword"
               value={confirmPassword}
               onChange={handleInputChange}
               placeholder="Confirm your password"
-              required
               disabled={isLoading}
+              className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
             />
           </div>
 
+          {/* Button */}
           <button
             type="submit"
-            className={`signup-button ${isLoading ? "disabled" : ""}`}
             disabled={isLoading}
+            className={`w-full py-3 rounded-md font-bold text-white transition ${
+              isLoading
+                ? "bg-pink-300 cursor-not-allowed"
+                : "bg-pink-500 hover:bg-pink-600 active:scale-[0.98]"
+            }`}
           >
             {isLoading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
 
-        <p className="signup-text">
+        <p className="text-center text-gray-700 font-semibold mt-4">
           Already have an account?{" "}
-          <Link to="/login" className="signup-link">
+          <Link to="/login" className="text-pink-500 font-bold underline">
             Login
           </Link>
         </p>

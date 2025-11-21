@@ -103,7 +103,7 @@ const Navbar = ({ alwaysVisible = false }) => {
 
           {/* HAMBURGER (MOBILE) */}
           <div
-            className="block lg:hidden text-4xl cursor-pointer absolute top-4 right-6"
+            className="block lg:hidden text-4xl cursor-pointer absolute top-6 right-6"
             onClick={toggleMenu}
           >
             <i className="fa-solid fa-bars"></i>
@@ -111,11 +111,11 @@ const Navbar = ({ alwaysVisible = false }) => {
 
           {/* NAV MENU */}
           <div
-            className={`flex gap-6 text-[25px] font-medium max-[1034px]:items-center ${
-              menuOpen
-                ? "flex-col absolute right-0 top-24 bg-[#eac1da] w-1/2 py-4 lg:flex"
-                : "hidden lg:flex"
-            }`}
+          className={`flex gap-6 text-[25px] font-medium max-[1034px]:items-center ${
+            menuOpen && isMobile
+              ? "flex-col absolute right-0 top-24 bg-[#eac1da] w-1/2 py-4"
+              : "hidden lg:flex"
+          }`}
           >
             <Link
               to="/"
@@ -147,10 +147,11 @@ const Navbar = ({ alwaysVisible = false }) => {
 
 
           {/* AUTH + ICONS */}
+         {/* AUTH + ICONS */}
           <div
-            className={`flex items-center gap-4 max-[1024px]:w-1/2 max-[1024px]:-mt-[3rem]  ${
-              menuOpen
-                ? "flex-col absolute right-0 bg-[#eac1da] top-[330px] w-full lg:flex-row"
+            className={`flex items-center gap-4 max-[1024px]:w-1/2 max-[1024px]:-mt-[3rem] max-[1024px]:pb-[1rem] max-[1024px]:rounded-bl-[1rem] ${
+              menuOpen && isMobile
+                ? "flex-col absolute right-0 bg-[#eac1da] top-[330px] w-full"
                 : "hidden lg:flex"
             }`}
           >
@@ -185,7 +186,7 @@ const Navbar = ({ alwaysVisible = false }) => {
 
                 <button
                   onClick={logout}
-                  className="px-8 py-5 text-[1.5rem] bg-[#eb61a2] text-white font-semibold text-lg rounded-lg hover:bg-[#d0578f]"
+                  className="px-8 py-5 text-[1.7rem] bg-[#eb61a2] text-white font-semibold text-lg rounded-lg hover:bg-[#d0578f]"
                 >
                   Logout
                 </button>
@@ -197,7 +198,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                   <Link
                     to="/login"
                     onClick={() => safeNavigate("/login")}
-                    className="px-7 py-3 text-[#ed3b8e] text-[1.5rem] border-2 border-[#ed3b8e] rounded-lg font-semibold hover:bg-[#ed3b8e] hover:text-white transition"
+                    className="px-7 py-3 text-[#ed3b8e] text-[1.5rem] border-2 border-[#ed3b8e] rounded-lg font-semibold hover:bg-[#ed3b8e] hover:text-white transition max-[1024px]:absolute max-[1024px]:-top-[16.5rem] max-[1024px]:right-[6rem]"
                   >
                     Login
                   </Link>

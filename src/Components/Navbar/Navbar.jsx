@@ -111,9 +111,9 @@ const Navbar = ({ alwaysVisible = false }) => {
 
           {/* NAV MENU */}
           <div
-            className={`flex gap-6 text-[24px] ${
+            className={`flex gap-6 text-[25px] font-medium max-[1034px]:items-center ${
               menuOpen
-                ? "flex-col absolute right-0 top-24 bg-[#FFD0ED] w-1/2 py-4 lg:flex"
+                ? "flex-col absolute right-0 top-24 bg-[#eac1da] w-1/2 py-4 lg:flex"
                 : "hidden lg:flex"
             }`}
           >
@@ -142,11 +142,15 @@ const Navbar = ({ alwaysVisible = false }) => {
             </Link>
           </div>
 
+
+
+
+
           {/* AUTH + ICONS */}
           <div
-            className={`flex items-center gap-4 ${
+            className={`flex items-center gap-4 max-[1024px]:w-1/2 max-[1024px]:-mt-[3rem]  ${
               menuOpen
-                ? "flex-col absolute right-0 bg-[#FFD0ED] top-[330px] w-full lg:flex-row"
+                ? "flex-col absolute right-0 bg-[#eac1da] top-[330px] w-full lg:flex-row"
                 : "hidden lg:flex"
             }`}
           >
@@ -154,7 +158,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             <Link
               to="/favorites"
               onClick={handleFavoriteClick}
-              className="text-3xl text-gray-700 hover:text-blue-500"
+              className="text-5xl text-gray-700 hover:text-blue-500"
             >
               <i className="fa-solid fa-heart"></i>
             </Link>
@@ -163,7 +167,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             <Link
               to="/bag_page"
               onClick={handleBagClick}
-              className="text-3xl text-gray-700 hover:text-blue-500"
+              className="text-5xl text-gray-700 hover:text-blue-500"
             >
               <i className="fa-solid fa-bag-shopping"></i>
             </Link>
@@ -174,14 +178,14 @@ const Navbar = ({ alwaysVisible = false }) => {
                 <Link
                   to="/profile"
                   onClick={() => safeNavigate("/profile")}
-                  className="text-3xl text-gray-700 hover:text-blue-500"
+                  className="text-5xl text-gray-700 hover:text-blue-500"
                 >
                   <i className="fa-solid fa-user"></i>
                 </Link>
 
                 <button
                   onClick={logout}
-                  className="px-6 py-2 bg-[#eb61a2] text-white font-semibold text-lg rounded-lg hover:bg-[#d0578f]"
+                  className="px-8 py-5 text-[1.5rem] bg-[#eb61a2] text-white font-semibold text-lg rounded-lg hover:bg-[#d0578f]"
                 >
                   Logout
                 </button>
@@ -193,7 +197,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                   <Link
                     to="/login"
                     onClick={() => safeNavigate("/login")}
-                    className="px-6 py-2 text-[#ed3b8e] border-2 border-[#ed3b8e] rounded-lg font-semibold hover:bg-[#ed3b8e] hover:text-white transition"
+                    className="px-7 py-3 text-[#ed3b8e] text-[1.5rem] border-2 border-[#ed3b8e] rounded-lg font-semibold hover:bg-[#ed3b8e] hover:text-white transition"
                   >
                     Login
                   </Link>
@@ -203,13 +207,13 @@ const Navbar = ({ alwaysVisible = false }) => {
                 <Link
                   to="/signup"
                   onClick={() => safeNavigate("/signup")}
-                  className="px-6 py-2 bg-[#eb61a2] text-white font-bold rounded-lg hover:bg-[#d0578f]"
+                  className="px-7 py-[0.9rem] text-[1.5rem] border-none bg-[#eb61a2] text-white font-bold rounded-lg hover:bg-[#d0578f]"
                 >
                   Sign Up
                 </Link>
               </>
             )}
-          </div>
+            </div>  
         </div>
       </nav>
 

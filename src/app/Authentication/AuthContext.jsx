@@ -1,13 +1,16 @@
-// src/app/Authentication/AuthContex.jsx
+// src/app/Authentication/AuthContext.jsx   (or .tsx)
+
+"use client";   // THIS LINE IS REQUIRED — ADD IT AT THE VERY TOP
+
 import Cookies from "js-cookie";
 import { createContext, useEffect, useState, useContext } from "react";
 import axiosAuth from "../api/axiosConfig";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";   // ← changed from react-router-dom
 
 const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
-  const navigate = useNavigate();
+  const router = useRouter();   // ← now from next/navigation
 
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
@@ -26,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async (token) => {
     try {
-      const response = await axiosAuth.get("/users/me"); // <-- use axiosAuth
+      const response = await axiosAuth.get("/users/me");
       if (response.status === 200) {
         const userData = response.data.data;
         setUser({ ...userData, token });
@@ -45,7 +48,6 @@ export const AuthProvider = ({ children }) => {
       const response = await axiosAuth.post("/auth/login", { email, password });
 
       if (response.status === 200 && response.data?.data?.jwtToken) {
-        // success
         const token = response.data.data.jwtToken;
         const userData = response.data.data;
         Cookies.set("token", token, { expires: 7 });
@@ -63,12 +65,10 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error("Login error:", err.response || err);
-
       let message = err.response?.data?.message || "Network error";
       if (message === "Invalid email or password") {
         message = "Incorrect email or password";
       }
-
       setError(message);
       return null;
     }
@@ -82,10 +82,8 @@ export const AuthProvider = ({ children }) => {
         lastName: data.lastName,
         email: data.email,
         password: data.password,
-        confirmPassword: data.password, 
+        confirmPassword: data.password,
       });
-
-      console.log("Signup response:", response.data);
 
       if (response.status === 200 || response.status === 201) {
         const userData = await login({
@@ -112,10 +110,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       setUser(null);
-      navigate("/login");
+      router.push("/login");   // ← now works
 
       if (token) {
-        await axiosAuth.post("/auth/logout"); // token automatically added by axiosAuth
         await axiosAuth.post("/auth/logout");
       }
     } catch (err) {
@@ -139,7 +136,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export default function useAuthContext() {
   return useContext(AuthContext);
 }

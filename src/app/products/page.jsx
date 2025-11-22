@@ -1,19 +1,27 @@
-// src/pages/Products.jsx
-import { useNavigate } from "react-router-dom";
+// src/app/products/page.tsx   ← must be this exact path
+
+"use client";
+
 import React, { useEffect, useState } from "react";
-import axios from "../../api/axiosConfig";
-import Navbar from "../../Components/Navbar/Navbar";
-import Footer from "../../Components/Footer/Footer";
-import ThirdImage from "../../assets/third_image.png";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import axios from "axios";
+import Navbar from "../Components/Navbar/Navbar";
+import Footer from "../Components/Footer/Footer";
+
 import { FaCartPlus, FaHeart, FaChevronRight, FaChevronLeft } from "react-icons/fa";
-import useAuthContext from "../../Authentication/AuthContext";
-import Loading from "../../Components/Loading/Loading";
-import useUserActions from "../../Components/Hooks/userUserActions";
-import LoginFirst from "../../Components/LoginFirst/LoginFirst.js";
-// import MessageWidget from "../../Components/MessageWidget/MessageWidget.jsx";
-import MessageWidget from "../../Components/MessageWidget/MessageWidget.jsx";
+import useAuthContext from "../Authentication/AuthContext";
+import Loading from "../Components/Loading/Loading";
+import useUserActions from "../Components/Hooks/userUserActions";
+import LoginFirst from "../Components/LoginFirst/LoginFirst";
+
+const ThirdImage = "/assets/third_image.png";
 
 const Products = () => {
+  const router = useRouter();
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -23,9 +31,8 @@ const Products = () => {
   const productsPerPage = 15;
 
   const { user } = useAuthContext();
-  const navigate = useNavigate();
   const { addToCart, addToFavorite } = useUserActions();
-  const loginFirst = new LoginFirst(user, navigate);
+  const loginFirst = new LoginFirst(user, router);
 
   /* ------------------- FETCH CATEGORIES ------------------- */
   useEffect(() => {
@@ -76,11 +83,7 @@ const Products = () => {
     if (!user) {
       const message = loginFirst.messages.loginRequiredFavorite;
       loginFirst.safeNavigate("/login", {
-        state: {
-          showLoginPopup: true,
-          redirectTo: window.location.pathname,
-          popupMessage: message,
-        },
+        search: `?redirect=${encodeURIComponent(window.location.pathname)}&message=${encodeURIComponent(message)}`,
       });
       return;
     }
@@ -125,7 +128,7 @@ const Products = () => {
           </div>
         </div>
 
-        {/* ===== Product Grid - NOW 5 COLUMNS ON LARGE SCREENS ===== */}
+        {/* ===== Product Grid ===== */}
         {loading ? (
           <Loading />
         ) : currentProducts.length === 0 ? (
@@ -140,15 +143,17 @@ const Products = () => {
                 >
                   {/* Image Container */}
                   <div className="product-img-container relative overflow-hidden">
-                    <img
+                    <Image
                       src={
                         p?.images?.[0]?.downloadUrl
                           ? `https://backend.skinme.store${p.images[0].downloadUrl}`
                           : ThirdImage
                       }
                       alt={p?.name || "Product"}
+                      width={400}
+                      height={400}
                       className="product-img w-full h-64 object-cover rounded-t-xl cursor-pointer transition-transform duration-300 hover:scale-105"
-                      onClick={() => navigate("/product_details", { state: { product: p } })}
+                      onClick={() => router.push(`/product_details?productId=${p.id}`)}
                     />
                     <button
                       onClick={() => handleFavorite(p.id)}
@@ -181,7 +186,7 @@ const Products = () => {
               ))}
             </div>
 
-            {/* Pagination - unchanged */}
+            {/* Pagination */}
             <div className="flex justify-center items-center gap-3 mt-16 flex-wrap">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
@@ -248,7 +253,6 @@ const Products = () => {
         )}
       </main>
       <Footer />
-      <MessageWidget />
     </>
   );
 };

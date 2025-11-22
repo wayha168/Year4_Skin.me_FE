@@ -1,22 +1,26 @@
+"use client";
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import Link from "next/link";
+import {useRouter, useSearchParams} from "next/navigation";
 import { FaFacebook, FaGoogle } from "react-icons/fa";
-import useAuthContext from "./AuthContext";
+import useAuthContext from "../Authentication/AuthContext";
 import Loading from "../Components/Loading/Loading";
-import MainImage from "../assets/product_homepage.png";
 
 const Login = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const MainImage = "/assets/product_homepage.png";
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const { login, error } = useAuthContext();
 
-  const popupMessage = location.state?.popupMessage || "";
-  const redirectTo = location.state?.redirectTo || "";
+  const popupMessage = searchParams.get("message") || "";
+  const redirectTo = searchParams.get("redirect") || "";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-// jj
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -31,7 +35,7 @@ const Login = () => {
       const isAdmin =
         rolesArray.includes("ROLE_ADMIN") || rolesArray.includes("ADMIN");
 
-      navigate(redirectTo || (isAdmin ? "/dashboard" : "/"));
+      router.push(redirectTo || (isAdmin ? "/dashboard" : "/"));
     }
 
     setIsLoading(false);
@@ -50,6 +54,8 @@ const Login = () => {
         className="absolute flex flex-col items-center ml-24 mt-[30rem] scale-125 z-0 max-w-full mb-[36rem]"
         src={MainImage}
         alt="Main visual"
+        width={1200}
+        height={1200}
       />
 
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg z-40">
@@ -93,7 +99,7 @@ const Login = () => {
           </div>
 
           <div className="text-right text-sm">
-            <Link to="/forgot-password" className="text-pink-400 hover:underline">
+            <Link href="/forgot-password" className="text-pink-400 hover:underline">
               Forgot Password?
             </Link>
           </div>
@@ -123,7 +129,7 @@ const Login = () => {
 
         <p className="mt-4 text-center text-gray-700">
           Don't have an account?{" "}
-          <Link to="/signup" className="text-pink-400 font-bold underline">
+          <Link href="/signup" className="text-pink-400 font-bold underline">
             Sign Up
           </Link>
         </p>

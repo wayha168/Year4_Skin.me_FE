@@ -1,3 +1,7 @@
+// src/app/Components/Hooks/userUserActions.js   (or .jsx / .ts)
+
+"use client";   // THIS LINE FIXES THE ERROR — ADD IT AT THE VERY TOP
+
 import { useState } from "react";
 import axios from "../../api/axiosConfig";
 import useAuthContext from "../../Authentication/AuthContext";

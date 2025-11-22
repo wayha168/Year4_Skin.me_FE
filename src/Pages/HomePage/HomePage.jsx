@@ -29,7 +29,7 @@ const HomePage = () => {
     const section = document.getElementById("product");
     if (section) {
       const navbarHeight = document.querySelector(".navbar-wrapper")?.offsetHeight || 0;
-      const y = section.getBoundingClientRect().top + window.scrollY - navbarHeight - 20;
+      const y = section.getBoundingClientRect().top + window.scrollY - navbarHeight;
       window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
@@ -64,6 +64,7 @@ const HomePage = () => {
       });
       return;
     }
+
     await addToFavorite(productId);
   };
 
@@ -79,6 +80,7 @@ const HomePage = () => {
       });
       return;
     }
+
     await addToCart(productId, 1);
   };
 
@@ -87,54 +89,69 @@ const HomePage = () => {
       <Navbar alwaysVisible={true} />
 
       {/* HERO SECTION */}
-      <div className="relative flex flex-col lg:flex-row items-center justify-center min-h-screen bg-gradient-to-b from-pink-100 to-pink-300 mt-16 overflow-hidden">
-        {/* Decorative Circles */}
-        <div className="absolute -left-96 top-16 w-96 h-96 bg-purple-400 rounded-full -z-10"></div>
-        <div className="absolute -right-96 top-80 w-96 h-96 bg-purple-400 rounded-full -z-10"></div>
-
-        <div className="w-full lg:w-3/5 flex flex-col justify-center items-start px-8 lg:pl-32 z-10">
-          <p className="text-3xl font-medium text-pink-500 mb-4">Welcome to SKIN.ME</p>
-          <h1 className="text-5xl font-semibold text-white mb-4">Most Essential Skin Care Product</h1>
-          <p className="text-xl text-gray-700 mb-8">Give you the best skincare products is our mission.</p>
-          <button
-            onClick={scrollToProducts}
-            className="bg-pink-500 hover:bg-pink-600 active:bg-pink-700 text-white text-2xl font-semibold py-4 px-12 rounded-2xl transition-all duration-200"
-          >
-            Shop Now
-          </button>
+      <div className="flex justify-center items-center w-full h-screen bg-gradient-to-b from-[#fddcff] to-[#af6793] mt-16 overflow-hidden relative max-[992px]:flex-col max-[992px]:h-auto   max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-12 max-[760px]:flex-col max-[760px]:gap-20">
+        <div className="absolute bg-[#ab8fff] rounded-[1000px] z-0 left-[-25rem] top-16 w-[30rem] h-[30rem] max-[992px]:hidden"></div>
+        
+        <div className="flex flex-col ml-[7rem] justify-center w-[50%] text-[#1f2937] z-[2] max-[992px]:w-[90%] max-[992px]:ml-0">
+              <p className="text-[27px] font-medium text-[#eb61a1] mb-4 max-[600px]:text-[27px]">Welcome to SKIN.ME</p>
+              <p className="text-[44px] font-semibold text-white mb-4 max-[992px]:text-[32px] max-[600px]:text-[35px]">Most Essential Skin Care Product</p>
+              <p className="text-xl text-[#4c4c4c] mb-10 max-[600px]:text-xl">Give you the best skincare products is our mission.</p>
+            <div> 
+              <button 
+                onClick={scrollToProducts} 
+                className="text-white text-[22px] font-semibold px-[50px] py-3.5 bg-[#eb61a2] rounded-[15px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-base max-[600px]:px-[30px] max-[600px]:py-2.5"
+              >
+                Shop Now
+              </button>
+            </div>
         </div>
-
-        <div className="w-full lg:w-2/5 flex justify-center lg:justify-end -mt-20 lg:mt-0">
-          <img src={MainImage} alt="skin product" className="h-[50rem] object-contain" />
+        
+        <div className="w-[40rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem]">
+          <img src={MainImage} alt="skin product" className="h-[50rem] object-contain z-[5] max-[992px]:w-full max-[992px]:h-auto" />
         </div>
+        
+        <div className="absolute bg-[#ab8fff] rounded-[1000px] z-0 right-[-25rem] top-80 w-[30rem] h-[30rem] max-[992px]:hidden max-[760px]:right-[-25rem]"></div>
       </div>
 
       {/* OVERVIEW SECTION */}
-      <div className="flex flex-col lg:flex-row items-center justify-center py-20 px-8 gap-16 bg-gradient-to-b from-transparent to-pink-50">
-        <div className="flex flex-col items-center lg:items-start text-center lg:text-left max-w-lg">
-          <h2 className="text-4xl font-bold text-pink-500 mb-4">Let's Have A Look</h2>
-          <p className="text-2xl text-gray-800 mb-8">
+      <div className="flex flex-row items-center justify-center relative max-[1180px]:mt-16 max-[1180px]:flex-col max-[660px]:flex-col max-[660px]:my-0 max-[660px]:mx-auto">
+        <div className="flex flex-col justify-center items-center w-[30rem] mx-0 mr-32 ml-4 z-[5] max-[660px]:w-full max-[660px]:mx-0 max-[660px]:mb-8">
+          <div className="mb-5 text-[#eb61a1] text-[35px] font-bold font-[Arial,Helvetica,sans-serif] max-[660px]:text-center">
+            Let's Have A Look
+          </div>
+          <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] max-[660px]:text-center max-[660px]:px-8">
             This is the overview about our products that you can spend a few minutes to see how they look.
-          </p>
-          <div className="flex gap-8 -mb-32 lg:-mb-44 z-10">
-            <img src={FirstImage} alt="" className="w-64 h-64 object-cover rounded-lg shadow-xl" />
-            <img src={SecondImage} alt="" className="w-64 h-64 object-cover rounded-lg shadow-xl" />
+          </div>
+          <div className="flex flex-row gap-4 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-1"> 
+            <img 
+              src={FirstImage} 
+              className="w-[17rem] h-[17rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0 max-[660px]:mr-[-3rem] " 
+            />
+            <img 
+              src={SecondImage} 
+              className="rounded-[10px] w-[17rem] h-[17rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0" 
+            />
           </div>
         </div>
-        <div className="relative">
-          <img src={ThirdImage} alt="" className="w-full max-w-2xl rounded-lg shadow-2xl -mt-20 lg:-mt-32" />
+        
+        <div className="mt-28 w-[30rem] h-[30rem] max-[1180px]:mb-40 max-[660px]:mt-4 max-[660px]:mb-0 max-[1180px]:mt-[6.3rem] ">
+          <img 
+            src={ThirdImage} 
+            className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" 
+          />
         </div>
-        <div className="absolute -left-80 top-full w-96 h-96 bg-purple-400 rounded-full -z-10 hidden lg:block"></div>
+
+        <div className="absolute bg-[#ab8fff] rounded-[1000px] z-[0] left-[-24rem] top-[63rem] w-[30rem] h-[30rem] max-[992px]:hidden max-[1180px]:-ml-[160px] max-[760px]:top-[100rem]"></div>
       </div>
 
       {/* PRODUCTS SECTION */}
-      <section id="product" className="py-20 px-8 bg-white">
+      <section id="product" className="py-20 px-8 bg-white text-center max-[1180px]:mt-[-3rem] max-">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-12 px-5">
-            <h2 className="text-4xl lg:text-5xl text-pink-500 font-bold uppercase">Product</h2>
-            <button
+          <div className="flex justify-between items-center mb-12 px-5 uppercase">
+            <h2 className="text-4xl text-[#eb61a2] font-bold max-[600px]:text-[28px]">Product</h2>
+            <button 
+              className="bg-[#eb61a2] text-white border-none px-6 py-3 rounded-2xl text-xl cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[600px]:text-sm"
               onClick={() => navigate("/products")}
-              className="bg-pink-500 hover:bg-pink-600 text-white px-8 py-4 rounded-3xl text-xl font-medium transition-all duration-200 mt-6 sm:mt-0"
             >
               All Product
             </button>
@@ -145,13 +162,13 @@ const HomePage = () => {
           ) : products.length === 0 ? (
             <p className="text-center text-gray-500 text-lg mt-20">No products found.</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {products.slice(0, 10).map((p) => (
-                <div
-                  key={p.id}
-                  className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                <div 
+                  key={p.id} 
+                  className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-4 flex flex-col justify-between transition-[transform_0.3s_ease,box-shadow_0.3s_ease] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                 >
-                  <div className="relative overflow-hidden">
+                  <div className="relative">
                     <img
                       src={
                         p?.images?.[0]?.downloadUrl
@@ -159,28 +176,24 @@ const HomePage = () => {
                           : ThirdImage
                       }
                       alt={p.name}
-                      className="w-full h-64 object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
+                      className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
                       onClick={() => navigate("/check_out", { state: { product: p } })}
                     />
-                    <button
+                    <button 
+                      className="absolute top-2 right-2 bg-white/85 rounded-full p-1.5 text-[#f56565] text-base cursor-pointer transition-[background_0.2s] hover:bg-[#fed7d7]"
                       onClick={() => handleFavoriteClick(p.id)}
-                      className="absolute top-3 right-3 bg-white/90 hover:bg-pink-100 text-red-500 p-2 rounded-full transition-colors"
                     >
-                      <FaHeart className="text-lg" />
+                      <FaHeart />
                     </button>
                   </div>
-
-                  <div className="p-5 flex flex-col justify-between flex-grow">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800 line-clamp-2">{p.name}</h3>
-                      <p className="text-2xl font-bold text-pink-500 mt-2">${p.price}</p>
-                    </div>
-                    <button
+                  <div className="flex flex-col justify-between px-3 py-2.5 flex-grow">
+                    <h3 className="text-base font-semibold text-[#2d3748] leading-tight overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:text-base">{p.name}</h3>
+                    <p className="text-base font-bold text-[#2563eb] my-1.5 max-[600px]:text-sm">${p.price}</p>
+                    <button 
+                      className="mt-auto bg-[#d13e82] border-none rounded-xl px-5 py-2.5 text-white font-semibold cursor-pointer flex items-center justify-center gap-2 text-[0.95rem] shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] active:-translate-y-px active:scale-[0.98] active:shadow-[0_4px_10px_rgba(209,62,130,0.3)]"
                       onClick={() => handleAddToCartClick(p.id)}
-                      className="mt-6 w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-98 transition-all duration-300"
                     >
-                      <FaCartPlus className="text-lg" />
-                      Add to Cart
+                      <FaCartPlus className="text-[1.1rem] transition-transform duration-300" /> Add to Cart
                     </button>
                   </div>
                 </div>
@@ -191,22 +204,19 @@ const HomePage = () => {
       </section>
 
       {/* ABOUT US SECTION */}
-      <div className="bg-pink-100 py-20 px-8 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl lg:text-5xl font-bold text-pink-600 mb-6">About Us</h2>
-          <p className="text-xl lg:text-2xl text-gray-700 mb-12">
-            SKIN.ME is more than skincare — it's a daily ritual of self-respect and renewal. We craft minimalist, effective formulas designed for real skin and real lives.
+      <div id="aboutus" className="bg-[#ffd0ed] py-20 px-8 text-center">
+        <div>
+          <p className="text-4xl font-bold text-[#d13e82] mb-6">About Us</p>
+          <p className="text-[22px] text-[#333] max-w-[900px] mx-auto mb-12">
+            SKIN.ME is more than skincare — it's a daily ritual of self-respect and renewal. We craft
+            minimalist, effective formulas designed for real skin and real lives.
           </p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-          {[FirstImage, SecondImage, ThirdImage, FirstImage].map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              alt=""
-              className="w-full max-w-sm h-72 object-cover rounded-xl shadow-lg hover:scale-105 transition-transform duration-300"
-            />
-          ))}
+        <div className="grid grid-cols-4 gap-4 justify-items-center max-[1190px]:scale-95 max-[1000px]:grid-cols-[repeat(2,20rem)] max-[1000px]:justify-center max-[1000px]:scale-110 max-[770px]:pt-8 max-[770px]:grid-cols-[repeat(2,15rem)] max-[770px]:justify-center max-[770px]:scale-110 max-[650px]:grid-cols-1 max-[650px]:justify-center max-[650px]:py-20 max-[650px]:scale-[1.2]">
+          <img src={FirstImage} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
+          <img src={SecondImage} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
+          <img src={ThirdImage} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
+          <img src={FirstImage} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
         </div>
       </div>
 

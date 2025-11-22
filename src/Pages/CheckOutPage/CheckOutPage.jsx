@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../Components/Navbar/Navbar";
 import Footer from "../../Components/Footer/Footer";
 import MessageWidget from "../../Components/MessageWidget/MessageWidget";
-import "./CheckOutPage.css";
 import DiliveryAndPayment from "../../Components/DiliveryAndPayment/DiliveryAndPayment";
 
 function CheckOutPage() {
@@ -12,13 +11,16 @@ function CheckOutPage() {
   const navigate = useNavigate();
   const { product, quantity } = location.state || {};
   const [showModal, setShowModal] = useState(false);
-  const modalRef = useRef(null); // <-- Ref to detect outside clicks
+  const modalRef = useRef(null);
 
   if (!product) {
     return (
-      <div className="no-product">
-        <p>No product selected for checkout.</p>
-        <button className="back-btn" onClick={() => navigate("/products")}>
+      <div className="text-center mt-[100px]">
+        <p className="text-[1.2rem] text-[#555]">No product selected for checkout.</p>
+        <button 
+          className="mt-5 bg-[#eb61a2] text-white py-[10px] px-[18px] rounded-lg border-none cursor-pointer transition-all duration-300" 
+          onClick={() => navigate("/products")}
+        >
           Go Back to Products
         </button>
       </div>
@@ -60,32 +62,38 @@ function CheckOutPage() {
     <>
       <Navbar />
 
-      <div className="checkout-page">
-        <div className="checkout-container">
-          <h2 className="checkout-title">Your Bag</h2>
+      <div className="bg-[#fafafa] min-h-[70vh] flex flex-col items-center pt-[140px] px-5 pb-[60px]">
+        <div className="bg-white rounded-2xl py-10 px-[30px] w-full max-w-[800px] shadow-[0_4px_15px_rgba(0,0,0,0.08)] max-[768px]:py-[30px] max-[768px]:px-5">
+          <h2 className="text-center text-[#eb61a2] text-[2rem] mb-[30px] font-semibold">Your Bag</h2>
 
-          <div className="checkout-card">
-            <div className="checkout-item">
+          <div className="flex flex-col gap-[30px]">
+            <div className="flex items-center gap-[25px] border-b border-[#eee] pb-5 max-[768px]:flex-col max-[768px]:text-center">
               <img
                 src={`https://backend.skinme.store${product.images?.[0]?.downloadUrl}`}
                 alt={product.name}
-                className="checkout-image"
+                className="w-40 h-40 rounded-xl object-cover shadow-[0_2px_8px_rgba(0,0,0,0.1)] max-[768px]:w-[200px] max-[768px]:h-[200px]"
               />
 
-              <div className="checkout-info">
-                <h3>{product.name}</h3>
-                <p className="brand">Brand: {product.brand?.name || "Unknown"}</p>
-                <p className="price">${product.price}</p>
+              <div>
+                <h3 className="text-[1.4rem] mb-2 text-[#333]">{product.name}</h3>
+                <p className="text-[#777] text-[0.95rem] mb-[5px]">Brand: {product.brand?.name || "Unknown"}</p>
+                <p className="text-[#eb61a2] font-bold text-[1.2rem]">${product.price}</p>
                 <p>Quantity: {quantity}</p>
-                <p className="total">Total: ${totalPrice}</p>
+                <p className="mt-[10px] font-bold text-[#222]">Total: ${totalPrice}</p>
               </div>
             </div>
 
-            <div className="checkout-actions">
-              <button className="back-btn" onClick={() => navigate(-1)}>
+            <div className="flex justify-between items-center gap-[15px] mt-[10px] max-[768px]:flex-col">
+              <button 
+                className="py-3 px-5 rounded-[10px] border-none text-base cursor-pointer transition-all duration-300 bg-[#f0f0f0] text-[#333] hover:bg-[#e0e0e0]" 
+                onClick={() => navigate(-1)}
+              >
                 ← Continue Shopping
               </button>
-              <button className="pay-btn" onClick={() => setShowModal(true)}>
+              <button 
+                className="py-3 px-5 rounded-[10px] border-none text-base cursor-pointer transition-all duration-300 bg-[linear-gradient(90deg,#eb61a2,#ff7bbd)] text-white font-semibold hover:bg-[linear-gradient(90deg,#ff7bbd,#eb61a2)] hover:-translate-y-[2px]" 
+                onClick={() => setShowModal(true)}
+              >
                 Proceed to Payment
               </button>
             </div>

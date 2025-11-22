@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./BagPage.css";
 import ThirdImage from "../../assets/third_image.png";
 import Navbar from "../../Components/Navbar/Navbar";
 import Footer from "../../Components/Footer/Footer";
 import axios from "../../api/axiosConfig";
 import MessageWidget from "../../Components/MessageWidget/MessageWidget";
-
 
 function BagPage() {
   const navigate = useNavigate();
@@ -58,54 +56,84 @@ function BagPage() {
     <>
       <Navbar />
 
-      {removedFromBag && <div className="remove_bag_alert">Removed From Bag</div>}
+      {removedFromBag && (
+        <div className="fixed top-[7.5rem] right-[30px] bg-[#ff0011] text-white font-semibold px-5 py-2.5 rounded-[10px] z-[9999] shadow-[0_4px_10px_rgba(0,0,0,0.2)] animate-[fadeInOut_3s_ease]">
+          Removed From Bag
+        </div>
+      )}
 
-      <section className="products-section h-auto min-h-screen py-8 px-4 bg-gray-100">
-        <div className="products-favorite">
-          <h1 className="favorite-title">My Bag</h1>
+      <main className="pt-24 px-6 pb-16 bg-white font-[Poppins,sans-serif]">
+        <div className="max-w-7xl mx-auto mb-12">
+          <h1 className="text-4xl font-bold text-[#eb61a2]">My Bag</h1>
         </div>
 
         {loading ? (
-          <p className="loading">Loading your cart...</p>
+          <p className="text-center text-gray-500 text-lg mt-20">Loading your cart...</p>
         ) : cartItems.length === 0 ? (
-          <p className="loading">Your bag is empty.</p>
+          <p className="text-center text-gray-500 text-lg mt-20">Your bag is empty.</p>
         ) : (
-          <div className="products-grid">
+          <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {cartItems.map((item) => (
-              <div className="product-card" key={item.id}>
-                <div className="product-img-container">
+              <div
+                key={item.id}
+                className="product-card bg-white rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)]"
+              >
+                {/* Image Container */}
+                <div className="product-img-container relative overflow-hidden">
                   <img
                     onClick={handleCheckOut}
                     src={getProductImage(item)}
                     alt={item.product.name}
-                    className="product-img"
+                    className="product-img w-full h-64 object-cover rounded-t-xl cursor-pointer transition-transform duration-300 hover:scale-105"
                   />
                 </div>
 
-                <div className="product-info">
-                  <h3 className="product-name">{item.product.name}</h3>
-                  <p className="product-desc">{item.product.description}</p>
-                  <p className="product-price">${item.product.price?.toFixed(2)}</p>
-                  <p className="product-qty">Quantity: {item.quantity}</p>
+                {/* Info */}
+                <div className="product-info flex flex-col justify-between p-5 flex-grow">
+                  <div>
+                    <h3 className="product-name text-lg font-semibold text-gray-800 line-clamp-2">
+                      {item.product.name}
+                    </h3>
+                    <p className="product-price text-xl font-bold text-[#2563eb] mt-2">
+                      ${item.product.price?.toFixed(2)}
+                    </p>
+                    <p className="text-gray-600 mt-1">Quantity: {item.quantity}</p>
+                  </div>
 
-                  <div className="add_to_card_and_remove">
-                    <button className="add-to-cart" onClick={handleCheckOut}>
+                  <div className="flex flex-col gap-3 mt-5">
+                    <button
+                      onClick={handleCheckOut}
+                      className="add-to-cart w-full bg-[#d13e82] text-white font-semibold py-3 px-4 rounded-xl shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] hover:-translate-y-1"
+                    >
                       Check Out
                     </button>
-                    <p className="remove_favorite" onClick={handleRemoveBag}>
-                      remove
-                    </p>
+                    <button
+                      onClick={handleRemoveBag}
+                      className="text-[#d13e82] font-medium hover:underline"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </section>
+      </main>
 
       <Footer />
-       <MessageWidget/>
+      <MessageWidget />
 
+      <style jsx>{`
+        @keyframes fadeInOut {
+          0%, 80% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+      `}</style>
     </>
   );
 }

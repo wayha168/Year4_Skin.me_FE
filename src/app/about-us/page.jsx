@@ -1,9 +1,9 @@
-import Navbar from "../../Components/Navbar/Navbar";
-import Footer from "../../Components/Footer/Footer";
-import TeamImage from "../../assets/second_image.png";
-import MessageWidget from "../../Components/MessageWidget/MessageWidget";
+import Navbar from "../Components/Navbar/Navbar";
+import Footer from "../Components/Footer/Footer";
+// import MessageWidget from "../../Components/MessageWidget/MessageWidget";
 
 const AboutUsPage = () => {
+  const TeamImage = "/assets/second_image.png";
   return (
     <>
       <Navbar />
@@ -28,7 +28,7 @@ const AboutUsPage = () => {
         </div>
       </div>
       <Footer />
-      <MessageWidget/>
+      {/* <MessageWidget/> */}
     </>
   );
 };

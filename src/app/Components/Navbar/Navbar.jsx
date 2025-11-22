@@ -1,22 +1,38 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+// app/Components/Navbar/Navbar.jsx
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import useAuthContext from "../../Authentication/AuthContext";
 import Loading from "../Loading/Loading";
-import LoginFirst from "../LoginFirst/LoginFirst"; 
+import LoginFirst from "../LoginFirst/LoginFirst";
 
 const Navbar = ({ alwaysVisible = false }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user, logout } = useAuthContext();
 
   const [visible, setVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1030);
+  const [isMobile, setIsMobile] = useState(false);
   const navRef = useRef(null);
+
+  // Initialize isMobile after mount
+  useEffect(() => {
+    setIsMobile(window.innerWidth <= 1030);
+  }, []);
 
   // Resize handler
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 1030);
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 1030;
+      setIsMobile(mobile);
+      
+      if (!mobile) {
+        setMenuOpen(false);
+      }
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -51,11 +67,9 @@ const Navbar = ({ alwaysVisible = false }) => {
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
-  const safeNavigate = (path, state = null) => {
+  const safeNavigate = (path) => {
     setLoading(true);
-    if (state) navigate(path, { state });
-    else navigate(path);
-
+    router.push(path);
     setMenuOpen(false);
     setTimeout(() => setLoading(false), 500);
   };
@@ -86,7 +100,7 @@ const Navbar = ({ alwaysVisible = false }) => {
         >
           {/* BRAND */}
           <Link
-            to="/"
+            href="/"
             onClick={(e) => {
               e.preventDefault();
               safeNavigate("/");
@@ -111,14 +125,14 @@ const Navbar = ({ alwaysVisible = false }) => {
 
           {/* NAV MENU */}
           <div
-          className={`flex gap-6 text-[25px] font-medium max-[1034px]:items-center ${
-            menuOpen && isMobile
-              ? "flex-col absolute right-0 top-24 bg-[#eac1da] w-1/2 py-4"
-              : "hidden lg:flex"
-          }`}
+            className={`flex gap-6 text-[25px] font-medium max-[1034px]:items-center ${
+              menuOpen && isMobile
+                ? "flex-col absolute right-0 top-24 bg-[#eac1da] w-1/2 py-4"
+                : "hidden lg:flex"
+            }`}
           >
             <Link
-              to="/"
+              href="/home"
               onClick={() => safeNavigate("/")}
               className="text-black opacity-80 hover:opacity-60 text-center"
             >
@@ -126,7 +140,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             </Link>
 
             <Link
-              to="/products"
+              href="/products"
               onClick={() => safeNavigate("/products")}
               className="text-black opacity-80 hover:opacity-60"
             >
@@ -134,7 +148,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             </Link>
 
             <Link
-              to="/about-us"
+              href="/about-us"
               onClick={() => safeNavigate("/about-us")}
               className="text-black opacity-80 hover:opacity-60"
             >
@@ -142,12 +156,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             </Link>
           </div>
 
-
-
-
-
           {/* AUTH + ICONS */}
-         {/* AUTH + ICONS */}
           <div
             className={`flex items-center gap-4 max-[1024px]:w-1/2 max-[1024px]:-mt-[3rem] max-[1024px]:pb-[1rem] max-[1024px]:rounded-bl-[1rem] ${
               menuOpen && isMobile
@@ -157,7 +166,7 @@ const Navbar = ({ alwaysVisible = false }) => {
           >
             {/* HEART */}
             <Link
-              to="/favorites"
+              href="/favorites"
               onClick={handleFavoriteClick}
               className="text-5xl text-gray-700 hover:text-blue-500"
             >
@@ -166,7 +175,7 @@ const Navbar = ({ alwaysVisible = false }) => {
 
             {/* BAG */}
             <Link
-              to="/bag_page"
+              href="/bag_page"
               onClick={handleBagClick}
               className="text-5xl text-gray-700 hover:text-blue-500"
             >
@@ -177,7 +186,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             {user ? (
               <>
                 <Link
-                  to="/profile"
+                  href="/profile"
                   onClick={() => safeNavigate("/profile")}
                   className="text-5xl text-gray-700 hover:text-blue-500"
                 >
@@ -196,7 +205,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                 {/* LOGIN (conditionally hidden on mobile) */}
                 {(!isMobile || (isMobile && menuOpen)) && (
                   <Link
-                    to="/login"
+                    href="/login"
                     onClick={() => safeNavigate("/login")}
                     className="px-7 py-3 text-[#ed3b8e] text-[1.5rem] border-2 border-[#ed3b8e] rounded-lg font-bold hover:bg-[#ed3b8e] hover:text-white transition max-[1024px]:absolute max-[1024px]:-top-[16.5rem] max-[1024px]:right-[6rem]"
                   >
@@ -206,7 +215,7 @@ const Navbar = ({ alwaysVisible = false }) => {
 
                 {/* SIGNUP */}
                 <Link
-                  to="/signup"
+                  href="/signup"
                   onClick={() => safeNavigate("/signup")}
                   className="px-7 py-[0.9rem] text-[1.5rem] border-none bg-[#eb61a2] text-white font-bold rounded-lg hover:bg-[#d0578f]"
                 >
@@ -214,7 +223,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                 </Link>
               </>
             )}
-            </div>  
+          </div>
         </div>
       </nav>
 

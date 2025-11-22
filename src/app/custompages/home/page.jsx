@@ -1,12 +1,13 @@
+// src/app/home/page.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Navbar from "../../Components/Navbar/Navbar.jsx";
-import Footer from "../../Components/Footer/Footer.jsx";
-import axios from "../../api/axiosConfig";
-import useUserActions from "../../Components/Hooks/userUserActions.js";
-import useAuthContext from "../../Authentication/AuthContext.jsx";
-import LoginFirst from "../../Components/LoginFirst/LoginFirst.js";
-import MessageWidget from "../../Components/MessageWidget/MessageWidget.jsx";
+import Navbar from "../Components/Navbar/Navbar.jsx";
+import Footer from "../Components/Footer/Footer.jsx";
+import axios from "../api/axiosConfig.js";
+import useUserActions from "../Components/Hooks/userUserActions.js";
+import {useAuthContext} from "../Authentication/AuthContext.jsx";
+import LoginFirst from "../Components/LoginFirst/LoginFirst.js";
+import MessageWidget from "../Components/MessageWidget/MessageWidget.jsx";
 
 import MainImage from "../../assets/product_homepage.png";
 import FirstImage from "../../assets/first_image.png";

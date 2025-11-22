@@ -1,16 +1,15 @@
-import React from "react";
 
-import Aba from "../../assets/ABA.png";
-import Acelida from "../../assets/acelida.png";
-import Visa from "../../assets/Visa.png";
-import Paypal from "../../assets/paypal.png";
-import TIKTOK from "../../assets/tiktok_icon.png";
-import TWITER from "../../assets/twitter_icon.png";
-import FACEBOOK from "../../assets/facebook_icon_social.png";
-import PINTEREST from "../../assets/pinterest_icon.png";
-import INSTARGRAM from "../../assets/instargram_icon.png";
 
 const Footer = () => {
+  const Aba = "/assets/ABA.png";
+  const Acelida = "/assets/acelida.png";
+  const Visa = "/assets/Visa.png";
+  const Paypal = "/assets/paypal.png";
+  const TIKTOK = "/assets/tiktok_icon.png";
+  const TWITER = "/assets/twitter_icon.png";
+  const FACEBOOK = "/assets/facebook_icon_social.png";
+  const PINTEREST = "/assets/pinterest_icon.png";
+  const INSTARGRAM = "/assets/instargram_icon.png";
   return (
     <div className="bg-[#0a3d3f] text-white py-12">
       {/* MAIN ROW */}

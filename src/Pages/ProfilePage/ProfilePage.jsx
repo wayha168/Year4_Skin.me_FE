@@ -2,15 +2,13 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../../Components/Navbar/Navbar";
 import Footer from "../../Components/Footer/Footer";
 import useAuthContext from "../../Authentication/AuthContext";
-import { FaUser, FaEnvelope, FaCalendarAlt } from "react-icons/fa";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaCalendarAlt, FaUserCircle } from "react-icons/fa";
 import Loading from "../../Components/Loading/Loading";
-import axios from "../../api/axiosConfig"; // your axios instance
-import "./ProfilePage.css";
+import axios from "../../api/axiosConfig";
 import MessageWidget from "../../Components/MessageWidget/MessageWidget";
 
 const ProfilePage = () => {
-  const { user: authUser } = useAuthContext(); // user from context (usually has id)
+  const { user: authUser } = useAuthContext();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -25,7 +23,7 @@ const ProfilePage = () => {
       try {
         setLoading(true);
         const response = await axios.get(`/users/${authUser.id}/user`);
-        setUser(response.data.data); // assuming ApiResponse format: { message, data }
+        setUser(response.data.data);
       } catch (err) {
         console.error(err);
         setError("Failed to load user data.");
@@ -37,15 +35,16 @@ const ProfilePage = () => {
     fetchUser();
   }, [authUser]);
 
-  if (!authUser) {
+  if (!authUser)
     return (
       <>
         <Navbar alwaysVisible={true} />
-        <div className="profile-error">User not logged in.</div>
+        <div className="text-center py-10 text-red-600 font-semibold">
+          User not logged in.
+        </div>
         <Footer />
       </>
     );
-  }
 
   if (loading) return <Loading />;
 
@@ -53,7 +52,7 @@ const ProfilePage = () => {
     return (
       <>
         <Navbar alwaysVisible={true} />
-        <div className="profile-error">{error}</div>
+        <div className="text-center py-10 text-red-600 font-semibold">{error}</div>
         <Footer />
       </>
     );
@@ -61,40 +60,62 @@ const ProfilePage = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="profile-wrapper h-auto min-h-screen py-8 px-4 bg-gray-100">
-        <div className="profile-card">
-          <div className="profile-avatar">
+
+      {/* Wrapper */}
+      <main className="flex justify-center items-center min-h-screen bg-gray-100 p-5">
+
+        {/* Card */}
+        <div className="bg-white rounded-[15px] shadow-lg p-10 max-w-[400px] w-full text-center">
+
+          {/* Avatar */}
+          <div className="flex justify-center mb-5">
             {user.avatar ? (
-              <img src={user.avatar} alt={`${user.firstName} ${user.lastName}`} />
+              <img
+                src={user.avatar}
+                alt="avatar"
+                className="w-[150px] h-[150px] rounded-full object-cover bg-pink-100"
+              />
             ) : (
-              <div className="cute-avatar">
+              <div className="w-[150px] h-[150px] rounded-full bg-pink-100 flex items-center justify-center">
                 <FaUserCircle size={150} color="#eb61a2" />
               </div>
             )}
           </div>
 
-          <div className="profile-info">
-            <h2>
-              <FaUser className="icon" /> {user.firstName} {user.lastName}
+          {/* Info */}
+          <div className="space-y-3">
+            <h2 className="text-[1.6rem] font-semibold flex justify-center items-center gap-2">
+              <FaUser className="text-green-600" />
+              {user.firstName} {user.lastName}
             </h2>
-            <p>
-              <FaEnvelope className="icon" /> {user.email}
+
+            <p className="text-gray-600 flex justify-center items-center gap-2">
+              <FaEnvelope className="text-green-600" /> {user.email}
             </p>
-            <p>
-              <FaCalendarAlt className="icon" /> Joined:{" "}
-              {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
+
+            <p className="text-gray-600 flex justify-center items-center gap-2">
+              <FaCalendarAlt className="text-green-600" /> Joined:{" "}
+              {user.createdAt
+                ? new Date(user.createdAt).toLocaleDateString()
+                : "-"}
             </p>
           </div>
 
-          <div className="profile-actions">
-            <button className="edit-btn">Edit Profile</button>
-            <button className="change-password-btn">Change Password</button>
+          {/* Buttons */}
+          <div className="mt-6 flex justify-around">
+            <button className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+              Edit Profile
+            </button>
+
+            <button className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+              Change Password
+            </button>
           </div>
         </div>
       </main>
+
       <Footer />
-      <MessageWidget/>
-      
+      <MessageWidget />
     </>
   );
 };

@@ -186,7 +186,7 @@ const Navbar = ({ alwaysVisible = false }) => {
 
                 <button
                   onClick={logout}
-                  className="px-8 py-5 text-[1.7rem] bg-[#eb61a2] text-white font-semibold text-lg rounded-lg hover:bg-[#d0578f]"
+                  className="px-7 py-3 text-[1.7rem] bg-[#eb61a2] text-white font-semibold rounded-lg hover:bg-[#d0578f]"
                 >
                   Logout
                 </button>
@@ -198,7 +198,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                   <Link
                     to="/login"
                     onClick={() => safeNavigate("/login")}
-                    className="px-7 py-3 text-[#ed3b8e] text-[1.5rem] border-2 border-[#ed3b8e] rounded-lg font-semibold hover:bg-[#ed3b8e] hover:text-white transition max-[1024px]:absolute max-[1024px]:-top-[16.5rem] max-[1024px]:right-[6rem]"
+                    className="px-7 py-3 text-[#ed3b8e] text-[1.5rem] border-2 border-[#ed3b8e] rounded-lg font-bold hover:bg-[#ed3b8e] hover:text-white transition max-[1024px]:absolute max-[1024px]:-top-[16.5rem] max-[1024px]:right-[6rem]"
                   >
                     Login
                   </Link>

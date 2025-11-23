@@ -155,7 +155,7 @@ const Products = () => {
                       width={400}
                       height={400}
                       className="product-img w-full h-64 object-cover rounded-t-xl cursor-pointer transition-transform duration-300 hover:scale-105"
-                      onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                      onClick={() => router.push(`/product_detials?productId=${p.id}`)}
                     />
                     <button
                       onClick={() => handleFavorite(p.id)}

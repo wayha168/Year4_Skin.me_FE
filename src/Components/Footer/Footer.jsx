@@ -1,5 +1,4 @@
-
-
+// src/Components/Footer/Footer.jsx
 const Footer = () => {
   const Aba = "/assets/ABA.png";
   const Acelida = "/assets/acelida.png";

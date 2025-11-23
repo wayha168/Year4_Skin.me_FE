@@ -1,11 +1,14 @@
+"use client"
+
 import React, { useEffect, useState } from "react";
-import Sidebar from "../Components/Sidebar/Sidebar";
+import Sidebar from "../../Components/Sidebar/Sidebar";
 import Cookies from "js-cookie";
-import axios from "../api/axiosConfig";
+import axios from "../../api/axiosConfig";
 import { DollarSign, Package, TrendingUp, ShoppingCart } from "lucide-react";
-import SummaryCard from "../Components/SummaryCard/SummaryCard";
-import { useNavigate } from "react-router-dom";
-import HeaderWithRole from "../Components/Hooks/HeaderWithRole";
+import SummaryCard from "../../Components/SummaryCard/SummaryCard";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import HeaderWithRole from "../../Components/Hooks/HeaderWithRole";
 
 const Dashboard = () => {
   const [salesRecords, setSalesRecords] = useState([]);
@@ -14,7 +17,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,7 +69,7 @@ const Dashboard = () => {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div onClick={() => navigate("/sales")} className="cursor-pointer">
+          <div onClick={() => router.push("/sales")} className="cursor-pointer">
             <SummaryCard
               title="Total Revenue"
               value={`$${totalRevenue.toFixed(2)}`}
@@ -74,7 +77,6 @@ const Dashboard = () => {
               bgColor="bg-green-50"
             />
           </div>
-
           <SummaryCard title="Products Sold" value={totalQuantity} icon={Package} bgColor="bg-blue-50" />
 
           <SummaryCard

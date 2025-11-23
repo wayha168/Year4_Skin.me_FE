@@ -1,6 +1,7 @@
+"use client";
 import React, { useEffect, useState } from "react";
-import axios from "../api/axiosConfig";
-import Sidebar from "../Components/Sidebar/Sidebar";
+import axios from "../../api/axiosConfig";
+import Sidebar from "../../Components/Sidebar/Sidebar";
 import { FaPlus, FaEdit, FaTrash, FaImage, FaSync } from "react-icons/fa";
 import Cookies from "js-cookie";
 
@@ -345,7 +346,7 @@ const ProductCrud = () => {
               className="border p-2 rounded-lg resize-none"
             />
             <textarea
-              name="description"
+              name="howToUse"
               value={form.howToUse}
               onChange={handleChange}
               placeholder="howToUse"

@@ -1,31 +1,34 @@
-// src/app/Authentication/AuthContext.jsx   (or .tsx)
-
-"use client";   // THIS LINE IS REQUIRED — ADD IT AT THE VERY TOP
+"use client";
 
 import Cookies from "js-cookie";
 import { createContext, useEffect, useState, useContext } from "react";
 import axiosAuth from "../api/axiosConfig";
-import { useRouter } from "next/navigation";   // ← changed from react-router-dom
+import { useRouter } from "next/navigation";
 
 const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
-  const router = useRouter();   // ← now from next/navigation
+  const router = useRouter();
 
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    const savedToken = Cookies.get("token");
-    return savedUser && savedToken ? { ...JSON.parse(savedUser), token: savedToken } : null;
+    if (typeof window !== "undefined") {
+      const savedUser = localStorage.getItem("user");
+      const savedToken = Cookies.get("token");
+      return savedUser && savedToken ? { ...JSON.parse(savedUser), token: savedToken } : null;
+    }
+    return null;
   });
 
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const token = Cookies.get("token");
-    if (token && !user) {
-      fetchUser(token);
+    if (typeof window !== "undefined") {
+      const token = Cookies.get("token");
+      if (token && !user) {
+        fetchUser(token);
+      }
     }
-  }, []);
+  }, []); // ✅ Empty dependency array is correct
 
   const fetchUser = async (token) => {
     try {
@@ -34,7 +37,6 @@ export const AuthProvider = ({ children }) => {
         const userData = response.data.data;
         setUser({ ...userData, token });
         localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("token", token);
       }
     } catch (err) {
       console.error("Failed to fetch user:", err);
@@ -50,9 +52,10 @@ export const AuthProvider = ({ children }) => {
       if (response.status === 200 && response.data?.data?.jwtToken) {
         const token = response.data.data.jwtToken;
         const userData = response.data.data;
+        
         Cookies.set("token", token, { expires: 7 });
         localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("token", token);
+        
         setUser({ ...userData, token });
         return userData;
       } else {
@@ -106,20 +109,21 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       const token = Cookies.get("token");
+      
       Cookies.remove("token");
       localStorage.removeItem("user");
-      localStorage.removeItem("token");
       setUser(null);
-      router.push("/login");   // ← now works
+      
+      router.push("/login");
 
       if (token) {
         await axiosAuth.post("/auth/logout");
       }
     } catch (err) {
       console.error("Logout error:", err);
-      setUser(null);
+      Cookies.remove("token");
       localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      setUser(null);
     }
   };
 
@@ -136,6 +140,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// ✅ This export is CORRECT - it's a custom hook
 export default function useAuthContext() {
   return useContext(AuthContext);
 }

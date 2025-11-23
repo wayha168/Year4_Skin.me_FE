@@ -4,16 +4,17 @@
 
 import React, { useEffect } from "react";
 import Image from "next/image";
-import {  useSearchParams } from "next/navigation";
+import {useRouter,  useSearchParams } from "next/navigation";
+import { useState } from "react";
 
-import Navbar from "../Components/Navbar/Navbar.jsx";
-import Footer from "../Components/Footer/Footer.jsx";
-// import axios from "../api/axiosConfig";
-// import useUserActions from "../Components/Hooks/userUserActions";
-// import useAuthContext from "../Authentication/AuthContext";
-// import LoginFirst from "../Components/LoginFirst/LoginFirst";
-
+import Navbar from "../../Components/Navbar/Navbar.jsx";
+import Footer from "../../Components/Footer/Footer.jsx";
+import axios from "axios";
+import useUserActions from "../../Components/Hooks/userUserActions.js";
+import useAuthContext from "../../Authentication/AuthContext.jsx";
+import LoginFirst from "../../Components/LoginFirst/LoginFirst.js";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
+
 
 const MainImage = "/assets/product_homepage.png";
 const FirstImage = "/assets/first_image.png";
@@ -21,15 +22,15 @@ const SecondImage = "/assets/second_image.png";
 const ThirdImage = "/assets/third_image.png";
 
 const HomePage = () => {
-  // const router = useRouter();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
-  // const { user } = useAuthContext();
-  // // const { addToCart, addToFavorite } = useUserActions();
-  // const [products, setProducts] = useState([]);
-  // const [loading, ing] = useState(true);
+  const { user } = useAuthContext();
+  const { addToCart, addToFavorite } = useUserActions();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // const loginFirst = new LoginFirst(user, router);
+  const loginFirst = new LoginFirst(user, router);
 
   const scrollToProducts = () => {
     const section = document.getElementById("product");
@@ -46,41 +47,41 @@ const HomePage = () => {
     }
   }, [searchParams]);
 
-  // useEffect(() => {
-  //   const fetchProducts = async () => {
-  //     try {
-  //       const res = await axios.get("/products/all", { withCredentials: true });
-  //       setProducts(res?.data?.data || []);
-  //     } catch (err) {
-  //       console.error("Error fetching products:", err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchProducts();
-  // }, []);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get("/products/all", { withCredentials: true });
+        setProducts(res?.data?.data || []);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
-  // const handleFavoriteClick = async (productId) => {
-  //   if (!user) {
-  //     const message = loginFirst.messages.loginRequiredFavorite;
-  //     loginFirst.safeNavigate("/login", {
-  //       search: `?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`,
-  //     });
-  //     return;
-  //   }
-  //   await addToFavorite(productId);
-  // };
+  const handleFavoriteClick = async (productId) => {
+    if (!user) {
+      const message = loginFirst.messages.loginRequiredFavorite;
+      loginFirst.safeNavigate("/login", {
+        search: `?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`,
+      });
+      return;
+    }
+    await addToFavorite(productId);
+  };
 
-  // const handleAddToCartClick = async (productId) => {
-  //   if (!user) {
-  //     const message = loginFirst.messages.loginRequiredCart;
-  //     loginFirst.safeNavigate("/login", {
-  //       search: `?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`,
-  //     });
-  //     return;
-  //   }
-  //   await addToCart(productId, 1);
-  // };
+  const handleAddToCartClick = async (productId) => {
+    if (!user) {
+      const message = loginFirst.messages.loginRequiredCart;
+      loginFirst.safeNavigate("/login", {
+        search: `?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`,
+      });
+      return;
+    }
+    await addToCart(productId, 1);
+  };
 
   return (
     <>
@@ -113,7 +114,7 @@ const HomePage = () => {
 
       {/* ... (rest of your sections - unchanged) ... */}
 
-      {/* PRODUCTS SECTION 
+      {/* PRODUCTS SECTION  */}
       <section id="product" className="py-20 px-8 bg-white text-center max-[1180px]:mt-[-3rem]">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-12 px-5 uppercase">

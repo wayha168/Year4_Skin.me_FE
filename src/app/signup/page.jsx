@@ -1,16 +1,21 @@
-import React, { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import useAuthContext from "./AuthContext";
-import Loading from "../Components/Loading/Loading";
-import MainImage from "../assets/product_homepage.png";
+// src/signup/page.jsx
+"use client";
+import Link from "next/link";
+import useAuthContext from "../../Authentication/AuthContext";
+import Loading from "../../Components/Loading/Loading";
+import { useState } from "react";
+import {useRouter, useSearchParams } from "next/navigation";
 
 const Signup = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+
+  const MainImage = "/assets/product_homepage.png"
+
+  const route = useRouter();
+  const searchParam = useSearchParams();
   const { signup, error } = useAuthContext();
 
-  const popupMessage = location.state?.popupMessage || "";
-  const redirectTo = location.state?.redirectTo || "";
+  const popupMessage = searchParam.state?.popupMessage || "";
+  const redirectTo = searchParam.state?.redirectTo || "";
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -65,7 +70,7 @@ const Signup = () => {
         const isAdmin =
           roles.includes("ROLE_ADMIN") || roles.includes("ADMIN");
 
-        navigate(redirectTo || (isAdmin ? "/dashboard" : "/"));
+        route.push(redirectTo || (isAdmin ? "/dashboard" : "/"));
       }
     } catch (err) {
       console.error(err);
@@ -196,7 +201,7 @@ const Signup = () => {
 
         <p className="text-center text-gray-700 font-semibold mt-4">
           Already have an account?{" "}
-          <Link to="/login" className="text-pink-500 font-bold underline">
+          <Link href="/login" className="text-pink-500 font-bold underline">
             Login
           </Link>
         </p>

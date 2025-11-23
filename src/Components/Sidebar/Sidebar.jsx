@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   FaChartLine,
   FaBoxOpen,
@@ -14,7 +15,7 @@ import { SiHomepage } from "react-icons/si";
 import useAuthContext from "../../Authentication/AuthContext"; // ← Import
 
 const Sidebar = () => {
-  const { pathname } = useLocation();
+  const pathname = usePathname();
   const { logout } = useAuthContext(); // ← Get logout
 
   const linkClass = (path) =>
@@ -33,27 +34,27 @@ const Sidebar = () => {
       <h2 className="text-2xl font-bold text-white mb-5 tracking-wider text-center">Skin.Me</h2>
 
       <nav className="flex flex-col gap-4 ">
-        <Link to="/dashboard" className={linkClass("/dashboard")}>
+        <Link href="/dashboard" className={linkClass("/dashboard")}>
           <FaChartLine /> <span>Dashboard</span>
         </Link>
 
-        <Link to="/category-crud" className={linkClass("/category-crud")}>
+        <Link href="/category-crud" className={linkClass("/category-crud")}>
           <FaTags /> <span>Categories</span>
         </Link>
 
-        <Link to="/product-crud" className={linkClass("/product-crud")}>
+        <Link href="/product-crud" className={linkClass("/product-crud")}>
           <FaBoxOpen /> <span>Products</span>
         </Link>
 
-        <Link to="/order-control" className={linkClass("/order-control")}>
+        <Link href="/order-control" className={linkClass("/order-control")}>
           <FaClipboardList /> <span>Orders</span>
         </Link>
 
-        <Link to="/user-control" className={linkClass("/user-control")}>
+        <Link href="/user-control" className={linkClass("/user-control")}>
           <FaUsers /> <span>Users</span>
         </Link>
 
-        <Link to="/" className={linkClass("/homepage")}>
+        <Link href="/" className={linkClass("/")}>
           <SiHomepage /> <span>Homepage</span>
         </Link>
       </nav>

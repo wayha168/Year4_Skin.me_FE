@@ -1,11 +1,12 @@
+"use client";
 import React, { useEffect, useState } from "react";
-import Sidebar from "../Components/Sidebar/Sidebar";
-import axios from "../api/axiosConfig";
+import Sidebar from "../../Components/Sidebar/Sidebar";
+import axios from "../../api/axiosConfig";
 import Cookies from "js-cookie";
 import { FaUserCheck, FaUserTimes, FaSearch, FaSync, FaPlus } from "react-icons/fa";
-import HeaderWithRole from "../Components/Hooks/HeaderWithRole";
+import HeaderWithRole from "../../Components/Hooks/HeaderWithRole";
 
-export const UserControl = () => {
+const UserControl = () => {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -286,3 +287,5 @@ export const UserControl = () => {
     </div>
   );
 };
+
+export default UserControl;

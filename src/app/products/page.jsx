@@ -7,15 +7,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import axios from "axios";
-import Navbar from "../Components/Navbar/Navbar";
-import Footer from "../Components/Footer/Footer";
+import axios from "../../api/axiosConfig";
+import Navbar from "../../Components/Navbar/Navbar";
+import Footer from "../../Components/Footer/Footer";
 
 import { FaCartPlus, FaHeart, FaChevronRight, FaChevronLeft } from "react-icons/fa";
-import useAuthContext from "../Authentication/AuthContext";
-import Loading from "../Components/Loading/Loading";
-import useUserActions from "../Components/Hooks/userUserActions";
-import LoginFirst from "../Components/LoginFirst/LoginFirst";
+import useAuthContext from "../../Authentication/AuthContext";
+import Loading from "../../Components/Loading/Loading";
+import useUserActions from "../../Components/Hooks/userUserActions";
+import LoginFirst from "../../Components/LoginFirst/LoginFirst";
+
+
 
 const ThirdImage = "/assets/third_image.png";
 
@@ -113,7 +115,7 @@ const Products = () => {
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
-                <option key={cat?.id} value={cat?.name}>
+                <option key={cat?.id} value={cat?.id}>
                   {cat?.name || "Unnamed Category"}
                 </option>
               ))}

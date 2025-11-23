@@ -1,6 +1,7 @@
+"use client";
 import React, { useEffect, useState } from "react";
-import Sidebar from "../Components/Sidebar/Sidebar";
-import axios from "../api/axiosConfig";
+import Sidebar from "../../Components/Sidebar/Sidebar";
+import axios from "../../api/axiosConfig";
 import { FaPlus, FaEdit, FaTrash, FaSync, FaUser } from "react-icons/fa";
 import Cookies from "js-cookie";
 

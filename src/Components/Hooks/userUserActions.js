@@ -1,6 +1,6 @@
 // src/app/Components/Hooks/userUserActions.js   (or .jsx / .ts)
 
-"use client";   // THIS LINE FIXES THE ERROR — ADD IT AT THE VERY TOP
+"use client"; // THIS LINE FIXES THE ERROR — ADD IT AT THE VERY TOP
 
 import { useState } from "react";
 import axios from "../../api/axiosConfig";
@@ -53,7 +53,11 @@ const useUserActions = () => {
       return true;
     } catch (err) {
       console.error("Error adding to favorite:", err);
-      setMessage(err.response?.data?.message || err.response?.data?.error || "Failed to add to favorite");
+      setMessage(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Failed to add to favorite"
+      );
       return false;
     } finally {
       setLoading(false);
@@ -77,7 +81,11 @@ const useUserActions = () => {
       return true;
     } catch (err) {
       console.error("Error removing favorite:", err);
-      setMessage(err.response?.data?.message || err.response?.data?.error || "Failed to remove favorite");
+      setMessage(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Failed to remove favorite"
+      );
       return false;
     } finally {
       setLoading(false);

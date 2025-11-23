@@ -27,13 +27,14 @@ export default function Page() {
       const { addToCart, addToFavorite } = useUserActions();
       const [products, setProducts] = useState([]);
       const [loading, setLoading] = useState(true);
+      const [isClient, setIsClient] = useState(false);
     
       const loginFirst = new LoginFirst(user, router.push);
     
       const scrollToProducts = () => {
         const section = document.getElementById("product");
         if (section) {
-          const navbarHeight = document.querySelector(".navbar-wrapper")?.offsetHeight || 0;
+          const navbarHeight = document.querySelector("nav")?.offsetHeight || 0;
           const y = section.getBoundingClientRect().top + window.scrollY - navbarHeight;
           window.scrollTo({ top: y, behavior: "smooth" });
         }
@@ -45,6 +46,10 @@ export default function Page() {
         }
       }, [searchParams]);
     
+      useEffect(() => {
+        setIsClient(true);
+      }, []);
+
       useEffect(() => {
         const fetchProducts = async () => {
           try {
@@ -76,8 +81,9 @@ export default function Page() {
         }
         await addToCart(productId, 1);
       };
-  return <div>
-          <Navbar alwaysVisible={true} />
+  return (
+    <>
+          {isClient && <Navbar alwaysVisible={true} />}
     
           {/* HERO SECTION */}
           <div className="flex justify-center items-center w-full h-screen bg-gradient-to-b from-[#fddcff] to-[#af6793] mt-16 overflow-hidden relative max-[992px]:flex-col max-[992px]:h-auto max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-12 max-[760px]:flex-col max-[760px]:gap-20">
@@ -104,7 +110,37 @@ export default function Page() {
             <div className="absolute bg-[#ab8fff] rounded-[1000px] z-0 right-[-25rem] top-80 w-[30rem] h-[30rem] max-[992px]:hidden max-[760px]:right-[-25rem]"></div>
           </div>
     
-          {/* ... (rest of your sections - unchanged) ... */}
+      {/* OVERVIEW SECTION */}
+      <div className="flex flex-row items-center justify-center relative max-[1180px]:mt-16 max-[1180px]:flex-col max-[660px]:flex-col max-[660px]:my-0 max-[660px]:mx-auto">
+        <div className="flex flex-col justify-center items-center w-[30rem] mx-0 mr-32 ml-4 z-[5] max-[660px]:w-full max-[660px]:mx-0 max-[660px]:mb-8">
+          <div className="mb-5 text-[#eb61a1] text-[35px] font-bold font-[Arial,Helvetica,sans-serif] max-[660px]:text-center">
+            Let's Have A Look
+          </div>
+          <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] max-[660px]:text-center max-[660px]:px-8">
+            This is the overview about our products that you can spend a few minutes to see how they look.
+          </div>
+          <div className="flex flex-row gap-4 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-1">
+            <Image
+              src={FirstImage}
+              alt="Overview 1"
+              width={272}
+              height={272}
+              className="w-[17rem] h-[17rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0 max-[660px]:mr-[-3rem] "
+            />
+            <Image
+              src={SecondImage}
+              alt="Overview 2"
+              width={272}
+              height={272}
+              className="rounded-[10px] w-[17rem] h-[17rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
+            />
+          </div>
+        </div>
+        <div className="mt-28 w-[30rem] h-[30rem] max-[1180px]:mb-40 max-[660px]:mt-4 max-[660px]:mb-0 max-[1180px]:mt-[6.3rem] ">
+          <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" />
+        </div>
+        <div className="absolute bg-[#ab8fff] rounded-[1000px] z-[0] left-[-24rem] top-[63rem] w-[30rem] h-[30rem] max-[992px]:hidden max-[1180px]:-ml-[160px] max-[760px]:top-[100rem]"></div>
+      </div>
     
           {/* PRODUCTS SECTION  */}
           <section id="product" className="py-20 px-8 bg-white text-center max-[1180px]:mt-[-3rem]">
@@ -131,11 +167,10 @@ export default function Page() {
                       className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-4 flex flex-col justify-between transition-[transform_0.3s_ease,box-shadow_0.3s_ease] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                     >
                       <div className="relative">
-                        <Image
+                         <Image
                           src={
                             p?.images?.[0]?.downloadUrl
-                              ? `https://backend.skinme.store${p.images[0].downloadUrl}`
-                              : ThirdImage
+                              ? `https://backend.skinme.store${p.images[0].downloadUrl}` : ThirdImage
                           }
                           alt={p.name}
                           width={300}
@@ -185,5 +220,6 @@ export default function Page() {
           </div>
     
           <Footer />
-  </div>
+  </>
+  );
 }

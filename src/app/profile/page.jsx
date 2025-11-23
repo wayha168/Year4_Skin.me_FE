@@ -1,10 +1,12 @@
+"use client";
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import Navbar from "../../Components/Navbar/Navbar";
 import Footer from "../../Components/Footer/Footer";
 import useAuthContext from "../../Authentication/AuthContext";
 import { FaUser, FaEnvelope, FaCalendarAlt, FaUserCircle } from "react-icons/fa";
 import Loading from "../../Components/Loading/Loading";
-import axios from "../../api/axiosConfig";
+import axiosAuth from "../../api/axiosConfig";
 import MessageWidget from "../../Components/MessageWidget/MessageWidget";
 
 const ProfilePage = () => {
@@ -22,7 +24,7 @@ const ProfilePage = () => {
     const fetchUser = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/users/${authUser.id}/user`);
+        const response = await axiosAuth.get(`/users/${authUser.id}/user`);
         setUser(response.data.data);
       } catch (err) {
         console.error(err);
@@ -37,13 +39,7 @@ const ProfilePage = () => {
 
   if (!authUser)
     return (
-      <>
-        <Navbar alwaysVisible={true} />
-        <div className="text-center py-10 text-red-600 font-semibold">
-          User not logged in.
-        </div>
-        <Footer />
-      </>
+      <Loading />
     );
 
   if (loading) return <Loading />;
@@ -57,6 +53,16 @@ const ProfilePage = () => {
       </>
     );
 
+  // Add a check for user data before rendering the main content
+  if (!user) {
+    return (
+      <>
+        <Navbar alwaysVisible={true} />
+        <div className="text-center py-10 text-gray-500">Loading user profile...</div>
+        <Footer />
+      </>
+    );
+  }
   return (
     <>
       <Navbar alwaysVisible={true} />
@@ -70,10 +76,12 @@ const ProfilePage = () => {
           {/* Avatar */}
           <div className="flex justify-center mb-5">
             {user.avatar ? (
-              <img
+              <Image
                 src={user.avatar}
                 alt="avatar"
-                className="w-[150px] h-[150px] rounded-full object-cover bg-pink-100"
+                width={150}
+                height={150}
+                className="rounded-full object-cover bg-pink-100"
               />
             ) : (
               <div className="w-[150px] h-[150px] rounded-full bg-pink-100 flex items-center justify-center">

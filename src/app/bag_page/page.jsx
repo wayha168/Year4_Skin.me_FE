@@ -1,16 +1,19 @@
+"use client";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import ThirdImage from "../../assets/third_image.png";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Navbar from "../../Components/Navbar/Navbar";
 import Footer from "../../Components/Footer/Footer";
 import axios from "../../api/axiosConfig";
 import MessageWidget from "../../Components/MessageWidget/MessageWidget";
 
+const ThirdImage = "/assets/third_image.png";
+
 function BagPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [cartItems, setCartItems] = useState([]);
-  const [removedFromBag, setRemovedFromBag] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState("");
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -31,20 +34,17 @@ function BagPage() {
     fetchCart();
   }, []);
 
-  const handleRemoveBag = async (e) => {
-    e.preventDefault();
+  const handleRemoveItem = async (itemId) => {
     try {
-      await axios.delete("/carts/my-cart/clear", { withCredentials: true });
-      setCartItems([]);
-      setRemovedFromBag(true);
-      setTimeout(() => setRemovedFromBag(false), 2000);
+      await axios.delete(`/cartItems/item/${itemId}/delete`, { withCredentials: true });
+      setCartItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
+      setNotification("Item removed from bag");
+      setTimeout(() => setNotification(""), 2000);
     } catch (err) {
-      console.error("Error clearing cart:", err);
+      console.error("Error removing item from cart:", err);
+      setNotification("Failed to remove item");
+      setTimeout(() => setNotification(""), 3000);
     }
-  };
-
-  const handleCheckOut = () => {
-    navigate("/check_out");
   };
 
   const getProductImage = (item) => {
@@ -56,9 +56,9 @@ function BagPage() {
     <>
       <Navbar />
 
-      {removedFromBag && (
+      {notification && (
         <div className="fixed top-[7.5rem] right-[30px] bg-[#ff0011] text-white font-semibold px-5 py-2.5 rounded-[10px] z-[9999] shadow-[0_4px_10px_rgba(0,0,0,0.2)] animate-[fadeInOut_3s_ease]">
-          Removed From Bag
+          {notification}
         </div>
       )}
 
@@ -80,10 +80,12 @@ function BagPage() {
               >
                 {/* Image Container */}
                 <div className="product-img-container relative overflow-hidden">
-                  <img
-                    onClick={handleCheckOut}
+                  <Image
+                    onClick={() => router.push(`/product_details?productId=${item.product.id}`)}
                     src={getProductImage(item)}
                     alt={item.product.name}
+                    width={400}
+                    height={400}
                     className="product-img w-full h-64 object-cover rounded-t-xl cursor-pointer transition-transform duration-300 hover:scale-105"
                   />
                 </div>
@@ -102,13 +104,13 @@ function BagPage() {
 
                   <div className="flex flex-col gap-3 mt-5">
                     <button
-                      onClick={handleCheckOut}
+                      onClick={() => router.push("/check_out")}
                       className="add-to-cart w-full bg-[#d13e82] text-white font-semibold py-3 px-4 rounded-xl shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] hover:-translate-y-1"
                     >
                       Check Out
                     </button>
                     <button
-                      onClick={handleRemoveBag}
+                      onClick={() => handleRemoveItem(item.id)}
                       className="text-[#d13e82] font-medium hover:underline"
                     >
                       Remove

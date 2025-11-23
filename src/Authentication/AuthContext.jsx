@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }) => {
         lastName: data.lastName,
         email: data.email,
         password: data.password,
-        confirmPassword: data.password,
+        confirmPassword: data.confirmPassword,
       });
 
       if (response.status === 200 || response.status === 201) {

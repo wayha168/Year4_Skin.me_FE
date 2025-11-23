@@ -1,12 +1,15 @@
 // FavoritePage.jsx
+"use client";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import axios from "../../api/axiosConfig";
 import Navbar from "../../Components/Navbar/Navbar";
 import Footer from "../../Components/Footer/Footer";
 import useAuthContext from "../../Authentication/AuthContext";
-import ThirdImage from "../../assets/third_image.png";
 import MessageWidget from "../../Components/MessageWidget/MessageWidget";
+
+const ThirdImage = "/assets/third_image.png";
 
 const FavoritePage = () => {
   const [favorites, setFavorites] = useState([]);
@@ -14,16 +17,14 @@ const FavoritePage = () => {
   const [notification, setNotification] = useState("");
 
   const { user } = useAuthContext();
-  const navigate = useNavigate();
+  const router = useRouter();
   const userId = user?.id;
 
   useEffect(() => {
     if (!userId) {
-      navigate("/login", {
-        state: { redirectTo: "/favorites", showLoginPopup: true },
-      });
+      router.push("/login?redirect=/favorites&showLoginPopup=true");
     }
-  }, [userId, navigate]);
+  }, [userId, router]);
 
   useEffect(() => {
     if (!userId) {
@@ -69,7 +70,7 @@ const FavoritePage = () => {
   };
 
   const handleProductClick = (productId) => {
-    navigate("/check_out", { state: { productId } });
+    router.push(`/check_out?productId=${productId}`);
   };
 
   const getProductImage = (fav) => {
@@ -118,11 +119,12 @@ const FavoritePage = () => {
                     className="product-img-container relative overflow-hidden cursor-pointer"
                     onClick={() => handleProductClick(product.id)}
                   >
-                    <img
+                    <Image
                       src={getProductImage(fav)}
                       alt={product.name}
+                      width={400}
+                      height={400}
                       className="product-img w-full h-64 object-cover rounded-t-xl transition-transform duration-300 hover:scale-105"
-                      loading="lazy"
                       onError={(e) => (e.currentTarget.src = ThirdImage)}
                     />
                   </div>

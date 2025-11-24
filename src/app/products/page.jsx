@@ -4,7 +4,6 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import axios from "../../api/axiosConfig";
@@ -15,8 +14,6 @@ import { FaCartPlus, FaHeart, FaChevronRight, FaChevronLeft } from "react-icons/
 import useAuthContext from "../../Authentication/AuthContext";
 import Loading from "../../Components/Loading/Loading";
 import useUserActions from "../../Components/Hooks/userUserActions";
-import LoginFirst from "../../Components/LoginFirst/LoginFirst";
-
 
 
 const ThirdImage = "/assets/third_image.png";
@@ -29,12 +26,9 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 15;
 
   const { user } = useAuthContext();
-  const { addToCart, addToFavorite } = useUserActions();
-  const loginFirst = new LoginFirst(user, router);
+  const { addToCart, addToFavorite, loginFirst } = useUserActions();
 
   /* ------------------- FETCH CATEGORIES ------------------- */
   useEffect(() => {
@@ -54,12 +48,7 @@ const Products = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        let res;
-        if (selectedCategory) {
-          res = await axios.get(`/products/by-category/${selectedCategory}`);
-        } else {
-          res = await axios.get("/products/all");
-        }
+        const res = await axios.get("/products/all");
         setProducts(res?.data?.data || []);
       } catch (err) {
         console.error("Error fetching products:", err);
@@ -69,41 +58,55 @@ const Products = () => {
       }
     };
     fetchProducts();
-  }, [selectedCategory]);
+  }, []);
 
   /* ------------------- HANDLERS ------------------- */
   const handleAddToCart = async (productId) => {
-    if (!user) {
-      loginFirst.redirectToCart();
-      return;
-    }
-    const success = await addToCart(productId, 1);
-    if (success) loginFirst.redirectToCart(true);
+    await addToCart(productId, 1);
   };
 
   const handleFavorite = async (productId) => {
-    if (!user) {
-      const message = loginFirst.messages.loginRequiredFavorite;
-      loginFirst.safeNavigate("/login", {
-        search: `?redirect=${encodeURIComponent(window.location.pathname)}&message=${encodeURIComponent(message)}`,
-      });
-      return;
-    }
     await addToFavorite(productId);
   };
 
-  /* ------------------- FILTER & PAGINATION ------------------- */
-  const filteredProducts = products.filter((p) =>
-    p?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  /* ------------------- FILTER & GROUP PRODUCTS ------------------- */
+  const getGroupedAndFilteredProducts = () => {
+    let filtered = products;
+
+    // Filter by selected category from dropdown
+    if (selectedCategory) {
+      filtered = products.filter((p) => p.category.id === selectedCategory);
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter((p) =>
+        p?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Group products by category
+    return filtered.reduce((acc, product) => {
+      const categoryName = product.category?.name || "Uncategorized";
+      if (!acc[categoryName]) acc[categoryName] = [];
+      acc[categoryName].push(product);
+      return acc;
+    }, {});
+  };
+
+  const groupedProducts = getGroupedAndFilteredProducts();
+  
+  // Sort categories by the number of products in descending order
+  const sortedCategories = Object.entries(groupedProducts).sort(
+    (a, b) => b[1].length - a[1].length
   );
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-  const startIndex = (currentPage - 1) * productsPerPage;
-  const currentProducts = filteredProducts.slice(startIndex, startIndex + productsPerPage);
+
+  const hasProducts = sortedCategories.length > 0;
 
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="pt-24 px-6 pb-16 bg-white font-[Poppins,sans-serif]">
+      <main className="pt-[9rem] px-4 sm:px-6 pb-16 bg-white font-[Poppins,sans-serif]">
         {/* ===== Filter Section ===== */}
         <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center mb-12">
           <h1 className="text-4xl font-bold text-[#eb61a2]">Our Products</h1>
@@ -130,128 +133,71 @@ const Products = () => {
           </div>
         </div>
 
-        {/* ===== Product Grid ===== */}
+        {/* ===== Products by Category ===== */}
         {loading ? (
           <Loading />
-        ) : currentProducts.length === 0 ? (
+        ) : !hasProducts ? (
           <p className="text-center text-gray-500 text-lg mt-20">No products found.</p>
         ) : (
-          <>
-            <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-              {currentProducts.map((p) => (
-                <div
-                  key={p?.id}
-                  className="product-card bg-white rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)]"
-                >
-                  {/* Image Container */}
-                  <div className="product-img-container relative overflow-hidden">
-                    <Image
-                      src={
-                        p?.images?.[0]?.downloadUrl
-                          ? `https://backend.skinme.store${p.images[0].downloadUrl}`
-                          : ThirdImage
-                      }
-                      alt={p?.name || "Product"}
-                      width={400}
-                      height={400}
-                      className="product-img w-full h-64 object-cover rounded-t-xl cursor-pointer transition-transform duration-300 hover:scale-105"
-                      onClick={() => router.push(`/product_detials?productId=${p.id}`)}
-                    />
-                    <button
-                      onClick={() => handleFavorite(p.id)}
-                      className="favorite-btn absolute top-3 right-3 bg-white/85 text-red-500 p-2 rounded-full text-lg transition-all hover:bg-pink-100 hover:scale-110"
+          <div className="max-w-7xl mx-auto space-y-16">
+            {sortedCategories.map(([categoryName, productsInCategory]) => (
+              <section key={categoryName}>
+                <h2 className="text-2xl font-bold text-gray-800 mb-8 border-b-[3px] border-[#000000] opacity-[.7] inline-block">
+                  {categoryName}
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 z-[1]">
+                  {productsInCategory.map((p) => (
+                    <div
+                      key={p?.id}
+                      className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-4 flex flex-col justify-between transition-[transform_0.3s_ease,box-shadow_0.3s_ease] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                     >
-                      <FaHeart />
-                    </button>
-                  </div>
+                      {/* Image Container */}
+                      <div className="relative">
+                        <Image
+                          src={
+                            p?.images?.[0]?.downloadUrl
+                              ? `https://backend.skinme.store${p.images[0].downloadUrl}`
+                              : ThirdImage
+                          }
+                          alt={p?.name || "Product"}
+                          width={400}
+                          height={400}
+                          className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
+                          onClick={() => router.push(`/product_detials?productId=${p.id}`)}
+                        />
+                        <button
+                          onClick={() => handleFavorite(p.id)}
+                          className="absolute top-2 right-2 bg-white/85 rounded-full p-1.5 text-[#f56565] text-base cursor-pointer transition-[background_0.2s] hover:bg-[#fed7d7]"
+                        >
+                          <FaHeart />
+                        </button>
+                      </div>
 
-                  {/* Info */}
-                  <div className="product-info flex flex-col justify-between p-5 flex-grow">
-                    <div>
-                      <h3 className="product-name text-lg font-semibold text-gray-800 line-clamp-2">
-                        {p?.name || "No Name"}
-                      </h3>
-                      <p className="product-price text-xl font-bold text-[#2563eb] mt-2">
-                        ${p?.price ?? "N/A"}
-                      </p>
+                      {/* Info */}
+                      <div className="flex flex-col justify-between px-3 py-2.5 flex-grow z-[100]">
+                        <div>
+                          <h3 className="text-base font-semibold text-left text-[#2d3748] leading-tight overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:text-base">
+                            {p?.name || "No Name"}
+                          </h3>
+                          <p className="flex justify-center text-base font-bold text-left text-[#2563eb] my-1.5 max-[600px]:text-sm">
+                            ${p?.price ?? "N/A"}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => handleAddToCart(p.id)}
+                          className="mt-auto bg-[#d13e82] border-none rounded-xl px-5 py-2.5 text-white font-semibold cursor-pointer flex items-center justify-center gap-2 text-[0.95rem] shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] active:-translate-y-px active:scale-[0.98] active:shadow-[0_4px_10px_rgba(209,62,130,0.3)] z-[100]"
+                        >
+                          <FaCartPlus className="text-[1.1rem] transition-transform duration-300" />
+                          Add to Cart
+                        </button>
+                      </div>
                     </div>
-
-                    <button
-                      onClick={() => handleAddToCart(p.id)}
-                      className="add-to-cart mt-5 w-full bg-[#d13e82] text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] hover:-translate-y-1 active:scale-98"
-                    >
-                      <FaCartPlus className="text-lg" />
-                      Add to Cart
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex justify-center items-center gap-3 mt-16 flex-wrap">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                disabled={currentPage === 1}
-                className="w-12 h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-600 transition-all hover:border-[#eb61a2] hover:text-[#eb61a2] hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FaChevronLeft />
-              </button>
-
-              {(() => {
-                const pages = [];
-                const start = Math.max(1, currentPage - 2);
-                const end = Math.min(totalPages, currentPage + 2);
-
-                if (start > 1) {
-                  pages.push(
-                    <button key={1} onClick={() => setCurrentPage(1)} className="w-11 h-11 rounded-full bg-white border-2 border-gray-300 text-gray-700 hover:border-[#eb61a2] hover:text-[#eb61a2]">
-                      1
-                    </button>
-                  );
-                  if (start > 2) pages.push(<span key="start-ellipsis" className="text-gray-500">…</span>);
-                }
-
-                for (let i = start; i <= end; i++) {
-                  pages.push(
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i)}
-                      className={`w-11 h-11 rounded-full font-medium transition-all ${
-                        currentPage === i
-                          ? "bg-[#eb61a2] text-white border-2 border-[#eb61a2] scale-110 shadow-lg"
-                          : "bg-white border-2 border-gray-300 text-gray-700 hover:border-[#eb61a2] hover:text-[#eb61a2]"
-                      }`}
-                    >
-                      {i}
-                    </button>
-                  );
-                }
-
-                if (end < totalPages) {
-                  if (end < totalPages - 1) pages.push(<span key="end-ellipsis" className="text-gray-500">…</span>);
-                  pages.push(
-                    <button
-                      key={totalPages}
-                      onClick={() => setCurrentPage(totalPages)}
-                      className="w-11 h-11 rounded-full bg-white border-2 border-gray-300 text-gray-700 hover:border-[#eb61a2] hover:text-[#eb61a2]"
-                    >
-                      {totalPages}
-                    </button>
-                  );
-                }
-                return pages;
-              })()}
-
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="w-12 h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-600 transition-all hover:border-[#eb61a2] hover:text-[#eb61a2] hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FaChevronRight />
-              </button>
-            </div>
-          </>
+              </section>
+            ))}
+          </div>
         )}
       </main>
       <Footer />

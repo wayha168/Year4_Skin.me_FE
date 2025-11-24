@@ -179,7 +179,7 @@ const HomePage = () => {
                       width={300}
                       height={200}
                       className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
-                          onClick={() => router.push(`/product_detials?productId=${p.id}`)}
+                          onClick={() => router.push(`/product_details?productId=${p.id}`)}
                     />
                     <button 
                       className="absolute top-2 right-2 bg-white/85 rounded-full p-1.5 text-[#f56565] text-base cursor-pointer transition-[background_0.2s] hover:bg-[#fed7d7]"

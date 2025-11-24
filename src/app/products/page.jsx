@@ -75,13 +75,15 @@ const Products = () => {
 
     // Filter by selected category from dropdown
     if (selectedCategory) {
-      filtered = products.filter((p) => p.category.id === selectedCategory);
+      // Ensure we compare numbers to numbers, as select value is a string
+      const categoryId = Number(selectedCategory);
+      filtered = filtered.filter((p) => p.category.id === categoryId);
     }
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter((p) =>
-        p?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter((p) => 
+        p?.name?.toLowerCase().includes(searchTerm.toLowerCase()) 
       );
     }
 
@@ -163,7 +165,7 @@ const Products = () => {
                           width={400}
                           height={400}
                           className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
-                          onClick={() => router.push(`/product_detials?productId=${p.id}`)}
+                          onClick={() => router.push(`/product_details?productId=${p.id}`)}
                         />
                         <button
                           onClick={() => handleFavorite(p.id)}

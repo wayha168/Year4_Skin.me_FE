@@ -1,25 +1,61 @@
 // src/Pages/CheckOutPage/CheckOutPage.jsx
-import React, { useState, useRef, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+"use client";
+
+import React, { useState, useRef, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "../../Components/Navbar/Navbar";
 import Footer from "../../Components/Footer/Footer";
 import MessageWidget from "../../Components/MessageWidget/MessageWidget";
 import DiliveryAndPayment from "../../Components/DiliveryAndPayment/DiliveryAndPayment";
 
-function CheckOutPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { product, quantity } = location.state || {};
+function CheckOutContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const productId = searchParams.get("productId");
+  const quantity = searchParams.get("quantity") || 1;
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [showModal, setShowModal] = useState(false);
   const modalRef = useRef(null);
 
-  if (!product) {
+  useEffect(() => {
+    if (productId) {
+      const fetchProduct = async () => {
+        try {
+          setLoading(true);
+          // Assuming an API endpoint exists to fetch a product by its ID
+          const response = await fetch(`https://backend.skinme.store/api/products/${productId}`);
+          if (!response.ok) {
+            throw new Error("Failed to fetch product data.");
+          }
+          const data = await response.json();
+          setProduct(data);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchProduct();
+    } else {
+      setLoading(false);
+    }
+  }, [productId]);
+
+  if (loading) {
+    return <div className="text-center mt-[100px] text-[1.2rem] text-[#555]">Loading...</div>;
+  }
+  
+  if (error || !product) {
     return (
       <div className="text-center mt-[100px]">
-        <p className="text-[1.2rem] text-[#555]">No product selected for checkout.</p>
+        <p className="text-[1.2rem] text-[#555]">{error || "No product selected for checkout."}</p>
         <button 
           className="mt-5 bg-[#eb61a2] text-white py-[10px] px-[18px] rounded-lg border-none cursor-pointer transition-all duration-300" 
-          onClick={() => navigate("/products")}
+          onClick={() => router.push("/products")}
         >
           Go Back to Products
         </button>
@@ -86,7 +122,7 @@ function CheckOutPage() {
             <div className="flex justify-between items-center gap-[15px] mt-[10px] max-[768px]:flex-col">
               <button 
                 className="py-3 px-5 rounded-[10px] border-none text-base cursor-pointer transition-all duration-300 bg-[#f0f0f0] text-[#333] hover:bg-[#e0e0e0]" 
-                onClick={() => navigate(-1)}
+                onClick={() => router.back()}
               >
                 ← Continue Shopping
               </button>
@@ -116,6 +152,15 @@ function CheckOutPage() {
         </div>
       )}  
     </>
+  );
+}
+
+// Using Suspense is a good practice in Next.js when dealing with search parameters.
+function CheckOutPage() {
+  return (
+    <Suspense fallback={<div className="text-center mt-[100px] text-[1.2rem] text-[#555]">Loading Checkout...</div>}>
+      <CheckOutContent />
+    </Suspense>
   );
 }
 

@@ -35,32 +35,103 @@ const ProductDetailsContent = () => {
     const fetchProductDetails = async () => {
       setLoading(true);
       setError("");
+      
       try {
-        // Let's try the most standard REST endpoint: /products/{id}
-        const response = await axios.get(`/products/${productId}`);
-        if (response.data && response.data.data) {
-          setProduct(response.data.data);
-        } else {
-          // This handles cases where the API returns a 200 status but no data
-          setError("Could not find product details.");
+        console.log("Fetching product with ID:", productId);
+        
+        // Try multiple possible endpoints
+        let response;
+        let productData = null;
+
+        // Attempt 1: /products/{id}
+        try {
+          console.log("Trying endpoint: /products/" + productId);
+          response = await axios.get(`/products/${productId}`);
+          console.log("Response from /products/{id}:", response.data);
+          
+          if (response.data) {
+            productData = response.data.data || response.data.product || response.data;
+          }
+        } catch {
+          console.log("Failed /products/{id}, trying next endpoint...");
         }
+
+        // Attempt 2: /products/by-id/{id}
+        if (!productData) {
+          try {
+            console.log("Trying endpoint: /products/by-id/" + productId);
+            response = await axios.get(`/products/by-id/${productId}`);
+            console.log("Response from /products/by-id/{id}:", response.data);
+            
+            if (response.data) {
+              productData = response.data.data || response.data.product || response.data;
+            }
+          } catch {
+            console.log("Failed /products/by-id/{id}, trying next endpoint...");
+          }
+        }
+
+        // Attempt 3: /products/product/{id}
+        if (!productData) {
+          try {
+            console.log("Trying endpoint: /products/product/" + productId);
+            response = await axios.get(`/products/product/${productId}`);
+            console.log("Response from /products/product/{id}:", response.data);
+            
+            if (response.data) {
+              productData = response.data.data || response.data.product || response.data;
+            }
+          } catch {
+            console.log("Failed /products/product/{id}");
+          }
+        }
+
+        // Attempt 4: Fallback - get from all products
+        if (!productData) {
+          console.log("Trying fallback: fetching from /products/all");
+          response = await axios.get("/products/all");
+          console.log("Response from /products/all:", response.data);
+          
+          const allProducts = response.data?.data || response.data || [];
+          productData = allProducts.find(p => p.id === Number(productId));
+          
+          if (productData) {
+            console.log("Found product in all products list");
+          }
+        }
+
+        if (productData) {
+          console.log("Successfully loaded product:", productData);
+          setProduct(productData);
+        } else {
+          console.error("Could not find product with ID:", productId);
+          setError("Product not found. Please check the product ID.");
+        }
+        
       } catch (err) {
         console.error("Error fetching product details:", err);
-        setError("Could not load product details."); // This is the message you are seeing
+        console.error("Error response:", err.response?.data);
+        setError(`Could not load product details. Error: ${err.message}`);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProductDetails();
-  }, [productId]); // Re-run the effect if the productId changes
+  }, [productId]);
 
   if (loading) {
     return <Loading />;
   }
 
   if (error) {
-    return <p className="text-center text-red-500 text-lg mt-20">{error}</p>;
+    return (
+      <div className="text-center mt-20">
+        <p className="text-red-500 text-lg mb-4">{error}</p>
+        <p className="text-gray-600">Product ID: {productId}</p>
+        <p className="text-sm text-gray-500 mt-2">Check the browser console for detailed error logs</p>
+      </div>
+    );
   }
 
   if (!product) {

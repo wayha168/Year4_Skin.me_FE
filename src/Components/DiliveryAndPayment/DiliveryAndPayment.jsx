@@ -1,6 +1,5 @@
 // src/Components/DiliveryAndPayment/DiliveryAndPayment.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import QrCode from '../../assets/paymentImage/qrcode.png';
 import { toast } from "react-toastify";
 // 25 Official Provinces of Cambodia
 const cambodiaProvinces = [
@@ -10,6 +9,10 @@ const cambodiaProvinces = [
   "Pursat", "Ratanakiri", "Siem Reap", "Sihanoukville", "Stung Treng",
   "Svay Rieng", "Takeo", "Tbong Khmum", "Kep"
 ];
+
+const QrCode = "/assets/paymentImage/qrcode.png";
+
+
 // === SEARCHABLE PROVINCE SELECT ===
 function ProvinceSearchSelect({ onProvinceChange, value, onChange }) {
   const [query, setQuery] = useState(value || '');

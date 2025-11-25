@@ -70,7 +70,7 @@ const FavoritePage = () => {
   };
 
   const handleProductClick = (productId) => {
-    router.push(`/check_out?productId=${productId}`);
+    router.push(`/product_details?productId=${productId}`);
   };
 
   const getProductImage = (fav) => {

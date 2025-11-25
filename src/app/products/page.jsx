@@ -73,21 +73,20 @@ const Products = () => {
   const getGroupedAndFilteredProducts = () => {
     let filtered = products;
 
-    // Filter by selected category from dropdown
-    if (selectedCategory) {
-      // Ensure we compare numbers to numbers, as select value is a string
-      const categoryId = Number(selectedCategory);
-      filtered = filtered.filter((p) => p.category.id === categoryId);
-    }
-
-    // Filter by search term
+    // Filter by search term first
     if (searchTerm) {
       filtered = filtered.filter((p) => 
         p?.name?.toLowerCase().includes(searchTerm.toLowerCase()) 
       );
     }
 
-    // Group products by category
+    // Filter by selected category from dropdown
+    if (selectedCategory) {
+      const categoryId = Number(selectedCategory);
+      filtered = filtered.filter((p) => p.category?.id === categoryId);
+    }
+
+    // Group filtered products by category
     return filtered.reduce((acc, product) => {
       const categoryName = product.category?.name || "Uncategorized";
       if (!acc[categoryName]) acc[categoryName] = [];
@@ -207,4 +206,4 @@ const Products = () => {
   );
 };
 
-export default Products;
+export default Products;  

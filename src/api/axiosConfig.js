@@ -1,45 +1,43 @@
-// src/api/axiosConfig.js
-import axios from "axios";
-import Cookies from "js-cookie";
+import axios from 'axios';
 
-const axiosAuth = axios.create({
-  baseURL: "https://backend.skinme.store/api/v1",
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true, // ✅ Add this
-  timeout: 10000, // ✅ Add 10 second timeout
+const instance = axios.create({
+  baseURL: 'https://backend.skinme.store/api/v1', // or your backend URL
+  withCredentials: true, // This is CRITICAL for sending cookies
+  headers: {
+    'Content-Type': 'application/json',
+  }
 });
 
-axiosAuth.interceptors.request.use(
+// Add request interceptor to attach token
+instance.interceptors.request.use(
   (config) => {
-    const token = Cookies.get("token");
+    // Get token from localStorage or cookies
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log("📤 Request:", config.method?.toUpperCase(), config.url); // ✅ Debug log
+    
     return config;
   },
   (error) => {
-    console.error("❌ Request Error:", error);
     return Promise.reject(error);
   }
 );
 
-// ✅ Add response interceptor for better error handling
-axiosAuth.interceptors.response.use(
-  (response) => {
-    console.log("✅ Response:", response.status, response.config.url); // ✅ Debug log
-    return response;
-  },
+// Add response interceptor to handle 401 errors
+instance.interceptors.response.use(
+  (response) => response,
   (error) => {
-    console.error("❌ Response Error:", error.message);
-    if (error.response) {
-      console.error("Status:", error.response.status);
-      console.error("Data:", error.response.data);
-    } else if (error.request) {
-      console.error("No response received:", error.request);
+    if (error.response?.status === 401) {
+      // Token expired or invalid - redirect to login
+      console.error('Authentication failed - redirecting to login');
+      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
 
-export default axiosAuth;
+export default instance;

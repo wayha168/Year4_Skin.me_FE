@@ -1,23 +1,29 @@
+"use client";
+
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
-import ThirdImage from "../../assets/third_image.png";
+
+const ThirdImage = "/assets/third_image.png";
 
 const ProductCard = ({ product, onAddToCart, onFavorite }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <div className="product-card">
       <div className="product-img-container">
-        <img
+        <Image
           src={
             product?.images?.[0]?.downloadUrl
               ? `https://backend.skinme.store${product.images[0].downloadUrl}`
               : ThirdImage
           }
           alt={product.name || "Product Image"}
+          width={400}
+          height={400}
           className="product-img"
-          onClick={() => navigate("/product_details", { state: { product } })}
+          onClick={() => router.push(`/product_details?productId=${product.id}`)}
         />
         <button className="favorite-btn" onClick={() => onFavorite(product.id)}>
           <FaHeart />

@@ -108,7 +108,7 @@ const ProductCrud = () => {
         category: { id: Number(form.categoryId) },
       };
       if (isEditing) {
-        await axios.put(`/products/product/${editingId}/update`, payload, {
+       await axios.put(`/products/product/${editingId}/update`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
@@ -123,17 +123,23 @@ const ProductCrud = () => {
     }
   };
 
-  const handleDeleteProduct = async (id) => {
-    if (!window.confirm("Delete this product?")) return;
-    try {
-      await axios.delete(`/products/product/${id}/delete`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchProducts();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const handleDeleteProduct = async (id) => {
+  if (!window.confirm("Delete this product?")) return;
+
+  try {
+    // THIS IS THE CORRECT ENDPOINT — matches your working UPDATE pattern
+    await axios.delete(`/products/product/${id}/delete`);
+
+    fetchProducts();
+    alert("Product deleted successfully!");
+  } catch (err) {
+    console.error(err.response || err);
+    alert("Delete failed: " + (err.response?.data?.error || "Unknown error"));
+  }
+};
+
+
+
 
   // Image upload logic
   const openImageModal = (productId) => {

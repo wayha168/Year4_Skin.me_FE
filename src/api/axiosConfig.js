@@ -1,40 +1,36 @@
+// src/api/axiosConfig.js
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 const instance = axios.create({
-  baseURL: 'https://backend.skinme.store/api/v1', // or your backend URL
-  withCredentials: true, // This is CRITICAL for sending cookies
+  baseURL: 'https://backend.skinme.store/api/v1',
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   }
 });
 
-// Add request interceptor to attach token
+// Attach token automatically
 instance.interceptors.request.use(
   (config) => {
-    // Get token from localStorage or cookies
-    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
+    const token = Cookies.get('token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Add response interceptor to handle 401 errors
+// Handle 401
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - redirect to login
-      console.error('Authentication failed - redirecting to login');
-      localStorage.removeItem('token');
-      localStorage.removeItem('authToken');
-      window.location.href = '/login';
+      Cookies.remove('token');
+      localStorage.removeItem('user');
+
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

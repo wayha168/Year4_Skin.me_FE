@@ -19,16 +19,29 @@ export const AuthProvider = ({ children }) => {
     return null;
   });
 
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = Cookies.get("token");
-      if (token && !user) {
-        fetchUser(token);
+    const initAuth = async () => {
+      if (typeof window !== "undefined") {
+        const token = Cookies.get("token");
+        
+        if (token && !user) {
+          // Token exists but no user in state - fetch user
+          await fetchUser(token);
+        } else if (token && user) {
+          // Token and user both exist - already loaded from localStorage
+          setLoading(false);
+        } else {
+          // No token - user is not logged in
+          setLoading(false);
+        }
       }
-    }
-  }, []); // ✅ Empty dependency array is correct
+    };
+
+    initAuth();
+  }, []);
 
   const fetchUser = async (token) => {
     try {
@@ -41,6 +54,8 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error("Failed to fetch user:", err);
       logout();
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -134,13 +149,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, error, login, signup, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, error, login, signup, logout, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// ✅ This export is CORRECT - it's a custom hook
 export default function useAuthContext() {
   return useContext(AuthContext);
 }

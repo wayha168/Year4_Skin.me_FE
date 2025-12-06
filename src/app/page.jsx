@@ -5,12 +5,11 @@ import React, { useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import {useRouter,  useSearchParams } from "next/navigation";
 import { useState } from "react";
-
+import axios from "../app/lib/api/axiosConfig.js";
 import Navbar from "../Components/Navbar/Navbar.jsx";
 import Footer from "../Components/Footer/Footer.jsx";
-import axios from "../lib/api/axiosConfig.js";
 import useUserActions from "../Components/Hooks/userUserActions.js";
-import useAuthContext from "../lib/Authentication/AuthContext.jsx";
+import useAuthContext from "./lib/Authentication/AuthContext.jsx";
 import LoginFirst from "../Components/LoginFirst/LoginFirst.js";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
 

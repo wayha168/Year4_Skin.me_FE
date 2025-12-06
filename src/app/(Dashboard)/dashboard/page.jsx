@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../../Components/Sidebar/Sidebar";
 import Cookies from "js-cookie";
-import axiosAuth from "../../../lib/api/axiosConfig";
+import axiosAuth from "../../../app/lib/api/axiosConfig";
 
 import { DollarSign, Package, TrendingUp, ShoppingCart } from "lucide-react";
 import SummaryCard from "../../../Components/SummaryCard/SummaryCard";

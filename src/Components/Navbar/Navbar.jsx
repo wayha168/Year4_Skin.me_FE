@@ -1,17 +1,14 @@
-// app/Components/Navbar/Navbar.jsx
-// ============================================
 "use client";
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import useAuthContext from "../../lib/Authentication/AuthContext";
+import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import LoginFirst from "../LoginFirst/LoginFirst";
 
-// Lazy load Loading component
 const Loading = dynamic(() => import("../Loading/Loading"), {
-  ssr: false
+  ssr: false,
 });
 
 const Navbar = ({ alwaysVisible = false }) => {
@@ -36,7 +33,7 @@ const Navbar = ({ alwaysVisible = false }) => {
   const handleResize = useCallback(() => {
     const mobile = window.innerWidth <= 1030;
     setIsMobile(mobile);
-    
+
     if (!mobile) {
       setMenuOpen(false);
     }
@@ -97,26 +94,35 @@ const Navbar = ({ alwaysVisible = false }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [handleClickOutside, menuOpen]);
 
-  const toggleMenu = useCallback(() => setMenuOpen(prev => !prev), []);
+  const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
 
-  const safeNavigate = useCallback((path) => {
-    setLoading(true);
-    router.push(path);
-    setMenuOpen(false);
-    setTimeout(() => setLoading(false), 500);
-  }, [router]);
+  const safeNavigate = useCallback(
+    (path) => {
+      setLoading(true);
+      router.push(path);
+      setMenuOpen(false);
+      setTimeout(() => setLoading(false), 500);
+    },
+    [router]
+  );
 
   const loginFirst = useMemo(() => new LoginFirst(user, safeNavigate), [user, safeNavigate]);
 
-  const handleFavoriteClick = useCallback((e) => {
-    e.preventDefault();
-    loginFirst.redirectToFavorites();
-  }, [loginFirst]);
+  const handleFavoriteClick = useCallback(
+    (e) => {
+      e.preventDefault();
+      loginFirst.redirectToFavorites();
+    },
+    [loginFirst]
+  );
 
-  const handleBagClick = useCallback((e) => {
-    e.preventDefault();
-    loginFirst.redirectToCart();
-  }, [loginFirst]);
+  const handleBagClick = useCallback(
+    (e) => {
+      e.preventDefault();
+      loginFirst.redirectToCart();
+    },
+    [loginFirst]
+  );
 
   return (
     <>
@@ -126,10 +132,7 @@ const Navbar = ({ alwaysVisible = false }) => {
           visible || alwaysVisible ? "top-0" : "-top-32"
         }`}
       >
-        <div
-          ref={navRef}
-          className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-full"
-        >
+        <div ref={navRef} className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-full">
           {/* BRAND */}
           <Link
             href="/"
@@ -139,12 +142,8 @@ const Navbar = ({ alwaysVisible = false }) => {
             }}
             className="flex flex-col no-underline select-none"
           >
-            <span className="text-[48px] font-bold text-[#eb61a2] leading-none">
-              SKIN.ME
-            </span>
-            <span className="text-[13px] text-black opacity-80">
-              @Home Of Your Care
-            </span>
+            <span className="text-[48px] font-bold text-[#eb61a2] leading-none">SKIN.ME</span>
+            <span className="text-[13px] text-black opacity-80">@Home Of Your Care</span>
           </Link>
 
           {/* HAMBURGER (MOBILE) */}

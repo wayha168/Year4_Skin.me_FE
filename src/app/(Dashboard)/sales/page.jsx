@@ -4,8 +4,7 @@ import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 import Sidebar from "../../../Components/Sidebar/Sidebar";
 import Cookies from "js-cookie";
-import axiosAuth from "../../../lib/api/axiosConfig";
-
+import axiosAuth from "../../../app/lib/api/axiosConfig";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 

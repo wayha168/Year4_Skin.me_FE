@@ -9,9 +9,9 @@ import { useState } from "react";
 
 import Navbar from "../../../Components/Navbar/Navbar.jsx";
 import Footer from "../../../Components/Footer/Footer.jsx";
-import axiosAuth from "../../../lib/api/axiosConfig.js";
+import axiosAuth from "../../lib/api/axiosConfig.js";
 import useUserActions from "../../../Components/Hooks/userUserActions.js";
-import useAuthContext from "../../../lib/Authentication/AuthContext.jsx";
+import useAuthContext from "../../lib/Authentication/AuthContext.jsx";
 import LoginFirst from "../../../Components/LoginFirst/LoginFirst.js";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
 

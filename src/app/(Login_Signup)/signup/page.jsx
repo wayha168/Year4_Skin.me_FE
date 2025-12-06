@@ -1,14 +1,13 @@
 // src/signup/page.jsx
 "use client";
 import Link from "next/link";
-import useAuthContext from "../../../lib/Authentication/AuthContext";
+import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
 import { useState } from "react";
-import {useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Signup = () => {
-
-  const MainImage = "/assets/product_homepage.png"
+  const MainImage = "/assets/product_homepage.png";
 
   const route = useRouter();
   const searchParam = useSearchParams();
@@ -63,12 +62,9 @@ const Signup = () => {
       });
 
       if (userData) {
-        const roles = Array.isArray(userData.roles)
-          ? userData.roles
-          : [userData.role];
+        const roles = Array.isArray(userData.roles) ? userData.roles : [userData.role];
 
-        const isAdmin =
-          roles.includes("ROLE_ADMIN") || roles.includes("ADMIN");
+        const isAdmin = roles.includes("ROLE_ADMIN") || roles.includes("ADMIN");
 
         route.push(redirectTo || (isAdmin ? "/dashboard" : "/"));
       }
@@ -95,9 +91,7 @@ const Signup = () => {
 
       {/* Card */}
       <div className="w-full max-w-lg bg-white/90 backdrop-blur-lg shadow-lg rounded-lg p-8 z-20 border border-black/5">
-        <h1 className="text-3xl font-bold text-center text-pink-500 mb-6">
-          Sign Up
-        </h1>
+        <h1 className="text-3xl font-bold text-center text-pink-500 mb-6">Sign Up</h1>
 
         {(formError || error) && (
           <p className="bg-red-100 text-red-600 p-3 rounded-md font-semibold text-center mb-3">
@@ -109,9 +103,7 @@ const Signup = () => {
           {/* Name Row */}
           <div className="flex gap-4 flex-col sm:flex-row">
             <div className="flex flex-col w-full">
-              <label className="text-sm font-semibold text-gray-700">
-                First Name
-              </label>
+              <label className="text-sm font-semibold text-gray-700">First Name</label>
               <input
                 type="text"
                 name="firstName"
@@ -124,9 +116,7 @@ const Signup = () => {
             </div>
 
             <div className="flex flex-col w-full">
-              <label className="text-sm font-semibold text-gray-700">
-                Last Name
-              </label>
+              <label className="text-sm font-semibold text-gray-700">Last Name</label>
               <input
                 type="text"
                 name="lastName"
@@ -155,9 +145,7 @@ const Signup = () => {
 
           {/* Password */}
           <div className="flex flex-col">
-            <label className="text-sm font-semibold text-gray-700">
-              Password
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Password</label>
             <input
               type="password"
               name="password"
@@ -171,9 +159,7 @@ const Signup = () => {
 
           {/* Confirm Password */}
           <div className="flex flex-col">
-            <label className="text-sm font-semibold text-gray-700">
-              Confirm Password
-            </label>
+            <label className="text-sm font-semibold text-gray-700">Confirm Password</label>
             <input
               type="password"
               name="confirmPassword"

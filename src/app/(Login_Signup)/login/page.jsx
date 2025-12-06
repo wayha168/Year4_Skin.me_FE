@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaFacebook, FaGoogle } from "react-icons/fa";
-import useAuthContext from "../../../lib/Authentication/AuthContext";
+import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
 import Image from "next/image"; // ✅ Added
 
@@ -30,12 +30,9 @@ const Login = () => {
       const userData = await login({ email, password });
 
       if (userData) {
-        const rolesArray = Array.isArray(userData.roles)
-          ? userData.roles
-          : [userData.role];
+        const rolesArray = Array.isArray(userData.roles) ? userData.roles : [userData.role];
 
-        const isAdmin =
-          rolesArray.includes("ROLE_ADMIN") || rolesArray.includes("ADMIN");
+        const isAdmin = rolesArray.includes("ROLE_ADMIN") || rolesArray.includes("ADMIN");
 
         router.push(redirectTo || (isAdmin ? "/dashboard" : "/"));
       }
@@ -65,22 +62,16 @@ const Login = () => {
       />
 
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg z-40 mx-4">
-        <h1 className="text-3xl font-bold text-pink-400 text-center mb-4">
-          Login
-        </h1>
+        <h1 className="text-3xl font-bold text-pink-400 text-center mb-4">Login</h1>
 
         {/* ✅ Better error display */}
         {error && (
-          <p className="bg-red-100 text-red-600 p-3 rounded-md text-center mb-4 font-semibold">
-            {error}
-          </p>
+          <p className="bg-red-100 text-red-600 p-3 rounded-md text-center mb-4 font-semibold">{error}</p>
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">
-              Email
-            </label>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Email</label>
             <input
               type="email"
               name="email"
@@ -94,9 +85,7 @@ const Login = () => {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">
-              Password
-            </label>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Password</label>
             <input
               type="password"
               name="password"
@@ -129,18 +118,16 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="my-4 text-center text-gray-500 text-sm">
-          Or continue with
-        </div>
+        <div className="my-4 text-center text-gray-500 text-sm">Or continue with</div>
 
         <div className="flex gap-2">
-          <button 
+          <button
             className="flex-1 p-2 rounded-lg text-white font-medium flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 transition"
             disabled={isLoading}
           >
             <FaFacebook /> Facebook
           </button>
-          <button 
+          <button
             className="flex-1 p-2 rounded-lg text-white font-medium flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 transition"
             disabled={isLoading}
           >

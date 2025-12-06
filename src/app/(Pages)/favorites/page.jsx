@@ -4,10 +4,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import axiosAuth from "../../../lib/api/axiosConfig";
+import axiosAuth from "../../../app/lib/api/axiosConfig";
+
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
-import useAuthContext from "../../../lib/Authentication/AuthContext";
+import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import { FaShoppingBag } from "react-icons/fa";
 
@@ -42,11 +43,13 @@ const FavoritePage = () => {
         setFavorites(data?.data || []);
       } catch (err) {
         console.error("Error fetching favorites:", err);
-        
+
         if (err.response?.status === 404) {
           setFavorites([]);
         } else if (err.response?.status === 401) {
-          router.replace("/login?redirect=/favorites&message=" + encodeURIComponent("Session expired. Please login again"));
+          router.replace(
+            "/login?redirect=/favorites&message=" + encodeURIComponent("Session expired. Please login again")
+          );
         } else {
           setNotification("Failed to load favorites");
           setTimeout(() => setNotification(""), 3000);
@@ -60,28 +63,34 @@ const FavoritePage = () => {
     fetchFavorites();
   }, [userId, authLoading, router]);
 
-  const handleRemoveFavorite = useCallback(async (productId) => {
-    if (!userId) return;
+  const handleRemoveFavorite = useCallback(
+    async (productId) => {
+      if (!userId) return;
 
-    try {
-      await axiosAuth.delete("/favorites/remove", {
-        params: { userId, productId },
-        withCredentials: true,
-      });
+      try {
+        await axiosAuth.delete("/favorites/remove", {
+          params: { userId, productId },
+          withCredentials: true,
+        });
 
-      setFavorites((prev) => prev.filter((f) => f.product.id !== productId));
-      setNotification("Removed from favorites");
-      setTimeout(() => setNotification(""), 2000);
-    } catch (err) {
-      console.error("Error removing favorite:", err);
-      setNotification("Failed to remove favorite");
-      setTimeout(() => setNotification(""), 3000);
-    }
-  }, [userId]);
+        setFavorites((prev) => prev.filter((f) => f.product.id !== productId));
+        setNotification("Removed from favorites");
+        setTimeout(() => setNotification(""), 2000);
+      } catch (err) {
+        console.error("Error removing favorite:", err);
+        setNotification("Failed to remove favorite");
+        setTimeout(() => setNotification(""), 3000);
+      }
+    },
+    [userId]
+  );
 
-  const handleProductClick = useCallback((productId) => {
-    router.push(`/product_details?productId=${productId}`);
-  }, [router]);
+  const handleProductClick = useCallback(
+    (productId) => {
+      router.push(`/product_details?productId=${productId}`);
+    },
+    [router]
+  );
 
   const handleCheckout = useCallback(() => {
     router.push("/check_out");
@@ -157,9 +166,7 @@ const FavoritePage = () => {
                           {product.name}
                         </h3>
                         {product.brand && (
-                          <p className="text-sm text-gray-600 text-center mt-1">
-                            {product.brand}
-                          </p>
+                          <p className="text-sm text-gray-600 text-center mt-1">{product.brand}</p>
                         )}
                         <p className="flex justify-center text-base font-bold text-left text-[#2563eb] my-1.5 max-[600px]:text-sm">
                           ${Number(product.price ?? 0).toFixed(2)}
@@ -195,7 +202,8 @@ const FavoritePage = () => {
 
       <style jsx>{`
         @keyframes fadeInOut {
-          0%, 80% {
+          0%,
+          80% {
             opacity: 1;
           }
           100% {

@@ -7,8 +7,9 @@ import Image from "next/image";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
-import axiosAuth from "../../../lib/api/axiosConfig";
-import useAuthContext from "../../../lib/Authentication/AuthContext";
+import axiosAuth from "../../../app/lib/api/axiosConfig";
+
+import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import { FaShoppingBag } from "react-icons/fa";
 
 const ThirdImage = "/assets/third_image.png";
@@ -23,7 +24,9 @@ function BagPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/login?redirect=/bag_page&message=" + encodeURIComponent("Please login to view your bag"));
+      router.replace(
+        "/login?redirect=/bag_page&message=" + encodeURIComponent("Please login to view your bag")
+      );
     }
   }, [user, authLoading, router]);
 
@@ -39,15 +42,17 @@ function BagPage() {
         const itemsArray = Array.isArray(res.data.data.items)
           ? res.data.data.items
           : Array.from(res.data.data.items || []);
-        
+
         setCartItems(itemsArray);
       } catch (err) {
         console.error("Error fetching cart:", err);
-        
+
         if (err.response?.status === 404) {
           setCartItems([]);
         } else if (err.response?.status === 401) {
-          router.replace("/login?redirect=/bag_page&message=" + encodeURIComponent("Session expired. Please login again"));
+          router.replace(
+            "/login?redirect=/bag_page&message=" + encodeURIComponent("Session expired. Please login again")
+          );
         } else {
           setNotification("Failed to load cart");
           setTimeout(() => setNotification(""), 3000);
@@ -63,7 +68,7 @@ function BagPage() {
 
   const handleRemoveItem = useCallback(async (item) => {
     const itemId = item.id || item.cartItemId || item.itemId;
-    
+
     if (!itemId) {
       setNotification("Error: Could not identify item to remove");
       setTimeout(() => setNotification(""), 3000);
@@ -72,11 +77,7 @@ function BagPage() {
 
     try {
       let success = false;
-      const endpoints = [
-        `/cartItems/item/${itemId}/delete`,
-        `/cartItems/${itemId}`,
-        `/cart/items/${itemId}`
-      ];
+      const endpoints = [`/cartItems/item/${itemId}/delete`, `/cartItems/${itemId}`, `/cart/items/${itemId}`];
 
       for (const endpoint of endpoints) {
         try {
@@ -95,7 +96,7 @@ function BagPage() {
             return currentItemId !== itemId;
           });
         });
-        
+
         setNotification("Item removed from bag");
         setTimeout(() => setNotification(""), 2000);
       } else {
@@ -112,9 +113,12 @@ function BagPage() {
     router.push("/check_out");
   }, [router]);
 
-  const handleProductClick = useCallback((productId) => {
-    router.push(`/product_details?productId=${productId}`);
-  }, [router]);
+  const handleProductClick = useCallback(
+    (productId) => {
+      router.push(`/product_details?productId=${productId}`);
+    },
+    [router]
+  );
 
   if (authLoading) {
     return (
@@ -157,7 +161,7 @@ function BagPage() {
                 const uniqueKey = item.id || `${item.product?.id}-${index}`;
                 const imageUrl = item?.product?.images?.[0]?.downloadUrl;
                 const imgSrc = imageUrl ? `https://backend.skinme.store${imageUrl}` : ThirdImage;
-                
+
                 return (
                   <div
                     key={uniqueKey}
@@ -183,9 +187,7 @@ function BagPage() {
                         <p className="flex justify-center text-base font-bold text-left text-[#2563eb] my-1.5 max-[600px]:text-sm">
                           ${item.product.price?.toFixed(2)}
                         </p>
-                        <p className="text-sm text-gray-600 text-center">
-                          Quantity: {item.quantity}
-                        </p>
+                        <p className="text-sm text-gray-600 text-center">Quantity: {item.quantity}</p>
                       </div>
 
                       <div className="flex flex-col gap-2">
@@ -217,7 +219,8 @@ function BagPage() {
 
       <style jsx>{`
         @keyframes fadeInOut {
-          0%, 80% {
+          0%,
+          80% {
             opacity: 1;
           }
           100% {

@@ -6,12 +6,12 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import axiosAuth from "../../../lib/api/axiosConfig";
+import axiosAuth from "../../../app/lib/api/axiosConfig";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 
 import { FaCartPlus, FaHeart, FaChevronRight, FaChevronLeft } from "react-icons/fa";
-import useAuthContext from "../../../lib/Authentication/AuthContext";
+import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
 

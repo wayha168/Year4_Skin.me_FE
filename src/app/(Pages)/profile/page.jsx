@@ -3,10 +3,11 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
-import useAuthContext from "../../../lib/Authentication/AuthContext";
+import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import { FaUser, FaEnvelope, FaCalendarAlt, FaUserCircle } from "react-icons/fa";
 import Loading from "../../../Components/Loading/Loading";
-import axiosAuth from "../../../lib/api/axiosConfig";
+import axiosAuth from "../../../app/lib/api/axiosConfig";
+
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 
 const ProfilePage = () => {
@@ -37,10 +38,7 @@ const ProfilePage = () => {
     fetchUser();
   }, [authUser]);
 
-  if (!authUser)
-    return (
-      <Loading />
-    );
+  if (!authUser) return <Loading />;
 
   if (loading) return <Loading />;
 
@@ -69,10 +67,8 @@ const ProfilePage = () => {
 
       {/* Wrapper */}
       <main className="flex justify-center items-center min-h-screen bg-gray-100 p-5">
-
         {/* Card */}
         <div className="bg-white rounded-[15px] shadow-lg p-10 max-w-[400px] w-full text-center">
-
           {/* Avatar */}
           <div className="flex justify-center mb-5">
             {user.avatar ? (
@@ -103,9 +99,7 @@ const ProfilePage = () => {
 
             <p className="text-gray-600 flex justify-center items-center gap-2">
               <FaCalendarAlt className="text-green-600" /> Joined:{" "}
-              {user.createdAt
-                ? new Date(user.createdAt).toLocaleDateString()
-                : "-"}
+              {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
             </p>
           </div>
 

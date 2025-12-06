@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import axiosAuth from "../../../lib/api/axiosConfig";
+import axiosAuth from "../../../app/lib/api/axiosConfig";
 
 import Sidebar from "../../../Components/Sidebar/Sidebar";
 import { FaPlus, FaEdit, FaTrash, FaImage, FaSync } from "react-icons/fa";
@@ -109,7 +109,7 @@ const ProductCrud = () => {
         category: { id: Number(form.categoryId) },
       };
       if (isEditing) {
-       await axiosAuth.put(`/products/product/${editingId}/update`, payload, {
+        await axiosAuth.put(`/products/product/${editingId}/update`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
@@ -124,23 +124,20 @@ const ProductCrud = () => {
     }
   };
 
-const handleDeleteProduct = async (id) => {
-  if (!window.confirm("Delete this product?")) return;
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm("Delete this product?")) return;
 
-  try {
-    // THIS IS THE CORRECT ENDPOINT — matches your working UPDATE pattern
-    await axiosAuth.delete(`/products/product/${id}/delete`);
+    try {
+      // THIS IS THE CORRECT ENDPOINT — matches your working UPDATE pattern
+      await axiosAuth.delete(`/products/product/${id}/delete`);
 
-    fetchProducts();
-    alert("Product deleted successfully!");
-  } catch (err) {
-    console.error(err.response || err);
-    alert("Delete failed: " + (err.response?.data?.error || "Unknown error"));
-  }
-};
-
-
-
+      fetchProducts();
+      alert("Product deleted successfully!");
+    } catch (err) {
+      console.error(err.response || err);
+      alert("Delete failed: " + (err.response?.data?.error || "Unknown error"));
+    }
+  };
 
   // Image upload logic
   const openImageModal = (productId) => {

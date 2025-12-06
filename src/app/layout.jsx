@@ -1,19 +1,17 @@
 import "./globals.css";
-import { AuthProvider } from "../lib/Authentication/AuthContext";
+import { AuthProvider } from "./lib/Authentication/AuthContext";
+// import FontAwesome from "../Components/FontAwesome/FontAwesome.jsx";
+
+export const metadata = {
+  title: "Skinme_store",
+  description: "An e-commerce platform for skincare products",};
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-        />
-      </head>
       <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        {/* <FontAwesome /> */}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

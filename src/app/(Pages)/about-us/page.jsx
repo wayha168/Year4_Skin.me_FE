@@ -3,7 +3,7 @@ import Footer from "../../../Components/Footer/Footer";
 // import MessageWidget from "../../Components/MessageWidget/MessageWidget";
 
 const AboutUsPage = () => {
-  const TeamImage = "/assets/second_image.png";
+  const TeamImage = "/assets/second_image.webp";
   return (
     <>
       <Navbar />

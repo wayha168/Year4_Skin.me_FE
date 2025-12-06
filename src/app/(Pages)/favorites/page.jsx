@@ -1,6 +1,7 @@
-// FavoritePage.jsx
+// OPTIMIZED FAVORITE PAGE - Fast Render
+// ============================================
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import axiosAuth from "../../../lib/api/axiosConfig";
@@ -21,7 +22,6 @@ const FavoritePage = () => {
   const router = useRouter();
   const userId = user?.id;
 
-  // Redirect if not authenticated (only after auth has finished loading)
   useEffect(() => {
     if (!authLoading && !user) {
       router.replace("/login?redirect=/favorites");
@@ -42,17 +42,25 @@ const FavoritePage = () => {
         setFavorites(data?.data || []);
       } catch (err) {
         console.error("Error fetching favorites:", err);
-        setNotification("Failed to load favorites");
-        setTimeout(() => setNotification(""), 3000);
+        
+        if (err.response?.status === 404) {
+          setFavorites([]);
+        } else if (err.response?.status === 401) {
+          router.replace("/login?redirect=/favorites&message=" + encodeURIComponent("Session expired. Please login again"));
+        } else {
+          setNotification("Failed to load favorites");
+          setTimeout(() => setNotification(""), 3000);
+          setFavorites([]);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchFavorites();
-  }, [userId, authLoading]);
+  }, [userId, authLoading, router]);
 
-  const handleRemoveFavorite = async (productId) => {
+  const handleRemoveFavorite = useCallback(async (productId) => {
     if (!userId) return;
 
     try {
@@ -69,21 +77,16 @@ const FavoritePage = () => {
       setNotification("Failed to remove favorite");
       setTimeout(() => setNotification(""), 3000);
     }
-  };
+  }, [userId]);
 
-  const handleProductClick = (productId) => {
+  const handleProductClick = useCallback((productId) => {
     router.push(`/product_details?productId=${productId}`);
-  };
+  }, [router]);
 
-  const getProductImage = (fav) => {
-    const imageUrl = fav?.productThumbnailUrl || fav?.product?.images?.[0]?.downloadUrl;
+  const handleCheckout = useCallback(() => {
+    router.push("/check_out");
+  }, [router]);
 
-    return imageUrl
-      ? `https://backend.skinme.store${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`
-      : ThirdImage;
-  };
-
-  // Show loading spinner while checking authentication
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -92,7 +95,6 @@ const FavoritePage = () => {
     );
   }
 
-  // Don't render page if no user (will redirect)
   if (!user) {
     return null;
   }
@@ -126,25 +128,29 @@ const FavoritePage = () => {
                 const product = fav.product;
                 if (!product) return null;
 
+                const imageUrl = fav?.productThumbnailUrl || fav?.product?.images?.[0]?.downloadUrl;
+                const imgSrc = imageUrl
+                  ? `https://backend.skinme.store${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`
+                  : ThirdImage;
+
                 return (
                   <div
                     key={product.id}
                     className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-4 flex flex-col justify-between transition-[transform_0.3s_ease,box-shadow_0.3s_ease] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                   >
-                    {/* Image Container */}
                     <div className="relative">
                       <Image
                         onClick={() => handleProductClick(product.id)}
-                        src={getProductImage(fav)}
+                        src={imgSrc}
                         alt={product.name}
                         width={400}
                         height={400}
+                        loading="lazy"
                         className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
                         onError={(e) => (e.currentTarget.src = ThirdImage)}
                       />
                     </div>
 
-                    {/* Info */}
                     <div className="flex flex-col justify-between px-3 py-2.5 flex-grow z-[100]">
                       <div>
                         <h3 className="text-base font-semibold text-left text-[#2d3748] leading-tight overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:text-base">
@@ -162,7 +168,7 @@ const FavoritePage = () => {
 
                       <div className="flex flex-col gap-2">
                         <button
-                          onClick={() => router.push("/check_out")}
+                          onClick={handleCheckout}
                           className="mt-auto bg-[#d13e82] border-none rounded-xl px-5 py-2.5 text-white font-semibold cursor-pointer flex items-center justify-center gap-2 text-[0.95rem] shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] active:-translate-y-px active:scale-[0.98] active:shadow-[0_4px_10px_rgba(209,62,130,0.3)] z-[100]"
                         >
                           <FaShoppingBag className="text-[1.1rem] transition-transform duration-300" />

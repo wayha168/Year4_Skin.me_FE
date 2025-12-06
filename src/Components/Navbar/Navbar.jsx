@@ -1,12 +1,18 @@
 // app/Components/Navbar/Navbar.jsx
+// ============================================
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import useAuthContext from "../../lib/Authentication/AuthContext";
-import Loading from "../Loading/Loading";
 import LoginFirst from "../LoginFirst/LoginFirst";
+
+// Lazy load Loading component
+const Loading = dynamic(() => import("../Loading/Loading"), {
+  ssr: false
+});
 
 const Navbar = ({ alwaysVisible = false }) => {
   const router = useRouter();
@@ -16,75 +22,101 @@ const Navbar = ({ alwaysVisible = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const navRef = useRef(null);
+  const scrollTimeoutRef = useRef(null);
 
-  // Initialize isMobile after mount
+  // Initialize isMobile and isClient after mount
   useEffect(() => {
+    setIsClient(true);
     setIsMobile(window.innerWidth <= 1030);
   }, []);
 
-  // Resize handler
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth <= 1030;
-      setIsMobile(mobile);
-      
-      if (!mobile) {
-        setMenuOpen(false);
-      }
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+  // Resize handler with useCallback and debouncing
+  const handleResize = useCallback(() => {
+    const mobile = window.innerWidth <= 1030;
+    setIsMobile(mobile);
+    
+    if (!mobile) {
+      setMenuOpen(false);
+    }
   }, []);
 
-  // Scroll hide/show
+  useEffect(() => {
+    // Debounced resize for better performance
+    let resizeTimeout;
+    const debouncedResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(handleResize, 150);
+    };
+
+    window.addEventListener("resize", debouncedResize);
+    return () => {
+      clearTimeout(resizeTimeout);
+      window.removeEventListener("resize", debouncedResize);
+    };
+  }, [handleResize]);
+
+  // Throttled scroll handler for better performance
+  const handleScroll = useCallback(() => {
+    if (scrollTimeoutRef.current) return;
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      const currentScroll = window.scrollY;
+      const prevScroll = window.prevScrollY || 0;
+      window.prevScrollY = currentScroll;
+      setVisible(prevScroll > currentScroll || currentScroll < 10);
+      scrollTimeoutRef.current = null;
+    }, 100);
+  }, []);
+
   useEffect(() => {
     if (alwaysVisible) return;
 
-    let prevScroll = window.scrollY;
-
-    const handleScroll = () => {
-      const currentScroll = window.scrollY;
-      setVisible(prevScroll > currentScroll || currentScroll < 10);
-      prevScroll = currentScroll;
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [alwaysVisible]);
-
-  // Click outside (close menu)
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (navRef.current && !navRef.current.contains(e.target)) {
-        setMenuOpen(false);
+    window.prevScrollY = window.scrollY;
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
+  }, [alwaysVisible, handleScroll]);
+
+  // Click outside with useCallback
+  const handleClickOutside = useCallback((e) => {
+    if (navRef.current && !navRef.current.contains(e.target)) {
+      setMenuOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return; // Only add listener when menu is open
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [handleClickOutside, menuOpen]);
 
-  const toggleMenu = () => setMenuOpen(!menuOpen);
+  const toggleMenu = useCallback(() => setMenuOpen(prev => !prev), []);
 
-  const safeNavigate = (path) => {
+  const safeNavigate = useCallback((path) => {
     setLoading(true);
     router.push(path);
     setMenuOpen(false);
     setTimeout(() => setLoading(false), 500);
-  };
+  }, [router]);
 
-  const loginFirst = new LoginFirst(user, safeNavigate);
+  const loginFirst = useMemo(() => new LoginFirst(user, safeNavigate), [user, safeNavigate]);
 
-  const handleFavoriteClick = (e) => {
+  const handleFavoriteClick = useCallback((e) => {
     e.preventDefault();
     loginFirst.redirectToFavorites();
-  };
+  }, [loginFirst]);
 
-  const handleBagClick = (e) => {
+  const handleBagClick = useCallback((e) => {
     e.preventDefault();
     loginFirst.redirectToCart();
-  };
+  }, [loginFirst]);
 
   return (
     <>
@@ -202,8 +234,18 @@ const Navbar = ({ alwaysVisible = false }) => {
               </>
             ) : (
               <>
-                {/* LOGIN (conditionally hidden on mobile) */}
-                {(!isMobile || (isMobile && menuOpen)) && (
+                {/* LOGIN - Always render on server, hide with CSS on mobile when closed */}
+                {isClient ? (
+                  (!isMobile || (isMobile && menuOpen)) && (
+                    <Link
+                      href="/login"
+                      onClick={() => safeNavigate("/login")}
+                      className="px-7 py-3 text-[#ed3b8e] text-[1.5rem] border-2 border-[#ed3b8e] rounded-lg font-bold hover:bg-[#ed3b8e] hover:text-white transition max-[1024px]:absolute max-[1024px]:-top-[16.5rem] max-[1024px]:right-[6rem]"
+                    >
+                      Login
+                    </Link>
+                  )
+                ) : (
                   <Link
                     href="/login"
                     onClick={() => safeNavigate("/login")}

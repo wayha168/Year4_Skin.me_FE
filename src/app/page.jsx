@@ -104,9 +104,18 @@ export default function Page() {
               </div>
             </div>
             
-            <div className="w-[40rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem]">
-             <Image  sizes="100vw"  priority
-            src={MainImage} alt="skin product" width={800} height={800} className="h-[50rem] object-contain z-[5] max-[992px]:w-full max-[992px]:h-auto"  rel="preload" />
+            <div className="w-[40rem] h-[50rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem] max-[992px]:h-auto">
+             <Image  
+              sizes="(max-width: 992px) 100vw, 40rem"  
+              priority
+              src={MainImage} 
+              alt="skin product" 
+              width={640} 
+              height={800} 
+              quality={85}
+              className="w-full h-full object-contain z-[5]"
+              fetchPriority="high"
+            />
             </div>
             
             <div className="absolute bg-[#ab8fff] rounded-[1000px] z-0 right-[-25rem] top-80 w-[30rem] h-[30rem] max-[992px]:hidden max-[760px]:right-[-25rem]"></div>

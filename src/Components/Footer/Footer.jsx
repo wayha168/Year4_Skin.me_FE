@@ -1,5 +1,9 @@
 // src/Components/Footer/Footer.jsx
-const Footer = () => {
+// ============================================
+import Image from "next/image";
+import { memo } from "react";
+
+const Footer = memo(() => {
   const Aba = "/assets/ABA.png";
   const Acelida = "/assets/acelida.png";
   const Visa = "/assets/Visa.png";
@@ -9,6 +13,7 @@ const Footer = () => {
   const FACEBOOK = "/assets/facebook_icon_social.png";
   const PINTEREST = "/assets/pinterest_icon.png";
   const INSTARGRAM = "/assets/instargram_icon.png";
+
   return (
     <div className="bg-[#0a3d3f] text-white py-12">
       {/* MAIN ROW */}
@@ -19,20 +24,20 @@ const Footer = () => {
           <p className="text-2xl font-bold mb-4">SKIN.ME</p>
 
           {/* PAYMENT ICONS */}
-          <div className="flex  flex-wrap gap-3 mb-4">
-            <img src={Aba} alt="ABA" className="w-[50px]" />
-            <img src={Visa} alt="Visa" className="w-[50px]" />
-            <img src={Paypal} alt="Paypal" className="w-[50px]" />
-            <img src={Acelida} alt="Acelida" className="w-[50px]" />
+          <div className="flex flex-wrap gap-3 mb-4">
+            <Image src={Aba} alt="ABA" width={50} height={32} loading="lazy" className="w-[50px] h-auto" />
+            <Image src={Visa} alt="Visa" width={50} height={32} loading="lazy" className="w-[50px] h-auto" />
+            <Image src={Paypal} alt="Paypal" width={50} height={32} loading="lazy" className="w-[50px] h-auto" />
+            <Image src={Acelida} alt="Acelida" width={50} height={32} loading="lazy" className="w-[50px] h-auto" />
           </div>
 
           {/* NEWSLETTER */}
           <div className="mt-4 max-[579px]:justify-center"> 
             <div>           
-            <p className="text-lg font-bold max-[579px]:flex  justify-center">NEWSLEER</p>
-            <p className="text-sm mt-1">
-              Subscribe to receive updates, access to exclusive deals, and more.
-            </p>
+              <p className="text-lg font-bold max-[579px]:flex justify-center">NEWSLETTER</p>
+              <p className="text-sm mt-1">
+                Subscribe to receive updates, access to exclusive deals, and more.
+              </p>
             </div>
 
             <div className="flex gap-3 mt-3 max-[1030px]:flex-col max-[1030px]:items-start max-[579px]:items-center">
@@ -77,11 +82,11 @@ const Footer = () => {
 
           {/* Icons wrapper */}
           <div className="flex flex-col gap-2 ml-[-4px] max-[1030px]:flex-row max-[1030px]:justify-center max-[1030px]:ml-0">
-            <img src={TIKTOK} className="w-[30px]" alt="TikTok" />
-            <img src={FACEBOOK} className="w-[30px]" alt="Facebook" />
-            <img src={INSTARGRAM} className="w-[30px]" alt="Instagram" />
-            <img src={PINTEREST} className="w-[30px]" alt="Pinterest" />
-            <img src={TWITER} className="w-[30px]" alt="Twitter" />
+            <Image src={TIKTOK} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="TikTok" />
+            <Image src={FACEBOOK} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Facebook" />
+            <Image src={INSTARGRAM} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Instagram" />
+            <Image src={PINTEREST} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Pinterest" />
+            <Image src={TWITER} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Twitter" />
           </div>
         </div>
 
@@ -93,6 +98,8 @@ const Footer = () => {
       </div>
     </div>
   );
-};
+});
 
-export default Footer;
+Footer.displayName = "Footer";
+
+export default Footer

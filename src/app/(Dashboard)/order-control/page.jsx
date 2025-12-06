@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../../Components/Sidebar/Sidebar";
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
+
 import Cookies from "js-cookie";
 import HeaderWithRole from "../../../Components/Hooks/HeaderWithRole";
 
@@ -22,7 +23,7 @@ const OrderControl = () => {
         return;
       }
 
-      const res = await axios.get("/orders/all", {
+      const res = await axiosAuth.get("/orders/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
 

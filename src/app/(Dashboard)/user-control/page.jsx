@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../../Components/Sidebar/Sidebar";
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
 import Cookies from "js-cookie";
 import { FaUserCheck, FaUserTimes, FaSearch, FaSync, FaPlus } from "react-icons/fa";
 import HeaderWithRole from "../../../Components/Hooks/HeaderWithRole";
@@ -30,7 +30,7 @@ const UserControl = () => {
       setError("");
       const token = Cookies.get("token");
 
-      const res = await axios.get("/users/all", {
+      const res = await axiosAuth.get("/users/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -63,7 +63,7 @@ const UserControl = () => {
         role: { name: `ROLE_${form.role.toUpperCase()}` }, // <-- wrap role string
       };
 
-      await axios.post("/users/add", payload, {
+      await axiosAuth.post("/users/add", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

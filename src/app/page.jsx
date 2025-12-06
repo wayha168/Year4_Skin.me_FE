@@ -1,7 +1,7 @@
 // src/page.jsx
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import {useRouter,  useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -29,22 +29,22 @@ export default function Page() {
       const [loading, setLoading] = useState(true);
       const [isClient, setIsClient] = useState(false);
     
-      const loginFirst = new LoginFirst(user, router.push);
+      const loginFirst = useMemo(() => new LoginFirst(user, router.push), [user, router.push]);
     
-      const scrollToProducts = () => {
+      const scrollToProducts = useCallback(() => {
         const section = document.getElementById("product");
         if (section) {
           const navbarHeight = document.querySelector("nav")?.offsetHeight || 0;
           const y = section.getBoundingClientRect().top + window.scrollY - navbarHeight;
           window.scrollTo({ top: y, behavior: "smooth" });
         }
-      };
+      }, []);
     
       useEffect(() => {
         if (searchParams.get("scroll") === "product") {
           scrollToProducts();
         }
-      }, [searchParams]);
+      }, [searchParams, scrollToProducts]);
     
       useEffect(() => {
         setIsClient(true);
@@ -64,23 +64,24 @@ export default function Page() {
         fetchProducts();
       }, []);
     
-      const handleFavoriteClick = async (productId) => {
+      const handleFavoriteClick = useCallback(async (productId) => {
         if (!user) {
           const message = loginFirst.messages.loginRequiredFavorite;
           router.push(`/login?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`);
           return;
         }
         await addToFavorite(productId);
-      };
+      }, [user, loginFirst, router, addToFavorite]);
     
-      const handleAddToCartClick = async (productId) => {
+      const handleAddToCartClick = useCallback(async (productId) => {
         if (!user) {
           const message = loginFirst.messages.loginRequiredCart;
           router.push(`/login?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`);
           return;
         }
         await addToCart(productId, 1);
-      };
+      }, [user, loginFirst, router, addToCart]);
+
   return (
     <>
           {isClient && <Navbar alwaysVisible={true} />}

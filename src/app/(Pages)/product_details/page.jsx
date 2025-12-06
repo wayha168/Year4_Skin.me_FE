@@ -3,7 +3,8 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import axios from "../../../api/axiosConfig";
+
+import axiosAuth from "../../../lib/api/axiosConfig";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import Loading from "../../../Components/Loading/Loading";
@@ -48,7 +49,7 @@ const ProductDetailsContent = () => {
         // Attempt 1: /products/{id}
         try {
           console.log("Trying endpoint: /products/" + productId);
-          response = await axios.get(`/products/${productId}`);
+          response = await axiosAuth.get(`/products/${productId}`);
           console.log("Response from /products/{id}:", response.data);
           
           if (response.data) {
@@ -62,7 +63,7 @@ const ProductDetailsContent = () => {
         if (!productData) {
           try {
             console.log("Trying endpoint: /products/by-id/" + productId);
-            response = await axios.get(`/products/by-id/${productId}`);
+            response = await axiosAuth.get(`/products/by-id/${productId}`);
             console.log("Response from /products/by-id/{id}:", response.data);
             
             if (response.data) {
@@ -77,7 +78,7 @@ const ProductDetailsContent = () => {
         if (!productData) {
           try {
             console.log("Trying endpoint: /products/product/" + productId);
-            response = await axios.get(`/products/product/${productId}`);
+            response = await axiosAuth.get(`/products/product/${productId}`);
             console.log("Response from /products/product/{id}:", response.data);
             
             if (response.data) {
@@ -91,7 +92,7 @@ const ProductDetailsContent = () => {
         // Attempt 4: Fallback - get from all products
         if (!productData) {
           console.log("Trying fallback: fetching from /products/all");
-          response = await axios.get("/products/all");
+          response = await axiosAuth.get("/products/all");
           console.log("Response from /products/all:", response.data);
           
           const allProducts = response.data?.data || response.data || [];
@@ -127,7 +128,7 @@ const ProductDetailsContent = () => {
     const fetchRelatedProducts = async (categoryId, currentProductId) => {
       try {
         // Fetch all products
-        const response = await axios.get("/products/all");
+        const response = await axiosAuth.get("/products/all");
         const allProducts = response.data?.data || response.data || [];
         
         // Filter products by same category, exclude current product, limit to 10 (5 columns x 2 rows)

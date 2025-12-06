@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
+
 import Sidebar from "../../../Components/Sidebar/Sidebar";
 import { FaPlus, FaEdit, FaTrash, FaImage, FaSync } from "react-icons/fa";
 import Cookies from "js-cookie";
@@ -54,7 +55,7 @@ const ProductCrud = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("/products/all", {
+      const res = await axiosAuth.get("/products/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProducts(res.data.data || []);
@@ -65,7 +66,7 @@ const ProductCrud = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get("/categories/all-categories", {
+      const res = await axiosAuth.get("/categories/all-categories", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCategories(res.data.data || []);
@@ -108,11 +109,11 @@ const ProductCrud = () => {
         category: { id: Number(form.categoryId) },
       };
       if (isEditing) {
-       await axios.put(`/products/product/${editingId}/update`, payload, {
+       await axiosAuth.put(`/products/product/${editingId}/update`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        await axios.post("/products/add", payload, {
+        await axiosAuth.post("/products/add", payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -128,7 +129,7 @@ const handleDeleteProduct = async (id) => {
 
   try {
     // THIS IS THE CORRECT ENDPOINT — matches your working UPDATE pattern
-    await axios.delete(`/products/product/${id}/delete`);
+    await axiosAuth.delete(`/products/product/${id}/delete`);
 
     fetchProducts();
     alert("Product deleted successfully!");
@@ -157,7 +158,7 @@ const handleDeleteProduct = async (id) => {
     formData.append("productId", currentProductId);
 
     try {
-      await axios.post("/images/upload", formData, {
+      await axiosAuth.post("/images/upload", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",

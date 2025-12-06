@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../../Components/Sidebar/Sidebar";
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
 import { FaPlus, FaEdit, FaTrash, FaSync, FaUser } from "react-icons/fa";
 import Cookies from "js-cookie";
 
@@ -18,7 +18,7 @@ const CategoryCrud = () => {
     setLoading(true);
     try {
       const token = Cookies.get("token");
-      const res = await axios.get("/categories/all-categories", {
+      const res = await axiosAuth.get("/categories/all-categories", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCategories(res.data.data || []);
@@ -34,7 +34,7 @@ const CategoryCrud = () => {
       const token = Cookies.get("token");
       if (!token) return;
 
-      const res = await axios.get("/users/me", {
+      const res = await axiosAuth.get("/users/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUserName(res.data?.data?.username || res.data?.data?.name || "Admin");
@@ -82,13 +82,13 @@ const CategoryCrud = () => {
       if (!token) throw new Error("Not authenticated");
 
       if (isEditing) {
-        await axios.put(
+        await axiosAuth.put(
           `/categories/category/${editingId}/update`,
           { name },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        await axios.post(
+        await axiosAuth.post(
           "/categories/add-category",
           { name },
           { headers: { Authorization: `Bearer ${token}` } }
@@ -105,7 +105,7 @@ const CategoryCrud = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this category?")) return;
     try {
-      await axios.delete(`/categories/category/${id}/delete`, {
+      await axiosAuth.delete(`/categories/category/${id}/delete`, {
         headers: { Authorization: `Bearer ${Cookies.get("token")}` },
       });
       fetchCategories();

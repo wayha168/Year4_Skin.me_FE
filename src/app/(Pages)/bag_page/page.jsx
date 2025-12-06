@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import { FaTrash, FaShoppingBag } from "react-icons/fa";
 
@@ -19,7 +19,7 @@ function BagPage() {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const res = await axios.get("/carts/my-cart", { withCredentials: true });
+        const res = await axiosAuth.get("/carts/my-cart", { withCredentials: true });
         const itemsArray = Array.isArray(res.data.data.items)
           ? res.data.data.items
           : Array.from(res.data.data.items || []);
@@ -57,7 +57,7 @@ function BagPage() {
 
       for (const endpoint of endpoints) {
         try {
-          await axios.delete(endpoint, { withCredentials: true });
+          await axiosAuth.delete(endpoint, { withCredentials: true });
           success = true;
           break;
         } catch (err) {

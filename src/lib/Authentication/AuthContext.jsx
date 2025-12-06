@@ -4,7 +4,7 @@
 
 import Cookies from "js-cookie";
 import { createContext, useEffect, useState, useContext } from "react";
-import axiosAuth from "../axiosAuthConfig";
+import axiosAuth from "../api/axiosConfig";
 import { useRouter } from "next/navigation";
 
 const AuthContext = createContext({});

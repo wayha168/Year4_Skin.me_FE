@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
-import useAuthContext from "../../../Authentication/AuthContext";
+import useAuthContext from "../../../lib/Authentication/AuthContext";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import { FaShoppingBag } from "react-icons/fa";
 
@@ -36,7 +36,7 @@ const FavoritePage = () => {
 
     const fetchFavorites = async () => {
       try {
-        const { data } = await axios.get(`/favorites/user/${userId}`, {
+        const { data } = await axiosAuth.get(`/favorites/user/${userId}`, {
           withCredentials: true,
         });
         setFavorites(data?.data || []);
@@ -56,7 +56,7 @@ const FavoritePage = () => {
     if (!userId) return;
 
     try {
-      await axios.delete("/favorites/remove", {
+      await axiosAuth.delete("/favorites/remove", {
         params: { userId, productId },
         withCredentials: true,
       });

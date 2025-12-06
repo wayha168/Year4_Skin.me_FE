@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../../Components/Sidebar/Sidebar";
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
+
 import { FaPlus, FaTrash } from "react-icons/fa";
 import Cookies from "js-cookie";
 
@@ -15,7 +16,7 @@ const ImageCrud = () => {
 
   const fetchImages = async () => {
     try {
-      const res = await axios.get("/images/all", {
+      const res = await axiosAuth.get("/images/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setImages(res.data.data || []);
@@ -26,7 +27,7 @@ const ImageCrud = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("/products/all", {
+      const res = await axiosAuth.get("/products/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProducts(res.data.data || []);
@@ -50,7 +51,7 @@ const ImageCrud = () => {
     formData.append("productId", productId);
 
     try {
-      await axios.post("/images/upload", formData, {
+      await axiosAuth.post("/images/upload", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -67,7 +68,7 @@ const ImageCrud = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this image?")) return;
     try {
-      await axios.delete(`/images/image/${id}/delete`, {
+      await axiosAuth.delete(`/images/image/${id}/delete`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchImages();

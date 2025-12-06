@@ -1,7 +1,7 @@
 // src/signup/page.jsx
 "use client";
 import Link from "next/link";
-import useAuthContext from "../../../Authentication/AuthContext";
+import useAuthContext from "../../../lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
 import { useState } from "react";
 import {useRouter, useSearchParams } from "next/navigation";

@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaFacebook, FaGoogle } from "react-icons/fa";
-import useAuthContext from "../../../Authentication/AuthContext";
+import useAuthContext from "../../../lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
 import Image from "next/image"; // ✅ Added
 

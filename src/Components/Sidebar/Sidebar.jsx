@@ -12,7 +12,7 @@ import {
   FaUserCheck,
 } from "react-icons/fa";
 import { SiHomepage } from "react-icons/si";
-import useAuthContext from "../../Authentication/AuthContext"; // ← Import
+import useAuthContext from "../../lib/Authentication/AuthContext";
 
 const Sidebar = () => {
   const pathname = usePathname();

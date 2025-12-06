@@ -3,10 +3,10 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
-import useAuthContext from "../../../Authentication/AuthContext";
+import useAuthContext from "../../../lib/Authentication/AuthContext";
 import { FaUser, FaEnvelope, FaCalendarAlt, FaUserCircle } from "react-icons/fa";
 import Loading from "../../../Components/Loading/Loading";
-import axiosAuth from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 
 const ProfilePage = () => {

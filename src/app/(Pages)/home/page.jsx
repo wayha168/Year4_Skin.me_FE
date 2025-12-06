@@ -9,9 +9,9 @@ import { useState } from "react";
 
 import Navbar from "../../../Components/Navbar/Navbar.jsx";
 import Footer from "../../../Components/Footer/Footer.jsx";
-import axios from "../../../api/axiosConfig.js";
+import axiosAuth from "../../../lib/api/axiosConfig.js";
 import useUserActions from "../../../Components/Hooks/userUserActions.js";
-import useAuthContext from "../../../Authentication/AuthContext.jsx";
+import useAuthContext from "../../../lib/Authentication/AuthContext.jsx";
 import LoginFirst from "../../../Components/LoginFirst/LoginFirst.js";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
 
@@ -55,7 +55,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("/products/all");
+        const res = await axiosAuth.get("/products/all");
         setProducts(res?.data?.data || []);
       } catch (err) {
         console.error("Error fetching products:", err);

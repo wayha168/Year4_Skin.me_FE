@@ -4,7 +4,8 @@ import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 import Sidebar from "../../../Components/Sidebar/Sidebar";
 import Cookies from "js-cookie";
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
+
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -16,7 +17,7 @@ const Sales = () => {
     const fetchMonthlySales = async () => {
       try {
         const token = Cookies.get("token");
-        const res = await axios.get("/sales/monthly", {
+        const res = await axiosAuth.get("/sales/monthly", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setSalesData(res.data.data || []);

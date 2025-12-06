@@ -6,12 +6,12 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 
 import { FaCartPlus, FaHeart, FaChevronRight, FaChevronLeft } from "react-icons/fa";
-import useAuthContext from "../../../Authentication/AuthContext";
+import useAuthContext from "../../../lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
 
@@ -34,7 +34,7 @@ const Products = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get("/categories/all-categories");
+        const res = await axiosAuth.get("/categories/all-categories");
         setCategories(res?.data?.data || []);
       } catch (err) {
         console.error("Error fetching categories:", err);
@@ -48,7 +48,7 @@ const Products = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("/products/all");
+        const res = await axiosAuth.get("/products/all");
         setProducts(res?.data?.data || []);
       } catch (err) {
         console.error("Error fetching products:", err);

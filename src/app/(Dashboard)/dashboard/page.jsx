@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../../Components/Sidebar/Sidebar";
 import Cookies from "js-cookie";
-import axios from "../../../api/axiosConfig";
+import axiosAuth from "../../../lib/api/axiosConfig";
+
 import { DollarSign, Package, TrendingUp, ShoppingCart } from "lucide-react";
 import SummaryCard from "../../../Components/SummaryCard/SummaryCard";
-import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import HeaderWithRole from "../../../Components/Hooks/HeaderWithRole";
 
@@ -25,13 +25,13 @@ const Dashboard = () => {
         const token = Cookies.get("token");
 
         // Fetch sales records
-        const resSales = await axios.get("/popular/sales", {
+        const resSales = await axiosAuth.get("/popular/sales", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setSalesRecords(resSales.data.data || []);
 
         // Fetch orders
-        const resOrders = await axios.get("/orders/all", {
+        const resOrders = await axiosAuth.get("/orders/all", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setOrders(resOrders.data.data || []);

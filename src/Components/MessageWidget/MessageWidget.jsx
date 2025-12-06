@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaSmile, FaPaperPlane, FaTimes, FaSpinner } from "react-icons/fa";
 import EmojiPicker from "emoji-picker-react";
-import axiosAuth from "../../lib/api/axiosConfig";
-import useAuthContext from "../../lib/Authentication/AuthContext";
+import axiosAuth from "../../app/lib/api/axiosConfig";
+import useAuthContext from "../../app/lib/Authentication/AuthContext";
 
 const WELCOME_MESSAGE =
   "Hello! This is Skin.me Assistant – your personal skincare advisor. How can I help you today?";

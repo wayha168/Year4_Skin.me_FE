@@ -1,21 +1,21 @@
-// src/signup/page.jsx
 "use client";
-import Link from "next/link";
-import useAuthContext from "../../../app/lib/Authentication/AuthContext";
-import Loading from "../../../Components/Loading/Loading";
+
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import useAuthContext from "../../lib/Authentication/AuthContext";
+import Loading from "../../../Components/Loading/Loading";
 
 const Signup = () => {
-  const MainImage = "/assets/product_homepage.png";
-
-  const route = useRouter();
-  const searchParam = useSearchParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { signup, error } = useAuthContext();
 
-  const popupMessage = searchParam.state?.popupMessage || "";
-  const redirectTo = searchParam.state?.redirectTo || "";
+  // Get query parameters properly
+  const popupMessage = searchParams.get("message") || "";
+  const redirectTo = searchParams.get("redirect") || "";
 
+  // Form state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,17 +27,32 @@ const Signup = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "firstName") setFirstName(value);
-    if (name === "lastName") setLastName(value);
-    if (name === "email") setEmail(value);
-    if (name === "password") setPassword(value);
-    if (name === "confirmPassword") setConfirmPassword(value);
+    switch (name) {
+      case "firstName":
+        setFirstName(value);
+        break;
+      case "lastName":
+        setLastName(value);
+        break;
+      case "email":
+        setEmail(value);
+        break;
+      case "password":
+        setPassword(value);
+        break;
+      case "confirmPassword":
+        setConfirmPassword(value);
+        break;
+      default:
+        break;
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
 
+    // Simple validation
     if (!firstName.trim() || !lastName.trim()) {
       setFormError("Please fill in your first and last name.");
       return;
@@ -63,16 +78,19 @@ const Signup = () => {
 
       if (userData) {
         const roles = Array.isArray(userData.roles) ? userData.roles : [userData.role];
-
         const isAdmin = roles.includes("ROLE_ADMIN") || roles.includes("ADMIN");
 
-        route.push(redirectTo || (isAdmin ? "/dashboard" : "/"));
+        router.push(redirectTo || (isAdmin ? "/dashboard" : "/"));
       }
     } catch (err) {
       console.error(err);
       setFormError(error || "Signup failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const MainImage = "/assets/product_homepage.png";
 
   return (
     <section className="min-h-screen bg-pink-100 flex items-center justify-center p-6 relative overflow-hidden">
@@ -153,7 +171,7 @@ const Signup = () => {
               onChange={handleInputChange}
               placeholder="Enter your password"
               disabled={isLoading}
-              className="border p-2 rounded-md focus:border-ppink-400 focus:ring-2 focus:ring-pink-200 outline-none"
+              className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
             />
           </div>
 
@@ -171,7 +189,7 @@ const Signup = () => {
             />
           </div>
 
-          {/* Button */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}

@@ -1,6 +1,6 @@
 // src/Components/Hooks/HeaderWithRole.jsx
 
-import useAuthContext from "../../lib/Authentication/AuthContext";
+import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import { FaUserShield, FaUser } from "react-icons/fa";
 
 const HeaderWithRole = () => {

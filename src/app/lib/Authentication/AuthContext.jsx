@@ -1,50 +1,51 @@
-// src/lib/Authentication/AuthContext.jsx
-
 "use client";
 
-import Cookies from "js-cookie";
 import { createContext, useEffect, useState, useContext } from "react";
+import Cookies from "js-cookie";
 import axiosAuth from "../api/axiosConfig";
 import { useRouter } from "next/navigation";
 
+// Create Auth Context
 const AuthContext = createContext({});
 
+// Auth Provider
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
 
-  const [user, setUser] = useState(() => {
-    if (typeof window !== "undefined") {
-      const savedUser = localStorage.getItem("user");
-      const savedToken = Cookies.get("token");
-      return savedUser && savedToken ? { ...JSON.parse(savedUser), token: savedToken } : null;
-    }
-    return null;
-  });
-
+  // User state
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Client mount flag to avoid SSR hydration mismatch
+  const [isClient, setIsClient] = useState(false);
+
+  // Run only on client
   useEffect(() => {
+    setIsClient(true);
+
     const initAuth = async () => {
-      if (typeof window !== "undefined") {
-        const token = Cookies.get("token");
-        
-        if (token && !user) {
-          // Token exists but no user in state - fetch user
-          await fetchUser(token);
-        } else if (token && user) {
-          // Token and user both exist - already loaded from localStorage
-          setLoading(false);
-        } else {
-          // No token - user is not logged in
+      const token = Cookies.get("token");
+
+      if (token) {
+        // Load user from localStorage if exists
+        const savedUser = localStorage.getItem("user");
+        if (savedUser) {
+          setUser({ ...JSON.parse(savedUser), token });
           setLoading(false);
         }
+
+        // Fetch latest user info from API
+        await fetchUser(token);
+      } else {
+        setLoading(false);
       }
     };
 
     initAuth();
   }, []);
 
+  // Fetch current user info
   const fetchUser = async (token) => {
     try {
       const response = await axiosAuth.get("/users/me");
@@ -61,6 +62,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Login function
   const login = async ({ email, password }) => {
     try {
       setError("");
@@ -69,31 +71,27 @@ export const AuthProvider = ({ children }) => {
       if (response.status === 200 && response.data?.data?.jwtToken) {
         const token = response.data.data.jwtToken;
         const userData = response.data.data;
-        
+
         Cookies.set("token", token, { expires: 7 });
         localStorage.setItem("user", JSON.stringify(userData));
-        
+
         setUser({ ...userData, token });
         return userData;
       } else {
         let message = response.data?.message || "Login failed";
-        if (message === "Invalid email or password") {
-          message = "Incorrect email or password";
-        }
+        if (message === "Invalid email or password") message = "Incorrect email or password";
         setError(message);
         return null;
       }
     } catch (err) {
       console.error("Login error:", err.response || err);
-      let message = err.response?.data?.message || "Network error";
-      if (message === "Invalid email or password") {
-        message = "Incorrect email or password";
-      }
+      const message = err.response?.data?.message || "Network error";
       setError(message);
       return null;
     }
   };
 
+  // Signup function
   const signup = async (data) => {
     try {
       setError("");
@@ -106,10 +104,8 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.status === 200 || response.status === 201) {
-        const userData = await login({
-          email: data.email,
-          password: data.password,
-        });
+        // Auto-login after signup
+        const userData = await login({ email: data.email, password: data.password });
         return userData;
       } else {
         setError(response.data?.message || "Signup failed");
@@ -123,14 +119,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Logout function
   const logout = async () => {
     try {
       const token = Cookies.get("token");
-      
+
       Cookies.remove("token");
       localStorage.removeItem("user");
       setUser(null);
-      
+
       router.push("/login");
 
       if (token) {
@@ -144,11 +141,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Check if user is admin
   const isAdmin = () => {
     if (!user) return false;
     const roles = Array.isArray(user.roles) ? user.roles : [user.role].filter(Boolean);
     return roles.some((r) => r === "ROLE_ADMIN" || r === "ADMIN");
   };
+
+  // Prevent SSR hydration mismatch
+  if (!isClient) return null;
 
   return (
     <AuthContext.Provider value={{ user, loading, error, login, signup, logout, isAdmin }}>

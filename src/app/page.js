@@ -5,7 +5,7 @@ import React, { useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import {useRouter,  useSearchParams } from "next/navigation";
 import { useState } from "react";
-import axios from "../app/lib/api/axiosConfig.js";
+import axios from "./lib/api/axiosConfig.js";
 import Navbar from "../Components/Navbar/Navbar.jsx";
 import Footer from "../Components/Footer/Footer.jsx";
 import useUserActions from "../Components/Hooks/userUserActions.js";

@@ -3,8 +3,8 @@
 "use client"; // THIS LINE FIXES THE ERROR — ADD IT AT THE VERY TOP
 
 import { useState } from "react";
-import axios from "../../api/axiosConfig";
-import useAuthContext from "../../Authentication/AuthContext";
+import axios from "../../lib/api/axiosConfig";
+import useAuthContext from "../../lib/Authentication/AuthContext";
 
 const useUserActions = () => {
   const { user } = useAuthContext();

@@ -4,7 +4,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import useAuthContext from "../../Authentication/AuthContext";
+import useAuthContext from "../../lib/Authentication/AuthContext";
 import Loading from "../Loading/Loading";
 import LoginFirst from "../LoginFirst/LoginFirst";
 

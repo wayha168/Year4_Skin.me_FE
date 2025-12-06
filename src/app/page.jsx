@@ -8,9 +8,9 @@ import { useState } from "react";
 
 import Navbar from "../Components/Navbar/Navbar.jsx";
 import Footer from "../Components/Footer/Footer.jsx";
-import axios from "../api/axiosConfig";
+import axios from "../lib/api/axiosConfig.js";
 import useUserActions from "../Components/Hooks/userUserActions.js";
-import useAuthContext from "../Authentication/AuthContext.jsx";
+import useAuthContext from "../lib/Authentication/AuthContext.jsx";
 import LoginFirst from "../Components/LoginFirst/LoginFirst.js";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
 
@@ -19,7 +19,7 @@ export default function Page() {
     const FirstImage = "/assets/first_image.png"
     const SecondImage = "/assets/second_image.png"
     const ThirdImage = "/assets/third_image.png"
-    const MainImage = "/assets/product_homepage.png"
+    const MainImage = "/assets/product_homepage.webp"
     const router = useRouter();
       const searchParams = useSearchParams();
     
@@ -104,7 +104,8 @@ export default function Page() {
             </div>
             
             <div className="w-[40rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem]">
-              <Image src={MainImage} alt="skin product" width={800} height={800} className="h-[50rem] object-contain z-[5] max-[992px]:w-full max-[992px]:h-auto" />
+             <Image  sizes="100vw"  priority
+            src={MainImage} alt="skin product" width={800} height={800} className="h-[50rem] object-contain z-[5] max-[992px]:w-full max-[992px]:h-auto"  rel="preload" />
             </div>
             
             <div className="absolute bg-[#ab8fff] rounded-[1000px] z-0 right-[-25rem] top-80 w-[30rem] h-[30rem] max-[992px]:hidden max-[760px]:right-[-25rem]"></div>

@@ -91,7 +91,7 @@ const MessageWidget = () => {
   if (!showInput) {
     return (
       <div
-        className="fixed bottom-5 right-5 w-[4.5rem] h-[4.5rem] bg-gradient-to-br from-pink-400 to-purple-600 text-white rounded-full flex items-center justify-center text-2xl shadow-[0_6px_20px_rgba(0,0,0,0.25)] cursor-pointer z-[999] transition-all duration-200 hover:scale-110 active:scale-105 active:bg-gradient-to-br active:from-pink-300 active:to-purple-500"
+        className="fixed bottom-5 right-5 w-[4.5rem] h-[4.5rem] bg-gradient-to-br from-pink-400 to-purple-600 text-white rounded-full flex items-center justify-center text-2xl shadow-[0_6px_20px_rgba(0,0,0,0.25)] cursor-pointer z-[999] transition-all duration-200 hover:scale-110 active:scale-105 active:bg-gradient-to-br active:from-pink-300 active:to-purple-500 max-[510px]:mb-[4.7rem]"
         onClick={() => setShowInput(true)}
       >
         <i className="fa-solid fa-message text-white text-2xl" />
@@ -101,7 +101,7 @@ const MessageWidget = () => {
 
   // Message Box
   return (
-    <div className="fixed bottom-5 right-5 w-[380px] max-h-[80vh] bg-white rounded-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.15)] flex flex-col font-[Segoe_UI,Roboto,sans-serif] z-[1000] overflow-hidden transition-all duration-300">
+    <div className="fixed bottom-5 right-5 w-[380px] max-h-[80vh] bg-white rounded-[20px] shadow-[0_12px_40px_rgba(0,0,0,0.15)] flex flex-col font-[Segoe_UI,Roboto,sans-serif] z-[1000] overflow-hidden transition-all duration-300 max-[510px]:mb-[4.7rem]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3.5 bg-gradient-to-br from-pink-400 to-purple-600 text-white font-semibold text-base shadow-[0_4px_10px_rgba(0,0,0,0.1)]">
         <span className="flex items-center gap-2">

@@ -54,9 +54,9 @@ const Navbar = ({ alwaysVisible = false }) => {
     };
   }, [handleResize]);
 
-  // Scroll hide/show navbar (disabled for alwaysVisible)
+  // Scroll hide/show navbar
   const handleScroll = useCallback(() => {
-    if (alwaysVisible || scrollTimeoutRef.current) return;
+    if (scrollTimeoutRef.current) return;
 
     scrollTimeoutRef.current = setTimeout(() => {
       const currentScroll = window.scrollY;
@@ -67,18 +67,16 @@ const Navbar = ({ alwaysVisible = false }) => {
       setVisible(currentScroll < prevScroll || currentScroll < 10);
       scrollTimeoutRef.current = null;
     }, 100);
-  }, [alwaysVisible]);
+  }, []);
 
   useEffect(() => {
-    if (alwaysVisible) return;
-
     window.prevScrollY = window.scrollY;
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
-  }, [alwaysVisible, handleScroll]);
+  }, [handleScroll]);
 
   // Close menu when clicking outside
   const handleClickOutside = useCallback((e) => {
@@ -125,7 +123,7 @@ const Navbar = ({ alwaysVisible = false }) => {
       {/* NORMAL NAVBAR */}
       <nav
         className={`fixed left-0 w-full bg-[#FFD0ED] shadow-xl transition-all duration-300 z-[9999] h-24 ${
-          visible || alwaysVisible ? "top-0" : "-top-32"
+          visible ? "top-0" : "-top-32"
         }`}
       >
         <div
@@ -267,21 +265,23 @@ const Navbar = ({ alwaysVisible = false }) => {
 
       {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px) */}
       {isSmallMobile && (
-        <div className="fixed bottom-0 left-0 w-full bg-[#FFD0ED] h-20 shadow-xl z-[99999] flex justify-around items-center text-4xl text-gray-700">
+        <div className="fixed bottom-0 left-0 w-full bg-[#FFD0ED] h-20 shadow-xl z-[99999] flex justify-around items-center text-5xl text-gray-700">
+          <i
+            className="fa-solid fa-circle-info cursor-pointer hover:text-[#eb61a2] transition-colors"
+            onClick={() => safeNavigate("/about-us")}
+          ></i>
+
+          <i
+            className="fa-solid fa-shop text-[2.6rem] cursor-pointer hover:text-[#eb61a2] transition-colors"
+            onClick={() => safeNavigate("/products")}
+          ></i>
+
           <i
             className="fa-solid fa-house cursor-pointer hover:text-[#eb61a2] transition-colors"
             onClick={() => safeNavigate("/")}
           ></i>
 
-          <i
-            className="fa-solid fa-box cursor-pointer hover:text-[#eb61a2] transition-colors"
-            onClick={() => safeNavigate("/products")}
-          ></i>
-
-          <i
-            className="fa-solid fa-circle-info cursor-pointer hover:text-[#eb61a2] transition-colors"
-            onClick={() => safeNavigate("/about-us")}
-          ></i>
+          
 
           <i
             className="fa-solid fa-heart cursor-pointer hover:text-[#eb61a2] transition-colors"
@@ -306,8 +306,9 @@ const Navbar = ({ alwaysVisible = false }) => {
           )}
         </div>
       )}
-      <MessageWidget />
+
       {loading && <Loading />}
+      <MessageWidget/>
     </>
   );
 };

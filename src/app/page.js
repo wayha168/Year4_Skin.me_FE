@@ -82,7 +82,7 @@ export default function Page() {
       }, [user, loginFirst, router, addToCart]);
 
   return (
-    <>
+    <div className="overflow-x-hidden">
           {isClient && <Navbar alwaysVisible={true} />}
     
           {/* HERO SECTION */}
@@ -103,9 +103,9 @@ export default function Page() {
               </div>
             </div>
             
-            <div className="w-[40rem] h-[50rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem] max-[992px]:h-auto">
+            <div className="w-[40rem] h-[50rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem] max-[992px]:h-auto ">
              <Image  
-              sizes="(max-width: 992px) 100vw, 40rem"  
+              sizes="(max-width: 992px) 100vw, 40rem (max-width: 992px) 100vw, 40rem"  
               priority
               src={MainImage} 
               alt="skin product" 
@@ -230,6 +230,6 @@ export default function Page() {
           </div>
     
           <Footer />
-  </>
+    </div>
   );
 }

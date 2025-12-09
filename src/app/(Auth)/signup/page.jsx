@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import useAuthContext from "../../lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
+import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 
 const Signup = () => {
   const router = useRouter();
@@ -212,6 +213,7 @@ const Signup = () => {
       </div>
 
       {isLoading && <Loading />}
+      <MessageWidget/>
     </section>
   );
 };

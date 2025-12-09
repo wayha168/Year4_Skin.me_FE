@@ -31,13 +31,19 @@ export default function Page() {
       const loginFirst = useMemo(() => new LoginFirst(user, router.push), [user, router.push]);
     
       const scrollToProducts = useCallback(() => {
-        const section = document.getElementById("product");
-        if (section) {
-          const navbarHeight = document.querySelector("nav")?.offsetHeight || 0;
-          const y = section.getBoundingClientRect().top + window.scrollY - navbarHeight;
-          window.scrollTo({ top: y, behavior: "smooth" });
-        }
-      }, []);
+      const section = document.getElementById("product");
+    if (section) {
+      const navbarHeight = document.querySelector("nav")?.offsetHeight || 0;
+    
+    // 🔥 THIS IS THE KEY LINE - Change this number to control position
+      const extraOffset = -120; // Adjust this value!
+    
+    // Apply the offset to the scroll calculation
+      const y = section.getBoundingClientRect().top + window.scrollY - navbarHeight - extraOffset;
+    
+     window.scrollTo({ top: y, behavior: "smooth" });
+  }
+}, []);
     
       useEffect(() => {
         if (searchParams.get("scroll") === "product") {
@@ -86,7 +92,7 @@ export default function Page() {
           {isClient && <Navbar alwaysVisible={true} />}
     
           {/* HERO SECTION */}
-          <div className="flex justify-center items-center w-full h-screen bg-gradient-to-b from-[#fddcff] to-[#af6793] mt-16 overflow-hidden relative max-[992px]:flex-col max-[992px]:h-auto max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-12 max-[760px]:flex-col max-[760px]:gap-20">
+          <div className="flex justify-center items-center w-full h-full bg-gradient-to-b from-[#fddcff] to-[#af6793]  overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[9rem] max-[992px]:h-auto max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-12 max-[760px]:flex-col max-[760px]:gap-20">
             <div className="absolute bg-[#ab8fff] rounded-[1000px] z-0 left-[-25rem] top-16 w-[30rem] h-[30rem] max-[992px]:hidden"></div>
             
             <div className="flex flex-col ml-[7rem] justify-center w-[50%] text-[#1f2937] z-[2] max-[992px]:w-[90%] max-[992px]:ml-0">
@@ -96,14 +102,14 @@ export default function Page() {
               <div> 
                 <button 
                   onClick={scrollToProducts} 
-                  className="text-white text-[22px] font-semibold px-[50px] py-3.5 bg-[#eb61a2] rounded-[15px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-base max-[600px]:px-[30px] max-[600px]:py-2.5"
+                  className="text-white text-[22px] font-semibold px-[50px] py-3.5 bg-[#eb61a2] rounded-[15px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-base max-[600px]:px-[30px] max-[600px]:py-2.5"
                 >
                   Shop Now
                 </button>
               </div>
             </div>
             
-            <div className="w-[40rem] h-[50rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem] max-[992px]:h-auto ">
+            <div className="min-[992px]:pt-[5rem] w-[40rem] h-[50rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem] max-[992px]:h-auto ">
              <Image  
               sizes="(max-width: 992px) 100vw, 40rem (max-width: 992px) 100vw, 40rem"  
               priority
@@ -156,12 +162,12 @@ export default function Page() {
           <section id="product" className="py-20 px-8 bg-white text-center max-[1180px]:mt-[-3rem]">
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-12 px-5 uppercase">
-                <h2 className="text-4xl text-[#eb61a2] font-bold max-[600px]:text-[28px]">Product</h2>
+                <h2 className="text-4xl text-[#eb61a2] font-bold max-[600px]:text-[28px]">Products</h2>
                 <button 
                   className="bg-[#eb61a2] text-white border-none px-6 py-3 rounded-2xl text-xl cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[600px]:text-sm"
                   onClick={() => router.push("/products")}
                 >
-                  All Product
+                  All Products
                 </button>
               </div>
     

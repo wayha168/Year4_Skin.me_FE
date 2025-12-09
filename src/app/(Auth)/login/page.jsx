@@ -7,6 +7,7 @@ import { FaFacebook, FaGoogle } from "react-icons/fa";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
 import Image from "next/image";
+import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 
 const Login = () => {
   const MainImage = "/assets/product_homepage.png";
@@ -148,6 +149,7 @@ const Login = () => {
       </div>
 
       {isLoading && <Loading />}
+      <MessageWidget/>
     </section>
   );
 };

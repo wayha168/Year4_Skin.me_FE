@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import LoginFirst from "../LoginFirst/LoginFirst";
+import MessageWidget from "../MessageWidget/MessageWidget";
 
 const Loading = dynamic(() => import("../Loading/Loading"), {
   ssr: false,
@@ -55,16 +56,18 @@ const Navbar = ({ alwaysVisible = false }) => {
 
   // Scroll hide/show navbar (disabled for alwaysVisible)
   const handleScroll = useCallback(() => {
-    if (scrollTimeoutRef.current) return;
+    if (alwaysVisible || scrollTimeoutRef.current) return;
 
     scrollTimeoutRef.current = setTimeout(() => {
       const currentScroll = window.scrollY;
       const prevScroll = window.prevScrollY || 0;
       window.prevScrollY = currentScroll;
-      setVisible(prevScroll > currentScroll || currentScroll < 10);
+      
+      // Show navbar when scrolling up OR at top of page
+      setVisible(currentScroll < prevScroll || currentScroll < 10);
       scrollTimeoutRef.current = null;
     }, 100);
-  }, []);
+  }, [alwaysVisible]);
 
   useEffect(() => {
     if (alwaysVisible) return;
@@ -158,7 +161,8 @@ const Navbar = ({ alwaysVisible = false }) => {
             </div>
           )}
 
-            {/* MENU */}
+          {/* MENU */}
+          {!isSmallMobile && (
             <div
               className={`flex gap-6 text-[25px] font-medium max-[1034px]:items-center ${
                 menuOpen && isMobile
@@ -190,8 +194,10 @@ const Navbar = ({ alwaysVisible = false }) => {
                 About Us
               </Link>
             </div>
+          )}
 
-            {/* AUTH + ICONS */}
+          {/* AUTH + ICONS */}
+          {!isSmallMobile && (
             <div
               className={`flex items-center gap-4 ${
                 menuOpen && isMobile
@@ -300,7 +306,7 @@ const Navbar = ({ alwaysVisible = false }) => {
           )}
         </div>
       )}
-
+      <MessageWidget />
       {loading && <Loading />}
     </>
   );

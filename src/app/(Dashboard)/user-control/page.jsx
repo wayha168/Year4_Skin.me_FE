@@ -61,7 +61,7 @@ const UserControl = () => {
 
       const payload = {
         ...form,
-        role: { name: `ROLE_${form.role.toUpperCase()}` }, // <-- wrap role string
+        role: { name: `ROLE_${form.role.toUpperCase()}` }, 
       };
 
       await axiosAuth.post("/users/add", payload, {

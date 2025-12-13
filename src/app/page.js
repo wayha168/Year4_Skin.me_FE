@@ -1,4 +1,3 @@
-// src/page.jsx
 "use client";
 
 import React, { useEffect, useCallback, useMemo } from "react";

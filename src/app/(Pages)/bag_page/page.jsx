@@ -1,6 +1,7 @@
 // OPTIMIZED BAG PAGE - Fast Render
 // ============================================
 "use client";
+
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -8,7 +9,6 @@ import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
-
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import { FaShoppingBag } from "react-icons/fa";
 
@@ -20,6 +20,7 @@ function BagPage() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
+  const userId = user?.id;
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -30,6 +31,7 @@ function BagPage() {
     }
   }, [user, authLoading, router]);
 
+  // Fetch cart data
   useEffect(() => {
     if (authLoading || !user) {
       setLoading(false);
@@ -66,48 +68,55 @@ function BagPage() {
     fetchCart();
   }, [user, authLoading, router]);
 
-  const handleRemoveItem = useCallback(async (item) => {
-    const itemId = item.id || item.cartItemId || item.itemId;
+  // Remove item from cart - TRYING COMMON CART DELETE ENDPOINTS
+  const handleRemoveItem = useCallback(
+    async (itemId) => {
+      if (!userId) return;
 
-    if (!itemId) {
-      setNotification("Error: Could not identify item to remove");
-      setTimeout(() => setNotification(""), 3000);
-      return;
-    }
+      try {
+        // Try common cart delete endpoint patterns (similar to /favorites/remove)
+        const endpoints = [
+          { url: "/cart/remove", params: { userId, itemId } },
+          { url: "/carts/remove", params: { userId, itemId } },
+          { url: "/cartItems/remove", params: { userId, itemId } },
+          { url: "/cart-items/remove", params: { userId, itemId } },
+        ];
 
-    try {
-      let success = false;
-      const endpoints = [`/cartItems/item/${itemId}/delete`, `/cartItems/${itemId}`, `/cart/items/${itemId}`];
-
-      for (const endpoint of endpoints) {
-        try {
-          await axiosAuth.delete(endpoint, { withCredentials: true });
-          success = true;
-          break;
-        } catch (err) {
-          continue;
+        let success = false;
+        for (const endpoint of endpoints) {
+          try {
+            await axiosAuth.delete(endpoint.url, {
+              params: endpoint.params,
+              withCredentials: true,
+            });
+            console.log(`Success with endpoint: ${endpoint.url}`);
+            success = true;
+            break;
+          } catch (err) {
+            console.log(`Failed with endpoint: ${endpoint.url}`, err.response?.status);
+            continue;
+          }
         }
-      }
 
-      if (success) {
-        setCartItems((prevItems) => {
-          return prevItems.filter((cartItem) => {
-            const currentItemId = cartItem.id || cartItem.cartItemId || cartItem.itemId;
-            return currentItemId !== itemId;
-          });
-        });
+        if (!success) {
+          throw new Error("All cart delete endpoints failed");
+        }
+
+        setCartItems((prev) => prev.filter((cartItem) => {
+          const currentItemId = cartItem.id || cartItem.cartItemId || cartItem.itemId;
+          return currentItemId !== itemId;
+        }));
 
         setNotification("Item removed from bag");
         setTimeout(() => setNotification(""), 2000);
-      } else {
-        throw new Error("All delete attempts failed");
+      } catch (err) {
+        console.error("Error removing item from cart:", err);
+        setNotification("Failed to remove item");
+        setTimeout(() => setNotification(""), 3000);
       }
-    } catch (err) {
-      console.error("Error removing item from cart:", err);
-      setNotification("Failed to remove item");
-      setTimeout(() => setNotification(""), 3000);
-    }
-  }, []);
+    },
+    [userId]
+  );
 
   const handleCheckout = useCallback(() => {
     router.push("/check_out");
@@ -142,7 +151,7 @@ function BagPage() {
         </div>
       )}
 
-      <main className="pt-[9rem] px-4 sm:px-6 pb-16 bg-white font-[Poppins,sans-serif]">
+      <main className="flex-col justify-start pt-[9rem] px-4 sm:px-6 pb-16 bg-white font-[Poppins,sans-serif]">
         <div className="max-w-7xl mx-auto mb-12">
           <h1 className="text-4xl font-bold text-[#eb61a2]">My Bag</h1>
         </div>
@@ -156,16 +165,17 @@ function BagPage() {
           <p className="text-center text-gray-500 text-lg mt-20">Your bag is empty.</p>
         ) : (
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 z-[1]">
+            <div className="flex-row z-[1]">
               {cartItems.map((item, index) => {
                 const uniqueKey = item.id || `${item.product?.id}-${index}`;
+                const itemId = item.id || item.cartItemId || item.itemId;
                 const imageUrl = item?.product?.images?.[0]?.downloadUrl;
                 const imgSrc = imageUrl ? `https://backend.skinme.store${imageUrl}` : ThirdImage;
 
                 return (
                   <div
                     key={uniqueKey}
-                    className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-4 flex flex-col justify-between transition-[transform_0.3s_ease,box-shadow_0.3s_ease] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+                    className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] py-3 px-4 flex justify-start transition-[transform_0.3s_ease,box-shadow_0.3s_ease] mb-[1rem] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100] w-[80%] scale-[0.9]"
                   >
                     <div className="relative">
                       <Image
@@ -179,31 +189,31 @@ function BagPage() {
                       />
                     </div>
 
-                    <div className="flex flex-col justify-between px-3 py-2.5 flex-grow z-[100]">
-                      <div>
-                        <h3 className="text-base font-semibold text-left text-[#2d3748] leading-tight overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:text-base">
+                    <div className="flex flex-col items-end justify-between px-3 py-2.5 flex-grow z-[100]">
+                      <div className="flex-col items-center justify-between">
+                        <h3 className="flex justify-center text-base font-semibold text-[#2d3748] leading-tight overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:text-base">
                           {item.product.name}
                         </h3>
                         <p className="flex justify-center text-base font-bold text-left text-[#2563eb] my-1.5 max-[600px]:text-sm">
                           ${item.product.price?.toFixed(2)}
                         </p>
                         <p className="text-sm text-gray-600 text-center">Quantity: {item.quantity}</p>
-                      </div>
 
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={handleCheckout}
-                          className="mt-auto bg-[#d13e82] border-none rounded-xl px-5 py-2.5 text-white font-semibold cursor-pointer flex items-center justify-center gap-2 text-[0.95rem] shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] active:-translate-y-px active:scale-[0.98] active:shadow-[0_4px_10px_rgba(209,62,130,0.3)] z-[100]"
-                        >
-                          <FaShoppingBag className="text-[1.1rem] transition-transform duration-300" />
-                          Check Out
-                        </button>
-                        <button
-                          onClick={() => handleRemoveItem(item)}
-                          className="text-[#d13e82] font-medium hover:underline text-sm"
-                        >
-                          Remove
-                        </button>
+                        <div className="flex flex-col items-center">
+                          <button
+                            onClick={handleCheckout}
+                            className="mt-[1rem] bg-[#d13e82] border-none rounded-xl px-5 py-2.5 text-white font-semibold cursor-pointer flex items-center justify-center gap-2 text-[0.95rem] shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] active:-translate-y-px active:scale-[0.98] active:shadow-[0_4px_10px_rgba(209,62,130,0.3)] z-[100] w-[13rem]"
+                          >
+                            <FaShoppingBag className="text-[1.1rem] transition-transform duration-300" />
+                            Check Out
+                          </button>
+                          <button
+                            onClick={() => handleRemoveItem(itemId)}
+                            className="text-[#d13e82] font-medium hover:underline text-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -129,7 +129,7 @@ const Navbar = ({ alwaysVisible = false }) => {
         <div
           ref={navRef}
           className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-full"
-        >
+        >                                                                             
           {/* BRAND */}
           <Link
             href="/"
@@ -232,12 +232,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                     <i className="fa-solid fa-user"></i>
                   </Link>
 
-                  <button
-                    onClick={logout}
-                    className="px-7 py-3 text-[1.7rem] bg-[#eb61a2] text-white font-semibold rounded-lg hover:bg-[#d0578f]"
-                  >
-                    Logout
-                  </button>
+                  
                 </>
               ) : (
                 <>
@@ -263,8 +258,24 @@ const Navbar = ({ alwaysVisible = false }) => {
         </div>
       </nav>
 
-      {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px) */}
+      {/* 🚀 FLOATING AUTH BUTTON (TOP RIGHT - SMALL MOBILE ONLY) */}
       {isSmallMobile && (
+        <div
+          className={`fixed right-4 bg-[#eb61a2] rounded-full w-14 h-14 flex items-center justify-center shadow-lg z-[99999] transition-all duration-300 cursor-pointer hover:bg-[#f44d9b] ${
+            visible ? "top-6" : "-top-20"
+          }`}
+          onClick={() => safeNavigate(user ? "/profile" : "/login")}
+        >
+          <i
+            className={`fa-solid ${
+              user ? "fa-user" : "fa-right-to-bracket"
+            } text-white text-2xl`}
+          ></i>
+        </div>
+      )}
+
+      {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px) */}
+      {isSmallMobile && ( 
         <div className="fixed bottom-0 left-0 w-full bg-[#FFD0ED] h-20 shadow-xl z-[99999] flex justify-around items-center text-5xl text-gray-700">
           <i
             className="fa-solid fa-circle-info cursor-pointer hover:text-[#eb61a2] transition-colors"
@@ -281,8 +292,6 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={() => safeNavigate("/")}
           ></i>
 
-          
-
           <i
             className="fa-solid fa-heart cursor-pointer hover:text-[#eb61a2] transition-colors"
             onClick={handleFavoriteClick}
@@ -292,18 +301,6 @@ const Navbar = ({ alwaysVisible = false }) => {
             className="fa-solid fa-bag-shopping cursor-pointer hover:text-[#eb61a2] transition-colors"
             onClick={handleBagClick}
           ></i>
-
-          {user ? (
-            <i
-              className="fa-solid fa-user cursor-pointer hover:text-[#eb61a2] transition-colors"
-              onClick={() => safeNavigate("/profile")}
-            ></i>
-          ) : (
-            <i
-              className="fa-solid fa-right-to-bracket cursor-pointer hover:text-[#eb61a2] transition-colors"
-              onClick={() => safeNavigate("/login")}
-            ></i>
-          )}
         </div>
       )}
 

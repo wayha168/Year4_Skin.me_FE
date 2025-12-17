@@ -14,7 +14,7 @@ const Loading = dynamic(() => import("../Loading/Loading"), {
 
 const Navbar = ({ alwaysVisible = false }) => {
   const router = useRouter();
-  const { user, logout } = useAuthContext();
+  const { user } = useAuthContext();
 
   const [visible, setVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);

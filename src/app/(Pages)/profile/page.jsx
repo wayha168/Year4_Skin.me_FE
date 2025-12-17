@@ -4,14 +4,14 @@ import Image from "next/image";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
-import { FaUser, FaEnvelope, FaCalendarAlt, FaUserCircle } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaCalendarAlt, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import Loading from "../../../Components/Loading/Loading";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
-
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 
 const ProfilePage = () => {
-  const { user: authUser } = useAuthContext();
+  // Get user and logout function from auth context
+  const { user: authUser, logout } = useAuthContext();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -61,6 +61,7 @@ const ProfilePage = () => {
       </>
     );
   }
+
   return (
     <>
       <Navbar alwaysVisible={true} />
@@ -104,13 +105,22 @@ const ProfilePage = () => {
           </div>
 
           {/* Buttons */}
-          <div className="mt-6 flex justify-around">
-            <button className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+          <div className="mt-6 flex justify-around gap-2">
+            <button className="px-5 py-2 bg-[#eb61a2] text-white rounded-lg hover:bg-[#e30285] transition">
               Edit Profile
             </button>
 
-            <button className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <button className="px-5 py-2 bg-[#eb61a2] text-white rounded-lg hover:bg-[#e30285] transition">
               Change Password
+            </button>
+
+            {/* Logout Button */}
+            <button 
+              onClick={logout}
+              className="px-5 py-2 bg-[#ff1281] text-white rounded-lg hover:bg-[#ff2424] transition flex items-center gap-2"
+            >
+              <FaSignOutAlt />
+              Logout
             </button>
           </div>
         </div>

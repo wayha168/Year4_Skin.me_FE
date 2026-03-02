@@ -11,9 +11,6 @@ import useAuthContext from "../../app/lib/Authentication/AuthContext";
 const WELCOME_MESSAGE =
   "Hello! This is Skin.me Assistant – your personal skincare advisor. How can I help you today?";
 
-const BACKEND_URL = "https://backend.skinme.store";
-const FRONTEND_URL = "https://skinme.store";
-
 const FALLBACK_ANSWER =
   "I couldn't find an exact product for that, but I can still help you with skincare advice or product suggestions!";
 
@@ -71,7 +68,8 @@ const MessageWidget = () => {
       let aiText = (res.data || "").trim();
       if (!aiText) aiText = FALLBACK_ANSWER;
 
-      aiText = aiText.replace(/src="\/api\/v1\/images/g, `src="${BACKEND_URL}/api/v1/images`);
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      aiText = aiText.replace(/src="(\/api\/v1\/images[^"]*)"/g, `src="${origin}$1"`);
 
       const assistantMsg = {
         role: "assistant",

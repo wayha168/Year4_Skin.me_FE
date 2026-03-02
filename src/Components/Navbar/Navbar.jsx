@@ -2,11 +2,14 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import LoginFirst from "../LoginFirst/LoginFirst";
 import MessageWidget from "../MessageWidget/MessageWidget";
+import axiosAuth from "../../app/lib/api/axiosConfig";
+import { getProductImageUrl } from "../../app/lib/productImage";
 
 const Loading = dynamic(() => import("../Loading/Loading"), {
   ssr: false,
@@ -22,9 +25,14 @@ const Navbar = ({ alwaysVisible = false }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isSmallMobile, setIsSmallMobile] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchProducts, setSearchProducts] = useState([]);
+  const [searchProductsLoading, setSearchProductsLoading] = useState(false);
 
   const navRef = useRef(null);
-  const scrollTimeoutRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const searchResultsRef = useRef(null);
 
   // Initialize screen size
   useEffect(() => {
@@ -54,42 +62,29 @@ const Navbar = ({ alwaysVisible = false }) => {
     };
   }, [handleResize]);
 
-  // Scroll hide/show navbar
+  // Keep navbar always visible when scrolling
   const handleScroll = useCallback(() => {
-    if (scrollTimeoutRef.current) return;
-
-    scrollTimeoutRef.current = setTimeout(() => {
-      const currentScroll = window.scrollY;
-      const prevScroll = window.prevScrollY || 0;
-      window.prevScrollY = currentScroll;
-      
-      // Show navbar when scrolling up OR at top of page
-      setVisible(currentScroll < prevScroll || currentScroll < 10);
-      scrollTimeoutRef.current = null;
-    }, 100);
+    setVisible(true);
   }, []);
 
   useEffect(() => {
-    window.prevScrollY = window.scrollY;
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Close menu when clicking outside
+  // Close menu and search when clicking outside
   const handleClickOutside = useCallback((e) => {
     if (navRef.current && !navRef.current.contains(e.target)) {
       setMenuOpen(false);
+      setSearchOpen(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen && !searchOpen) return;
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [handleClickOutside, menuOpen]);
+  }, [handleClickOutside, menuOpen, searchOpen]);
 
   // Helpers
   const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
@@ -118,136 +113,282 @@ const Navbar = ({ alwaysVisible = false }) => {
     loginFirst.redirectToCart();
   };
 
+  const handleSearchSubmit = (e) => {
+    e?.preventDefault?.();
+    const q = searchQuery?.trim();
+    if (q) {
+      safeNavigate(`/products?search=${encodeURIComponent(q)}`);
+      setSearchQuery("");
+      setSearchOpen(false);
+    } else {
+      safeNavigate("/products");
+      setSearchOpen(false);
+    }
+  };
+
+  const openSearch = useCallback(() => {
+    setSearchOpen(true);
+    setTimeout(() => searchInputRef.current?.focus(), 50);
+  }, []);
+
+  // Fetch products when search opens (for results dropdown)
+  useEffect(() => {
+    if (!searchOpen || isSmallMobile) return;
+    setSearchProductsLoading(true);
+    axiosAuth
+      .get("/products/all")
+      .then((res) => setSearchProducts(res?.data?.data || []))
+      .catch(() => setSearchProducts([]))
+      .finally(() => setSearchProductsLoading(false));
+  }, [searchOpen, isSmallMobile]);
+
+  // Filter products by name or brand – only show results after user types
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const term = searchQuery.toLowerCase().trim();
+    const getBrand = (p) =>
+      typeof p?.brand === "string" ? p.brand : p?.brand?.name;
+    return searchProducts
+      .filter(
+        (p) =>
+          p?.name?.toLowerCase().includes(term) ||
+          getBrand(p)?.toLowerCase().includes(term)
+      )
+      .slice(0, 8);
+  }, [searchProducts, searchQuery]);
+
+  const goToProduct = useCallback(
+    (productId) => {
+      setSearchOpen(false);
+      setSearchQuery("");
+      safeNavigate(`/product_details?productId=${productId}`);
+    },
+    [safeNavigate]
+  );
+
   return (
     <>
       {/* NORMAL NAVBAR */}
       <nav
-        className={`fixed left-0 w-full bg-[#FFD0ED] shadow-xl transition-all duration-300 z-[9999] h-24 ${
-          visible ? "top-0" : "-top-32"
-        }`}
+        className={`fixed left-0 w-full bg-[#FFD0ED] shadow-xl transition-all duration-300 z-[9999] h-14 ${visible ? "top-0" : "-top-32"
+          }`}
       >
         <div
           ref={navRef}
-          className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-full"
-        >                                                                             
-          {/* BRAND */}
-          <Link
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              safeNavigate("/");
-            }}
-            className={`flex flex-col no-underline select-none ${
-              isSmallMobile ? "mx-auto" : ""
-            }`}
-          >
-            <span className="text-[48px] font-bold text-[#eb61a2] leading-none">
-              SKIN.ME
-            </span>
-            <span className="text-[13px] text-black opacity-80">
-              @Home Of Your Care
-            </span>
-          </Link>
-
-          {/* HAMBURGER (HIDDEN IF SMALL MOBILE) */}
+          className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-full relative"
+        >
+          {/* LEFT: Nav icons (Home, Products, About Us) */}
           {!isSmallMobile && (
             <div
-              className="block lg:hidden text-4xl cursor-pointer absolute top-6 right-6"
-              onClick={toggleMenu}
-            >
-              <i className="fa-solid fa-bars"></i>
-            </div>
-          )}
-
-          {/* MENU */}
-          {!isSmallMobile && (
-            <div
-              className={`flex gap-6 text-[25px] font-medium max-[1034px]:items-center ${
-                menuOpen && isMobile
-                  ? "flex-col absolute right-0 top-24 bg-[#eac1da] w-1/2 py-4"
-                  : "hidden lg:flex"
-              }`}
+              className={`flex items-center gap-6 min-w-0 flex-1 justify-start ${menuOpen && isMobile
+                ? "flex-col absolute left-4 top-14 bg-[#eac1da] py-4 rounded-lg z-10"
+                : "hidden lg:flex"
+                }`}
             >
               <Link
                 href="/"
                 onClick={() => safeNavigate("/")}
-                className="text-black opacity-80 hover:opacity-60"
+                className="text-black/80 hover:text-[#eb61a2] transition-colors p-1"
+                title="Home"
               >
-                Home
+                <i className="fa-solid fa-house text-xl"></i>
               </Link>
-
               <Link
                 href="/products"
                 onClick={() => safeNavigate("/products")}
-                className="text-black opacity-80 hover:opacity-60"
+                className="text-black/80 hover:text-[#eb61a2] transition-colors p-1"
+                title="Products"
               >
-                Products
+                <i className="fa-solid fa-shop text-xl"></i>
               </Link>
-
               <Link
                 href="/about-us"
                 onClick={() => safeNavigate("/about-us")}
-                className="text-black opacity-80 hover:opacity-60"
+                className="text-black/80 hover:text-[#eb61a2] transition-colors p-1"
+                title="About Us"
               >
-                About Us
+                <i className="fa-solid fa-circle-info text-xl"></i>
               </Link>
             </div>
           )}
 
-          {/* AUTH + ICONS */}
+          {/* HAMBURGER (tablet only) */}
           {!isSmallMobile && (
             <div
-              className={`flex items-center gap-4 ${
-                menuOpen && isMobile
-                  ? "flex-col absolute right-0 bg-[#eac1da] top-[330px] w-full"
-                  : "hidden lg:flex"
-              }`}
+              className="block lg:hidden text-2xl cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 z-20"
+              onClick={toggleMenu}
             >
-              {/* HEART */}
+              <i className="fa-solid fa-bars text-gray-700"></i>
+            </div>
+          )}
+
+          {/* CENTER: Logo (hidden when search open) or Search form + results */}
+          {!searchOpen && (
+            <Link
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                safeNavigate("/");
+              }}
+              className={`flex flex-col items-center no-underline select-none absolute left-1/2 -translate-x-1/2 text-gray-600 hover:text-[#eb61a2] transition-colors ${isSmallMobile ? "mx-auto" : ""}`}
+            >
+              <span className="text-2xl font-bold tracking-tight leading-none uppercase">
+                SKIN.ME
+              </span>
+              <span className="text-[10px] opacity-90 mt-0.5 tracking-wide ml-10">
+                @Home Of Your Care
+              </span>
+            </Link>
+          )}
+
+          {searchOpen && !isSmallMobile && (
+            <div
+              ref={searchResultsRef}
+              className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-full max-w-xl px-4 z-20"
+            >
+              <form
+                onSubmit={handleSearchSubmit}
+                className="flex items-center gap-2 bg-white rounded-xl border-2 border-gray-200 shadow-lg pl-4 pr-2 py-2.5 min-h-[48px]"
+              >
+                <i className="fa-solid fa-magnifying-glass text-gray-500 text-lg"></i>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name or brand..."
+                  className="flex-1 min-w-0 text-base text-gray-800 placeholder-gray-500 bg-transparent border-none outline-none"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-[#eb61a2] rounded-lg hover:bg-[#d0578f] transition-colors"
+                  title="Search"
+                >
+                  Search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSearchOpen(false);
+                  }}
+                  className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Close"
+                >
+                  <i className="fa-solid fa-times"></i>
+                </button>
+              </form>
+              {/* Results dropdown */}
+              <div className="absolute left-4 right-4 top-full mt-1 bg-white rounded-xl border-2 border-gray-200 shadow-xl max-h-[min(70vh,400px)] overflow-y-auto z-30">
+                {searchProductsLoading ? (
+                  <div className="py-8 text-center text-gray-500">
+                    <i className="fa-solid fa-spinner fa-spin text-2xl"></i>
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="py-6 text-center text-gray-500 text-sm">
+                    {searchQuery.trim()
+                      ? "No products match your search."
+                      : "Type to search by product name or brand."}
+                  </div>
+                ) : (
+                  <ul className="py-2">
+                    {searchResults.map((p) => (
+                      <li key={p?.id}>
+                        <button
+                          type="button"
+                          onClick={() => goToProduct(p.id)}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-pink-50 transition-colors"
+                        >
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                            <Image
+                              src={getProductImageUrl(p)}
+                              alt={p?.name || ""}
+                              fill
+                              className="object-cover"
+                              sizes="48px"
+                              unoptimized
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium text-gray-900 block truncate">
+                              {p?.name || "Unnamed"}
+                            </span>
+                            {(typeof p?.brand === "string"
+                              ? p.brand
+                              : p?.brand?.name) && (
+                                <span className="text-xs text-gray-500 block truncate">
+                                  {typeof p.brand === "string"
+                                    ? p.brand
+                                    : p.brand?.name}
+                                </span>
+                              )}
+                          </div>
+                          <i className="fa-solid fa-chevron-right text-gray-400 text-xs flex-shrink-0"></i>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* RIGHT: Search icon (when closed), Favorite, Bag, Profile */}
+          {!isSmallMobile && (
+            <div
+              className={`flex items-center gap-3 min-w-0 flex-1 justify-end ${menuOpen && isMobile
+                ? "flex-col absolute right-4 bg-[#eac1da] top-14 py-4 rounded-lg z-10"
+                : "hidden lg:flex"
+                }`}
+            >
+              {!searchOpen && (
+                <button
+                  type="button"
+                  onClick={openSearch}
+                  className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                  title="Search products"
+                >
+                  <i className="fa-solid fa-magnifying-glass text-lg"></i>
+                </button>
+              )}
               <Link
                 href="/favorites"
                 onClick={handleFavoriteClick}
-                className="text-5xl text-gray-700 hover:text-blue-500"
+                className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                title="Favorites"
               >
-                <i className="fa-solid fa-heart"></i>
+                <i className="fa-solid fa-heart text-lg"></i>
               </Link>
-
-              {/* BAG */}
               <Link
                 href="/bag_page"
                 onClick={handleBagClick}
-                className="text-5xl text-gray-700 hover:text-blue-500"
+                className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                title="Bag"
               >
-                <i className="fa-solid fa-bag-shopping"></i>
+                <i className="fa-solid fa-bag-shopping text-lg"></i>
               </Link>
-
-              {/* AUTH */}
               {user ? (
-                <>
-                  <Link
-                    href="/profile"
-                    onClick={() => safeNavigate("/profile")}
-                    className="text-5xl text-gray-700 hover:text-blue-500"
-                  >
-                    <i className="fa-solid fa-user"></i>
-                  </Link>
-
-                  
-                </>
+                <Link
+                  href="/profile"
+                  onClick={() => safeNavigate("/profile")}
+                  className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                  title="Profile"
+                >
+                  <i className="fa-solid fa-user text-lg"></i>
+                </Link>
               ) : (
                 <>
                   <Link
                     href="/login"
                     onClick={() => safeNavigate("/login")}
-                    className="px-7 py-3 text-[#ed3b8e] text-[1.5rem] border-2 border-[#ed3b8e] rounded-lg font-bold hover:bg-[#ed3b8e] hover:text-white transition"
+                    className="px-5 py-2 text-[#ed3b8e] text-sm font-semibold border-2 border-[#ed3b8e] rounded-lg hover:bg-[#ed3b8e] hover:text-white transition"
                   >
                     Login
                   </Link>
-
                   <Link
                     href="/signup"
                     onClick={() => safeNavigate("/signup")}
-                    className="px-7 py-[0.9rem] text-[1.5rem] bg-[#eb61a2] text-white font-bold rounded-lg hover:bg-[#d0578f]"
+                    className="px-5 py-2 text-sm font-semibold bg-[#eb61a2] text-white rounded-lg hover:bg-[#d0578f]"
                   >
                     Sign Up
                   </Link>
@@ -258,54 +399,54 @@ const Navbar = ({ alwaysVisible = false }) => {
         </div>
       </nav>
 
-      {/* 🚀 FLOATING AUTH BUTTON (TOP RIGHT - SMALL MOBILE ONLY) */}
+      {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px): Home, Products, Favorite, Cart, Profile */}
       {isSmallMobile && (
-        <div
-          className={`fixed right-4 bg-[#eb61a2] rounded-full w-14 h-14 flex items-center justify-center shadow-lg z-[99999] transition-all duration-300 cursor-pointer hover:bg-[#f44d9b] ${
-            visible ? "top-6" : "-top-20"
-          }`}
-          onClick={() => safeNavigate(user ? "/profile" : "/login")}
-        >
-          <i
-            className={`fa-solid ${
-              user ? "fa-user" : "fa-right-to-bracket"
-            } text-white text-2xl`}
-          ></i>
-        </div>
-      )}
-
-      {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px) */}
-      {isSmallMobile && ( 
-        <div className="fixed bottom-0 left-0 w-full bg-[#FFD0ED] h-20 shadow-xl z-[99999] flex justify-around items-center text-5xl text-gray-700">
-          <i
-            className="fa-solid fa-circle-info cursor-pointer hover:text-[#eb61a2] transition-colors"
-            onClick={() => safeNavigate("/about-us")}
-          ></i>
-
-          <i
-            className="fa-solid fa-shop text-[2.6rem] cursor-pointer hover:text-[#eb61a2] transition-colors"
-            onClick={() => safeNavigate("/products")}
-          ></i>
-
-          <i
-            className="fa-solid fa-house cursor-pointer hover:text-[#eb61a2] transition-colors"
+        <div className="fixed bottom-0 left-0 right-0 w-full bg-[#FFD0ED] h-16 shadow-xl z-[99999] flex justify-between items-center text-gray-600 px-2 sm:px-4">
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
             onClick={() => safeNavigate("/")}
-          ></i>
-
-          <i
-            className="fa-solid fa-heart cursor-pointer hover:text-[#eb61a2] transition-colors"
+            title="Home"
+          >
+            <i className="fa-solid fa-house text-xl" />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            onClick={() => safeNavigate("/products")}
+            title="Products"
+          >
+            <i className="fa-solid fa-shop text-xl" />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
             onClick={handleFavoriteClick}
-          ></i>
-
-          <i
-            className="fa-solid fa-bag-shopping cursor-pointer hover:text-[#eb61a2] transition-colors"
+            title="Favorites"
+          >
+            <i className="fa-solid fa-heart text-xl" />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
             onClick={handleBagClick}
-          ></i>
+            title="Cart"
+          >
+            <i className="fa-solid fa-bag-shopping text-xl" />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            onClick={() => safeNavigate(user ? "/profile" : "/login")}
+            title="Profile"
+          >
+            <i className={`fa-solid ${user ? "fa-user" : "fa-right-to-bracket"} text-xl`} />
+          </button>
         </div>
       )}
 
       {loading && <Loading />}
-      <MessageWidget/>
+      <MessageWidget />
     </>
   );
 };

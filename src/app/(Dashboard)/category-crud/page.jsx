@@ -35,7 +35,7 @@ const CategoryCrud = () => {
       const token = Cookies.get("token");
       if (!token) return;
 
-      const res = await axiosAuth.get("/users/me", {
+      const res = await axiosAuth.get("/users/user-profile", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUserName(res.data?.data?.username || res.data?.data?.name || "Admin");

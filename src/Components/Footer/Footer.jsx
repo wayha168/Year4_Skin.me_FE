@@ -25,10 +25,10 @@ const Footer = memo(() => {
 
           {/* PAYMENT ICONS */}
           <div className="flex flex-wrap gap-3 mb-4">
-            <Image src={Aba} alt="ABA" width={50} height={32} loading="lazy" className="w-[50px] h-auto" />
-            <Image src={Visa} alt="Visa" width={50} height={32} loading="lazy" className="w-[50px] h-auto" />
-            <Image src={Paypal} alt="Paypal" width={50} height={32} loading="lazy" className="w-[50px] h-auto" />
-            <Image src={Acelida} alt="Acelida" width={50} height={32} loading="lazy" className="w-[50px] h-auto" />
+            <Image src={Aba} alt="ABA" width={50} height={32} loading="lazy" className="w-[50px] h-auto" style={{ width: "auto", height: "auto" }} />
+            <Image src={Visa} alt="Visa" width={50} height={32} loading="lazy" className="w-[50px] h-auto" style={{ width: "auto", height: "auto" }} />
+            <Image src={Paypal} alt="Paypal" width={50} height={32} loading="lazy" className="w-[50px] h-auto" style={{ width: "auto", height: "auto" }} />
+            <Image src={Acelida} alt="Acelida" width={50} height={32} loading="lazy" className="w-[50px] h-auto" style={{ width: "auto", height: "auto" }} />
           </div>
 
           {/* NEWSLETTER */}
@@ -82,11 +82,11 @@ const Footer = memo(() => {
 
           {/* Icons wrapper */}
           <div className="flex flex-col gap-2 ml-[-4px] max-[1030px]:flex-row max-[1030px]:justify-center max-[1030px]:ml-0">
-            <Image src={TIKTOK} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="TikTok" />
-            <Image src={FACEBOOK} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Facebook" />
-            <Image src={INSTARGRAM} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Instagram" />
-            <Image src={PINTEREST} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Pinterest" />
-            <Image src={TWITER} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Twitter" />
+            <Image src={TIKTOK} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="TikTok" style={{ width: "auto", height: "auto" }} />
+            <Image src={FACEBOOK} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Facebook" style={{ width: "auto", height: "auto" }} />
+            <Image src={INSTARGRAM} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Instagram" style={{ width: "auto", height: "auto" }} />
+            <Image src={PINTEREST} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Pinterest" style={{ width: "auto", height: "auto" }} />
+            <Image src={TWITER} width={30} height={30} loading="lazy" className="w-[30px] h-auto" alt="Twitter" style={{ width: "auto", height: "auto" }} />
           </div>
         </div>
 

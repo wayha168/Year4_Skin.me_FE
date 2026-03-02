@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import Navbar from "../../../Components/Navbar/Navbar";
@@ -14,18 +14,26 @@ import { FaCartPlus, FaHeart, FaChevronRight, FaChevronLeft } from "react-icons/
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
-
+import { getProductImageUrl } from "../../../app/lib/productImage";
+import { formatPrice } from "../../../app/lib/formatPrice";
 
 const ThirdImage = "/assets/third_image.png";
 
 const Products = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchFromUrl = searchParams.get("search") || "";
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchFromUrl);
   const [loading, setLoading] = useState(true);
+
+  // Sync search term from URL (e.g. when navigating from Navbar search)
+  useEffect(() => {
+    setSearchTerm(searchFromUrl);
+  }, [searchFromUrl]);
 
   const { user } = useAuthContext();
   const { addToCart, addToFavorite, loginFirst } = useUserActions();
@@ -73,10 +81,17 @@ const Products = () => {
   const getGroupedAndFilteredProducts = () => {
     let filtered = products;
 
-    // Filter by search term first
+    // Filter by search term (name or brand)
     if (searchTerm) {
-      filtered = filtered.filter((p) => 
-        p?.name?.toLowerCase().includes(searchTerm.toLowerCase()) 
+      const term = searchTerm.toLowerCase();
+      const getBrand = (p) =>
+        typeof p?.brand === "string"
+          ? p.brand
+          : p?.brand?.name;
+      filtered = filtered.filter(
+        (p) =>
+          p?.name?.toLowerCase().includes(term) ||
+          getBrand(p)?.toLowerCase().includes(term)
       );
     }
 
@@ -126,7 +141,7 @@ const Products = () => {
             </select>
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search by name or brand..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="py-3 px-5 rounded-xl border-2 border-gray-300 text-base placeholder-gray-500 focus:outline-none focus:border-[#eb61a2] focus:ring-4 focus:ring-pink-100 transition"
@@ -147,54 +162,58 @@ const Products = () => {
                   {categoryName}
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 z-[1]">
-                  {productsInCategory.map((p) => (
-                    <div
-                      key={p?.id}
-                      className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-4 flex flex-col justify-between transition-[transform_0.3s_ease,box-shadow_0.3s_ease] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
-                    >
-                      {/* Image Container */}
-                      <div className="relative">
-                        <Image
-                          src={
-                            p?.images?.[0]?.downloadUrl
-                              ? `https://backend.skinme.store${p.images[0].downloadUrl}`
-                              : ThirdImage
-                          }
-                          alt={p?.name || "Product"}
-                          width={400}
-                          height={400}
-                          className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
-                          onClick={() => router.push(`/product_details?productId=${p.id}`)}
-                        />
-                        <button
-                          onClick={() => handleFavorite(p.id)}
-                          className="absolute top-2 right-2 bg-white/85 rounded-full p-1.5 text-[#f56565] text-base cursor-pointer transition-[background_0.2s] hover:bg-[#fed7d7]"
-                        >
-                          <FaHeart />
-                        </button>
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex flex-col justify-between px-3 py-2.5 flex-grow z-[100]">
-                        <div>
-                          <h3 className="text-base font-semibold text-left text-[#2d3748] leading-tight overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:text-base">
+                  {productsInCategory.map((p) => {
+                    const brand = typeof p?.brand === "string" ? p.brand : p?.brand?.name ?? "";
+                    const desc = p?.description?.trim() || "No description";
+                    return (
+                      <div
+                        key={p?.id}
+                        className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+                      >
+                        <div className="relative h-[200px] bg-gray-100">
+                          <Image
+                            src={getProductImageUrl(p, ThirdImage)}
+                            alt={p?.name || "Product"}
+                            fill
+                            className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                            sizes="(max-width: 600px) 50vw, 200px"
+                            unoptimized
+                            onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleFavorite(p.id)}
+                            className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
+                          >
+                            <FaHeart className="text-sm" />
+                          </button>
+                        </div>
+                        <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
+                          {brand && (
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                              {brand}
+                            </span>
+                          )}
+                          <h3 className="text-sm font-semibold text-gray-800 truncate" title={p?.name}>
                             {p?.name || "No Name"}
                           </h3>
-                          <p className="flex justify-center text-base font-bold text-left text-[#2563eb] my-1.5 max-[600px]:text-sm">
-                            ${p?.price ?? "N/A"}
+                          <p className="text-xs text-gray-500 truncate" title={desc}>
+                            {desc}
                           </p>
+                          <p className="text-sm font-bold text-[#2563eb] mt-1">
+                            {formatPrice(p?.price)}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleAddToCart(p.id)}
+                            className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                          >
+                            <FaCartPlus className="text-base" /> Add to Cart
+                          </button>
                         </div>
-
-                        <button
-                          onClick={() => handleAddToCart(p.id)}
-                          className="mt-auto bg-[#d13e82] border-none rounded-xl px-5 py-2.5 text-white font-semibold cursor-pointer flex items-center justify-center gap-2 text-[0.95rem] shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] active:-translate-y-px active:scale-[0.98] active:shadow-[0_4px_10px_rgba(209,62,130,0.3)] z-[100]"
-                        >
-                          <FaCartPlus className="text-[1.1rem] transition-transform duration-300" />
-                          Add to Cart
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             ))}

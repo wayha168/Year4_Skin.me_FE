@@ -5,6 +5,7 @@ import axiosAuth from "../../../app/lib/api/axiosConfig";
 import Sidebar from "../../../Components/Sidebar/Sidebar";
 import { FaPlus, FaEdit, FaTrash, FaImage, FaSync } from "react-icons/fa";
 import Cookies from "js-cookie";
+import { getProductImageUrl } from "../../lib/productImage";
 
 // Reusable Modal component
 const Modal = ({ isOpen, onClose, children }) => {
@@ -207,7 +208,7 @@ const ProductCrud = () => {
               <div className="mb-3">
                 {p.images?.[0] ? (
                   <img
-                    src={`https://backend.skinme.store${p.images[0].downloadUrl}`}
+                    src={getProductImageUrl(p, "/assets/third_image.png")}
                     alt={p.images[0].fileName}
                     className="w-32 h-32 object-cover rounded-xl border"
                   />

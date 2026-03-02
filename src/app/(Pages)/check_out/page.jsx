@@ -7,6 +7,11 @@ import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import DiliveryAndPayment from "../../../Components/DiliveryAndPayment/DiliveryAndPayment";
+import axiosAuth from "../../../app/lib/api/axiosConfig";
+import { getProductImageUrl } from "../../../app/lib/productImage";
+import { formatPrice } from "../../../app/lib/formatPrice";
+
+const DefaultProductImage = "/assets/third_image.png";
 
 function CheckOutContent() {
   const router = useRouter();
@@ -26,15 +31,12 @@ function CheckOutContent() {
       const fetchProduct = async () => {
         try {
           setLoading(true);
-          // Assuming an API endpoint exists to fetch a product by its ID
-          const response = await fetch(`https://backend.skinme.store/api/products/${productId}`);
-          if (!response.ok) {
-            throw new Error("Failed to fetch product data.");
-          }
-          const data = await response.json();
-          setProduct(data);
+          const response = await axiosAuth.get(`/products/${productId}`);
+          const data = response?.data?.data ?? response?.data?.product ?? response?.data;
+          setProduct(data ?? null);
+          if (!data) setError("Product not found.");
         } catch (err) {
-          setError(err.message);
+          setError(err?.response?.data?.message || err.message || "Failed to load product.");
         } finally {
           setLoading(false);
         }
@@ -105,7 +107,7 @@ function CheckOutContent() {
           <div className="flex flex-col gap-[30px]">
             <div className="flex items-center gap-[25px] border-b border-[#eee] pb-5 max-[768px]:flex-col max-[768px]:text-center">
               <img
-                src={`https://backend.skinme.store${product.images?.[0]?.downloadUrl}`}
+                src={getProductImageUrl(product, DefaultProductImage)}
                 alt={product.name}
                 className="w-40 h-40 rounded-xl object-cover shadow-[0_2px_8px_rgba(0,0,0,0.1)] max-[768px]:w-[200px] max-[768px]:h-[200px]"
               />
@@ -113,9 +115,9 @@ function CheckOutContent() {
               <div>
                 <h3 className="text-[1.4rem] mb-2 text-[#333]">{product.name}</h3>
                 <p className="text-[#777] text-[0.95rem] mb-[5px]">Brand: {product.brand?.name || "Unknown"}</p>
-                <p className="text-[#eb61a2] font-bold text-[1.2rem]">${product.price}</p>
+                <p className="text-[#eb61a2] font-bold text-[1.2rem]">{formatPrice(product.price)}</p>
                 <p>Quantity: {quantity}</p>
-                <p className="mt-[10px] font-bold text-[#222]">Total: ${totalPrice}</p>
+                <p className="mt-[10px] font-bold text-[#222]">Total: {formatPrice(totalPrice)}</p>
               </div>
             </div>
 

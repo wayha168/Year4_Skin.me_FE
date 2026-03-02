@@ -5,6 +5,7 @@ import axiosAuth from "../../../app/lib/api/axiosConfig";
 
 import { FaPlus, FaTrash } from "react-icons/fa";
 import Cookies from "js-cookie";
+import { getImageUrlFromDownloadUrl } from "../../lib/productImage";
 
 const ImageCrud = () => {
   const [images, setImages] = useState([]);
@@ -133,7 +134,7 @@ const ImageCrud = () => {
               {imgs.map((img) => (
                 <div key={img.imageId} className="border rounded-lg p-2 relative hover:shadow-lg transition">
                   <img
-                    src={`https://backend.skinme.store${img.downloadUrl}`}
+                    src={getImageUrlFromDownloadUrl(img.downloadUrl)}
                     alt={img.fileName}
                     className="w-full h-32 object-cover rounded-lg"
                   />

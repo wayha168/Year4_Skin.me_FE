@@ -11,7 +11,8 @@ import useUserActions from "../Components/Hooks/userUserActions.js";
 import useAuthContext from "./lib/Authentication/AuthContext.jsx";
 import LoginFirst from "../Components/LoginFirst/LoginFirst.js";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
-
+import { getProductImageUrl } from "./lib/productImage.js";
+import { formatPrice } from "./lib/formatPrice.js";
 
 export default function Page() {
     const FirstImage = "/assets/first_image.png"
@@ -140,7 +141,8 @@ export default function Page() {
               alt="Overview 1"
               width={272}
               height={272}
-              className="w-[17rem] h-[17rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0 max-[660px]:mr-[-3rem] "
+              className="w-[17rem] h-[17rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0 max-[660px]:mr-[-3rem]"
+              style={{ width: "auto", height: "auto" }}
             />
             <Image
               src={SecondImage}
@@ -148,11 +150,12 @@ export default function Page() {
               width={272}
               height={272}
               className="rounded-[10px] w-[17rem] h-[17rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
+              style={{ width: "auto", height: "auto" }}
             />
           </div>
         </div>
         <div className="mt-28 w-[30rem] h-[30rem] max-[1180px]:mb-40 max-[660px]:mt-4 max-[660px]:mb-0 max-[1180px]:mt-[6.3rem] ">
-          <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" />
+          <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" style={{ width: "auto", height: "auto" }} />
         </div>
         <div className="absolute bg-[#ab8fff] rounded-[1000px] z-[0] left-[-24rem] top-[63rem] w-[30rem] h-[30rem] max-[992px]:hidden max-[1180px]:-ml-[160px] max-[760px]:top-[100rem]"></div>
       </div>
@@ -176,42 +179,58 @@ export default function Page() {
                 <p className="text-center text-gray-500 text-lg mt-20">No products found.</p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {products.slice(0, 10).map((p) => (
-                    <div 
-                      key={p.id} 
-                      className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-4 flex flex-col justify-between transition-[transform_0.3s_ease,box-shadow_0.3s_ease] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
-                    >
-                      <div className="relative">
-                         <Image
-                          src={
-                            p?.images?.[0]?.downloadUrl
-                              ? `https://backend.skinme.store${p.images[0].downloadUrl}` : ThirdImage
-                          }
-                          alt={p.name}
-                          width={300}
-                          height={200}
-                          className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
-                          onClick={() => router.push(`/product_details?productId=${p.id}`)}
-                        />
-                        <button 
-                          className="absolute top-2 right-2 bg-white/85 rounded-full p-1.5 text-[#f56565] text-base cursor-pointer transition-[background_0.2s] hover:bg-[#fed7d7]"
-                          onClick={() => handleFavoriteClick(p.id)}
-                        >
-                          <FaHeart />
-                        </button>
+                  {products.slice(0, 10).map((p) => {
+                    const brand = typeof p?.brand === "string" ? p.brand : p?.brand?.name ?? "";
+                    const desc = p?.description?.trim() || "No description";
+                    return (
+                      <div
+                        key={p.id}
+                        className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+                      >
+                        <div className="relative h-[200px] bg-gray-100">
+                          <Image
+                            src={getProductImageUrl(p, ThirdImage)}
+                            alt={p?.name || "Product"}
+                            fill
+                            className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                            sizes="(max-width: 600px) 50vw, 200px"
+                            unoptimized
+                            onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                          />
+                          <button
+                            type="button"
+                            className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
+                            onClick={() => handleFavoriteClick(p.id)}
+                          >
+                            <FaHeart className="text-sm" />
+                          </button>
+                        </div>
+                        <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
+                          {brand && (
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                              {brand}
+                            </span>
+                          )}
+                          <h3 className="text-sm font-semibold text-gray-800 truncate" title={p?.name}>
+                            {p?.name || "No Name"}
+                          </h3>
+                          <p className="text-xs text-gray-500 truncate" title={desc}>
+                            {desc}
+                          </p>
+                          <p className="text-sm font-bold text-[#2563eb] mt-1">
+                            {formatPrice(p?.price)}
+                          </p>
+                          <button
+                            type="button"
+                            className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                            onClick={() => handleAddToCartClick(p.id)}
+                          >
+                            <FaCartPlus className="text-base" /> Add to Cart
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex flex-col justify-between px-3 py-2.5 flex-grow">
-                        <h3 className="text-base font-semibold text-[#2d3748] leading-tight overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:text-base">{p.name}</h3>
-                        <p className="text-base font-bold text-[#2563eb] my-1.5 max-[600px]:text-sm">${p.price}</p>
-                        <button 
-                          className="mt-auto bg-[#d13e82] border-none rounded-xl px-5 py-2.5 text-white font-semibold cursor-pointer flex items-center justify-center gap-2 text-[0.95rem] shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] active:-translate-y-px active:scale-[0.98] active:shadow-[0_4px_10px_rgba(209,62,130,0.3)]"
-                          onClick={() => handleAddToCartClick(p.id)}
-                        >
-                          <FaCartPlus className="text-[1.1rem] transition-transform duration-300" /> Add to Cart
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -227,10 +246,10 @@ export default function Page() {
               </p>
             </div>
             <div className="grid grid-cols-4 gap-4 justify-items-center max-[1190px]:scale-95 max-[1000px]:grid-cols-[repeat(2,20rem)] max-[1000px]:justify-center max-[1000px]:scale-110 max-[770px]:pt-8 max-[770px]:grid-cols-[repeat(2,15rem)] max-[770px]:justify-center max-[770px]:scale-110 max-[650px]:grid-cols-1 max-[650px]:justify-center max-[650px]:py-20 max-[650px]:scale-[1.2]">
-              <Image src={FirstImage} alt="About 1" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
-              <Image src={SecondImage} alt="About 2" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
-              <Image src={ThirdImage} alt="About 3" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
-              <Image src={FirstImage} alt="About 4" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
+              <Image src={FirstImage} alt="About 1" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
+              <Image src={SecondImage} alt="About 2" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
+              <Image src={ThirdImage} alt="About 3" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
+              <Image src={FirstImage} alt="About 4" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
             </div>
           </div>
     

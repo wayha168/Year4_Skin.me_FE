@@ -11,6 +11,8 @@ import Footer from "../../../Components/Footer/Footer";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import { FaShoppingBag } from "react-icons/fa";
+import { getProductImageUrl } from "../../../app/lib/productImage";
+import { formatPrice } from "../../../app/lib/formatPrice";
 
 const ThirdImage = "/assets/third_image.png";
 
@@ -24,7 +26,8 @@ const FavoritePage = () => {
   const userId = user?.id;
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (authLoading) return;
+    if (!user) {
       router.replace("/login?redirect=/favorites");
     }
   }, [user, authLoading, router]);
@@ -137,10 +140,9 @@ const FavoritePage = () => {
                 const product = fav.product;
                 if (!product) return null;
 
-                const imageUrl = fav?.productThumbnailUrl || fav?.product?.images?.[0]?.downloadUrl;
-                const imgSrc = imageUrl
-                  ? `https://backend.skinme.store${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`
-                  : ThirdImage;
+                const imgSrc = fav?.productThumbnailUrl
+                  ? (fav.productThumbnailUrl.startsWith("http") ? fav.productThumbnailUrl : (fav.productThumbnailUrl.startsWith("/") ? fav.productThumbnailUrl : `/${fav.productThumbnailUrl}`))
+                  : getProductImageUrl(fav?.product, ThirdImage);
 
                 return (
                   <div
@@ -155,6 +157,8 @@ const FavoritePage = () => {
                         width={400}
                         height={400}
                         loading="lazy"
+                        unoptimized
+                        style={{ width: "auto", height: "auto" }}
                         className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
                         onError={(e) => (e.currentTarget.src = ThirdImage)}
                       />
@@ -165,11 +169,13 @@ const FavoritePage = () => {
                         <h3 className="text-base font-semibold text-left text-[#2d3748] leading-tight overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:text-base">
                           {product.name}
                         </h3>
-                        {product.brand && (
-                          <p className="text-sm text-gray-600 text-center mt-1">{product.brand}</p>
+                        {(product.brand != null) && (
+                          <p className="text-sm text-gray-600 text-center mt-1">
+                            {typeof product.brand === "object" ? product.brand?.name : product.brand}
+                          </p>
                         )}
                         <p className="flex justify-center text-base font-bold text-left text-[#2563eb] my-1.5 max-[600px]:text-sm">
-                          ${Number(product.price ?? 0).toFixed(2)}
+                          {formatPrice(product.price)}
                         </p>
                       </div>
 

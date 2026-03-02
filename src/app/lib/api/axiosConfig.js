@@ -1,10 +1,11 @@
-"use client"; 
+"use client";
 
 import axios from "axios";
 import Cookies from "js-cookie";
+import { API_BASE } from "./config";
 
 const axiosAuth = axios.create({
-  baseURL: "https://backend.skinme.store/api/v1",
+  baseURL: API_BASE,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -21,17 +22,14 @@ axiosAuth.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle 401 Unauthorized globally
+// On 401: redirect to login but do NOT clear cookie/localStorage here.
+// Session is only cleared on the login page after verifying the token (avoids F5 logout bug
+// where a single 401 would wipe a valid session).
 axiosAuth.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      Cookies.remove("token");
-      localStorage.removeItem("user");
-
-      if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
-        window.location.href = "/login";
-      }
+    if (error.response?.status === 401 && typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }

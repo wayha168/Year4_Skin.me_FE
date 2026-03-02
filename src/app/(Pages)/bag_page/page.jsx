@@ -11,6 +11,8 @@ import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import { FaShoppingBag } from "react-icons/fa";
+import { getProductImageUrl } from "../../../app/lib/productImage";
+import { formatPrice } from "../../../app/lib/formatPrice";
 
 const ThirdImage = "/assets/third_image.png";
 
@@ -22,9 +24,10 @@ function BagPage() {
   const [notification, setNotification] = useState("");
   const userId = user?.id;
 
-  // Redirect if not authenticated
+  // Redirect only after auth has finished loading and user is still not set
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (authLoading) return;
+    if (!user) {
       router.replace(
         "/login?redirect=/bag_page&message=" + encodeURIComponent("Please login to view your bag")
       );
@@ -169,8 +172,7 @@ function BagPage() {
               {cartItems.map((item, index) => {
                 const uniqueKey = item.id || `${item.product?.id}-${index}`;
                 const itemId = item.id || item.cartItemId || item.itemId;
-                const imageUrl = item?.product?.images?.[0]?.downloadUrl;
-                const imgSrc = imageUrl ? `https://backend.skinme.store${imageUrl}` : ThirdImage;
+                const imgSrc = getProductImageUrl(item?.product, ThirdImage);
 
                 return (
                   <div
@@ -186,6 +188,8 @@ function BagPage() {
                         height={400}
                         loading="lazy"
                         className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
+                        unoptimized
+                        style={{ width: "auto", height: "auto" }}
                       />
                     </div>
 
@@ -195,7 +199,7 @@ function BagPage() {
                           {item.product.name}
                         </h3>
                         <p className="flex justify-center text-base font-bold text-left text-[#2563eb] my-1.5 max-[600px]:text-sm">
-                          ${item.product.price?.toFixed(2)}
+                          {formatPrice(item.product.price)}
                         </p>
                         <p className="text-sm text-gray-600 text-center">Quantity: {item.quantity}</p>
 

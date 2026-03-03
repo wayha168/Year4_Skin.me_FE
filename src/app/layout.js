@@ -2,13 +2,14 @@ import "./globals.css";
 import { AuthProvider } from "./lib/Authentication/AuthContext";
 import ToastProvider from "./components/ToastProvider";
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata = {
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   icons: {
     icon: "/assets/logo/skinme-logo-header.png",
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
 import axiosAuth from "../../app/lib/api/axiosConfig";
 import useAuthContext from "../../app/lib/Authentication/AuthContext";
@@ -160,7 +160,12 @@ function FileUploadWithRemove({ onResetFile, onFileChange }) {
   );
 }
 
-const KHQR_GATEWAYS = ["aba", "wing", "acelida"];
+const KHQR_GATEWAYS = ["aba", "acelida"];
+const PAYMENT_OPTIONS = [
+  { id: "aba", label: "ABA", image: "/assets/ABA.png" },
+  { id: "acelida", label: "ACLEDA", image: "/assets/acelida.png" },
+  { id: "visa", label: "Visa / Card", image: "/assets/Visa.png" },
+];
 
 export default function DiliveryAndPayment({ onClose, totalPrice, embedded = false }) {
   const { user } = useAuthContext();
@@ -186,9 +191,11 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [khqrData, setKhqrData] = useState(null);
   const [submitError, setSubmitError] = useState("");
+  const [pollingForSuccess, setPollingForSuccess] = useState(false);
+  const pollingRef = useRef(null);
 
   const isKhqrGateway = KHQR_GATEWAYS.includes(paymentType);
-  const showQrCode = isKhqrGateway;
+  const isStripeCard = paymentType === "visa";
 
   useEffect(() => {
     const formDataToSave = {
@@ -274,14 +281,35 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
     e.preventDefault();
     setSubmitError("");
 
-    if (isKhqrGateway) {
-      if (!user?.id) {
-        toast.error("Please log in to place an order.");
-        return;
+    if (!paymentType) {
+      toast.error("Please select a payment method.");
+      return;
+    }
+    if (!user?.id) {
+      toast.error("Please log in to place an order.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const deliveryBody = buildDeliveryBody();
+
+      if (isStripeCard) {
+        const sessionRes = await axiosAuth.post(
+          `/payment/create-checkout-session/${user.id}`,
+          deliveryBody,
+          { withCredentials: true }
+        );
+        const resData = sessionRes.data?.data ?? sessionRes.data;
+        const checkoutUrl = resData?.checkoutUrl ?? resData?.checkout_url;
+        if (checkoutUrl && typeof window !== "undefined") {
+          window.location.href = checkoutUrl;
+          return;
+        }
+        throw new Error("No checkout URL returned");
       }
-      setSubmitting(true);
-      try {
-        const deliveryBody = buildDeliveryBody();
+
+      if (isKhqrGateway) {
         const sessionRes = await axiosAuth.post(
           `/payment/create-checkout-session/${user.id}`,
           deliveryBody,
@@ -289,9 +317,7 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
         );
         const resData = sessionRes.data?.data ?? sessionRes.data;
         const orderId = resData?.orderId ?? resData?.order_id;
-        if (!orderId) {
-          throw new Error("Order was not created");
-        }
+        if (!orderId) throw new Error("Order was not created");
         const amountNum = parseFloat(String(totalPrice).replace(/[^0-9.-]/g, "")) || 0;
         const khqrRes = await axiosAuth.get("/payment/generate-khqr", {
           params: { orderId, amount: amountNum, currency: "USD", gateway: paymentType },
@@ -307,49 +333,85 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
           merchantName: khqrResData?.merchantName,
           gateway: khqrResData?.gateway ?? paymentType,
         });
-      } catch (err) {
-        const msg = err.response?.data?.message ?? err.message ?? "Failed to create order or generate QR.";
-        setSubmitError(msg);
-        toast.error(msg);
-      } finally {
-        setSubmitting(false);
       }
-      return;
+    } catch (err) {
+      const msg = err.response?.data?.message ?? err.message ?? "Failed to create order or start payment.";
+      setSubmitError(msg);
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
     }
-
-    if (showCardFields) {
-      console.log("Card payment (Stripe flow can be wired here)", {
-        totalPrice,
-        ...buildDeliveryBody(),
-      });
-      toast.info("Card payment: redirect to Stripe or use Payment Element.");
-      return;
-    }
-
-    const fullAddress =
-      deliveryAddress.trim() ||
-      [homeNumber, streetAddress, districtCommune, selectedProvince, country].filter(Boolean).join(", ");
-    console.log("Form Submitted:", { deliveryAddress: fullAddress, totalPrice });
-    toast.success("Order received. Complete payment to confirm.");
-    onClose();
   };
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+    setPollingForSuccess(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
 
   const handleVerifyKhqr = async () => {
     if (!khqrData?.orderId) return;
     setVerifyLoading(true);
     try {
       await axiosAuth.post(`/payment/verify-khqr/${khqrData.orderId}`, {}, { withCredentials: true });
-      toast.success("Payment verification submitted. Your order is being processed.", {
+      toast.info("Verification submitted. Checking payment status…", {
         position: "top-center",
-        autoClose: 3000,
+        autoClose: 2000,
       });
-      setKhqrData(null);
-      onClose();
+      setVerifyLoading(false);
+      setPollingForSuccess(true);
+      const orderId = khqrData.orderId;
+      let attempts = 0;
+      const maxAttempts = 40;
+      const intervalMs = 3000;
+
+      const checkOrderStatus = async () => {
+        attempts += 1;
+        try {
+          const res = await axiosAuth.get("/payment/verify-success", {
+            params: { orderId },
+            withCredentials: true,
+          });
+          const data = res.data?.data ?? res.data;
+          const confirmed = data?.confirmed === true || data?.alreadyConfirmed === true;
+          const order = data?.order;
+          const status = (order?.orderStatus ?? order?.status ?? data?.paymentStatus ?? "").toString().toUpperCase();
+          if (confirmed || status === "PAID" || status === "SUCCESS") {
+            stopPolling();
+            toast.success("Payment successful! Your order is confirmed.", {
+              position: "top-center",
+              autoClose: 4000,
+            });
+            setKhqrData(null);
+            onClose();
+            return;
+          }
+        } catch (_) {}
+        if (attempts >= maxAttempts) {
+          stopPolling();
+          toast.info("Payment is being verified. We'll notify you when it's confirmed.", {
+            position: "top-center",
+            autoClose: 4000,
+          });
+          setKhqrData(null);
+          onClose();
+        }
+      };
+
+      checkOrderStatus();
+      pollingRef.current = setInterval(checkOrderStatus, intervalMs);
     } catch (err) {
+      setVerifyLoading(false);
       const msg = err.response?.data?.message ?? err.message ?? "Verification failed.";
       toast.error(msg);
-    } finally {
-      setVerifyLoading(false);
     }
   };
 
@@ -391,17 +453,26 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
             {khqrData.currency} {khqrData.amount}
           </p>
           <p className="text-[#666] text-sm mb-6">Scan the QR code with your banking app to pay.</p>
+          {pollingForSuccess && (
+            <p className="text-[#eb61a2] text-sm font-medium mb-3 flex items-center gap-2">
+              <span className="w-4 h-4 border-2 border-[#eb61a2] border-t-transparent rounded-full animate-spin" />
+              Checking payment status…
+            </p>
+          )}
           <button
             type="button"
             onClick={handleVerifyKhqr}
-            disabled={verifyLoading}
+            disabled={verifyLoading || pollingForSuccess}
             className="w-full py-3.5 rounded-xl bg-[#eb61a2] text-white font-semibold hover:bg-[#d94d8c] disabled:opacity-60 transition"
           >
-            {verifyLoading ? "Submitting…" : "I've paid"}
+            {verifyLoading ? "Submitting…" : pollingForSuccess ? "Waiting for confirmation…" : "I've paid"}
           </button>
           <button
             type="button"
-            onClick={() => setKhqrData(null)}
+            onClick={() => {
+              stopPolling();
+              setKhqrData(null);
+            }}
             className="mt-3 text-[#666] text-sm hover:text-[#1a1a1a]"
           >
             ← Back
@@ -610,91 +681,34 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
             <p className="text-sm font-medium text-[#831843]">Total</p>
             <p className="text-xl font-bold text-[#be185d]">${totalPrice}</p>
           </div>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="card_type" className={labelClass}>Pay by QR <span className="text-[#eb61a2]">*</span></label>
-              <select
-                id="card_type"
-                name="card_type"
-                required
-                value={paymentType}
-                onChange={(e) => setPaymentType(e.target.value)}
-                className={inputClass}
-              >
-                <option value="" disabled hidden>Select method</option>
-                <option value="aba">ABA</option>
-                <option value="acelida">ACELIDA</option>
-                <option value="wing">WING</option>
-              </select>
+          <div>
+            <label className={labelClass}>Pay by <span className="text-[#eb61a2]">*</span></label>
+            <div className="flex flex-wrap gap-3 mt-2">
+              {PAYMENT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setPaymentType(opt.id)}
+                  className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 bg-white transition-all min-w-[100px] ${
+                    paymentType === opt.id
+                      ? "border-[#eb61a2] ring-2 ring-[#eb61a2]/30 shadow-md"
+                      : "border-[#e5e7eb] hover:border-[#d1d5db] hover:bg-[#fafafa]"
+                  }`}
+                  aria-pressed={paymentType === opt.id}
+                  aria-label={`Pay with ${opt.label}`}
+                >
+                  <img
+                    src={opt.image}
+                    alt={opt.label}
+                    className="h-8 w-auto object-contain max-h-10"
+                  />
+                  <span className="text-xs font-medium text-[#374151]">{opt.label}</span>
+                </button>
+              ))}
             </div>
-            {showQrCode && (
-              <div className="flex justify-center my-4">
-                <img src={QrCode} alt="QR Code for payment" className="w-48 h-56 object-contain" />
-              </div>
+            {!paymentType && (
+              <p className="text-xs text-[#6b7280] mt-1.5">Select a payment method above</p>
             )}
-            <div
-              className="flex items-center gap-2 cursor-pointer select-none"
-              onClick={() => setShowCardFields(!showCardFields)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && setShowCardFields(!showCardFields)}
-            >
-              <span className={labelClass + " mb-0"}>Or pay by card</span>
-              <span className={`text-[#eb61a2] transition-transform ${showCardFields ? "rotate-90" : "-rotate-90"}`}>▶</span>
-            </div>
-            <div
-              className={`overflow-hidden transition-all duration-300 ${
-                showCardFields ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"
-              }`}
-            >
-              <div className="space-y-4 pt-2">
-                <div>
-                  <label htmlFor="card_number" className={labelClass}>Card number</label>
-                  <input
-                    type="text"
-                    id="card_number"
-                    name="card_number"
-                    required={showCardFields}
-                    pattern="[0-9\s]{15,23}"
-                    maxLength={23}
-                    placeholder="1234 5678 9012 3456"
-                    value={cardNumber}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\s/g, "");
-                      const chunks = raw.match(/.{1,4}/g);
-                      setCardNumber(chunks ? chunks.join(" ") : "");
-                    }}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="exp_date" className={labelClass}>Expiry</label>
-                  <input
-                    type="month"
-                    id="exp_date"
-                    name="exp_date"
-                    required={showCardFields}
-                    min="2025-01"
-                    value={expDate}
-                    onChange={(e) => setExpDate(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-                <div className="relative">
-                  <label htmlFor="amount" className={labelClass}>Amount</label>
-                  <input
-                    type="text"
-                    id="amount"
-                    placeholder="0"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
-                    required={showCardFields}
-                    className={`${inputClass} pl-8`}
-                  />
-                  <span className="absolute left-4 top-[2.6rem] text-[#6b7280]">$</span>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 

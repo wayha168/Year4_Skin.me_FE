@@ -44,6 +44,7 @@ function QuantityStepper({ value, min = 1, onChange, disabled }) {
 function BagPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuthContext();
+  const [cartId, setCartId] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
@@ -53,14 +54,25 @@ function BagPage() {
       const res = await axiosAuth.get("/carts/my-cart", { withCredentials: true });
       const data = res.data?.data;
       const items = Array.isArray(data?.items) ? data.items : Array.from(data?.items || []);
+      const cid =
+        data?.id ??
+        data?.cartId ??
+        data?.cart?.id ??
+        res.data?.cartId ??
+        res.data?.id ??
+        (items[0]?.cartId ?? items[0]?.cart_id ?? null);
+      setCartId(cid != null ? String(cid) : null);
       setCartItems(items);
     } catch (err) {
-      if (err.response?.status === 404) setCartItems([]);
-      else if (err.response?.status === 401) {
+      if (err.response?.status === 404) {
+        setCartId(null);
+        setCartItems([]);
+      } else if (err.response?.status === 401) {
         router.replace("/login?redirect=/bag_page&message=" + encodeURIComponent("Session expired. Please login again"));
       } else {
         setNotification("Failed to load cart");
         setTimeout(() => setNotification(""), 3000);
+        setCartId(null);
         setCartItems([]);
       }
     } finally {
@@ -78,29 +90,46 @@ function BagPage() {
     fetchCart();
   }, [user, authLoading, router, fetchCart]);
 
+  const findItemByKey = useCallback((itemKey, index) => {
+    const byId = cartItems.find((i) => String(i.id ?? i.cartItemId ?? i.itemId) === String(itemKey));
+    if (byId) return byId;
+    const match = String(itemKey).match(/^cart-(\d+)-(\d+)$/);
+    if (match) {
+      const pid = match[1];
+      const idx = parseInt(match[2], 10);
+      const byIndex = cartItems[idx];
+      if (byIndex && String(byIndex.product?.id) === pid) return byIndex;
+      return cartItems.find((i) => String(i.product?.id) === pid) ?? null;
+    }
+    return null;
+  }, [cartItems]);
+
   const updateQty = useCallback(
     async (itemKey, newQty) => {
       const qty = Math.max(1, Number(newQty));
-      const item = cartItems.find((i) => String(i.id ?? i.cartItemId ?? i.itemId) === String(itemKey));
+      const item = findItemByKey(itemKey);
       if (!item) return;
       const prevQty = item.quantity ?? 1;
       if (qty === prevQty) return;
 
       const itemId = item.id ?? item.cartItemId ?? item.itemId;
+      const productId = item.product?.id;
       setCartItems((prev) =>
         prev.map((i) => {
           const id = i.id ?? i.cartItemId ?? i.itemId;
-          if (String(id) !== String(itemKey)) return i;
+          const same = String(id) === String(itemKey) || (itemKey?.startsWith?.("cart-") && i.product?.id === productId);
+          if (!same) return i;
           return { ...i, quantity: qty };
         })
       );
 
-      const success = await updateCartItemQuantity(axiosAuth, itemId, qty);
+      const success = await updateCartItemQuantity(axiosAuth, itemId, qty, productId, cartId);
       if (!success) {
         setCartItems((prev) =>
           prev.map((i) => {
             const id = i.id ?? i.cartItemId ?? i.itemId;
-            if (String(id) !== String(itemKey)) return i;
+            const same = String(id) === String(itemKey) || (itemKey?.startsWith?.("cart-") && i.product?.id === productId);
+            if (!same) return i;
             return { ...i, quantity: prevQty };
           })
         );
@@ -108,14 +137,22 @@ function BagPage() {
         setTimeout(() => setNotification(""), 3000);
       }
     },
-    [cartItems]
+    [cartId, cartItems, findItemByKey]
   );
 
   const handleRemoveItem = useCallback(
-    async (itemId) => {
-      const success = await removeCartItem(axiosAuth, itemId, user?.id);
+    async (itemKey) => {
+      const item = findItemByKey(itemKey);
+      if (!item) return;
+      const itemId = item.id ?? item.cartItemId ?? item.itemId;
+      const productId = item.product?.id;
+      const success = await removeCartItem(axiosAuth, itemId, user?.id, productId, cartId);
       if (success) {
-        setCartItems((prev) => prev.filter((item) => (item.id ?? item.cartItemId ?? item.itemId) !== itemId));
+        setCartItems((prev) =>
+          prev.filter((i) =>
+            itemId != null ? (i.id ?? i.cartItemId ?? i.itemId) !== itemId : String(i.product?.id) !== String(productId)
+          )
+        );
         setNotification("Item removed");
         setTimeout(() => setNotification(""), 2000);
       } else {
@@ -123,7 +160,7 @@ function BagPage() {
         setTimeout(() => setNotification(""), 3000);
       }
     },
-    [user?.id]
+    [user?.id, cartId, cartItems, findItemByKey]
   );
 
   const handleCheckout = useCallback(() => {
@@ -223,7 +260,7 @@ function BagPage() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => handleRemoveItem(item.id ?? item.cartItemId ?? item.itemId)}
+                            onClick={() => handleRemoveItem(key)}
                             className="mt-2 text-left text-xs text-[#6b7280] hover:text-[#eb61a2] hover:underline"
                           >
                             Remove

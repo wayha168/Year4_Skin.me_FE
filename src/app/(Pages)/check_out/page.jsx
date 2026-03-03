@@ -10,33 +10,14 @@ import DiliveryAndPayment from "../../../Components/DiliveryAndPayment/DiliveryA
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
-import { updateCartItemQuantity } from "../../../app/lib/cartUpdateQuantity";
-
 const DefaultProductImage = "/assets/third_image.png";
 
-function QuantityStepper({ value, min = 1, onChange, disabled }) {
+/** Read-only quantity display on checkout (quantity is edited on my-bag page). */
+function QuantityReadOnly({ value }) {
   return (
-    <div className="inline-flex items-center border border-[#e5e7eb] rounded-xl overflow-hidden bg-white">
-      <button
-        type="button"
-        onClick={() => onChange(Math.max(min, value - 1))}
-        disabled={disabled || value <= min}
-        className="w-9 h-9 flex items-center justify-center text-[#374151] hover:bg-[#f9fafb] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        aria-label="Decrease quantity"
-      >
-        −
-      </button>
-      <span className="w-10 text-center text-sm font-semibold text-[#1a1a1a] tabular-nums">{value}</span>
-      <button
-        type="button"
-        onClick={() => onChange(value + 1)}
-        disabled={disabled}
-        className="w-9 h-9 flex items-center justify-center text-[#374151] hover:bg-[#f9fafb] disabled:cursor-not-allowed transition-colors"
-        aria-label="Increase quantity"
-      >
-        +
-      </button>
-    </div>
+    <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#f5f5f7] text-sm font-semibold text-[#1a1a1a] tabular-nums">
+      Qty: {value}
+    </span>
   );
 }
 
@@ -100,51 +81,9 @@ function CheckOutContent() {
     fetchCart();
   }, [productId, router]);
 
-  const refetchCart = useCallback(async () => {
-    try {
-      const res = await axiosAuth.get("/carts/my-cart", { withCredentials: true });
-      const data = res.data?.data;
-      const items = Array.isArray(data?.items) ? data.items : Array.from(data?.items || []);
-      setCartItems(items);
-    } catch (_) {}
-  }, []);
-
   useEffect(() => {
     if (productId) setSingleQty(Math.max(1, parseInt(quantityParam, 10) || 1));
   }, [quantityParam, productId]);
-
-  const updateCartItemQty = useCallback(
-    async (itemKey, newQty) => {
-      const item = cartItems.find((i) => String(i.id ?? i.cartItemId ?? i.itemId) === String(itemKey));
-      if (!item) return;
-      const qty = Math.max(1, Number(newQty));
-      const prevQty = item.quantity ?? 1;
-      if (qty === prevQty) return;
-
-      const itemId = item.id ?? item.cartItemId ?? item.itemId;
-      setCartItems((prev) =>
-        prev.map((i) => {
-          const id = i.id ?? i.cartItemId ?? i.itemId;
-          if (String(id) !== String(itemKey)) return i;
-          return { ...i, quantity: qty };
-        })
-      );
-
-      const success = await updateCartItemQuantity(axiosAuth, itemId, qty);
-      if (success) {
-        await refetchCart();
-      } else {
-        setCartItems((prev) =>
-          prev.map((i) => {
-            const id = i.id ?? i.cartItemId ?? i.itemId;
-            if (String(id) !== String(itemKey)) return i;
-            return { ...i, quantity: prevQty };
-          })
-        );
-      }
-    },
-    [cartItems, refetchCart]
-  );
 
   let totalPrice = "0.00";
   let itemCount = 0;
@@ -247,7 +186,7 @@ function CheckOutContent() {
                           <p className="text-[#eb61a2] font-semibold text-sm sm:text-base mt-1">{formatPrice(product.price)}</p>
                         </div>
                         <div className="flex items-center justify-between gap-3 mt-2">
-                          <QuantityStepper value={singleQty} onChange={setSingleQty} />
+                          <QuantityReadOnly value={singleQty} />
                           <span className="text-sm font-medium text-[#374151]">
                             {formatPrice((product.price * singleQty).toFixed(2))}
                           </span>
@@ -278,10 +217,7 @@ function CheckOutContent() {
                               <p className="text-[#eb61a2] font-semibold text-sm sm:text-base mt-1">{formatPrice(price)}</p>
                             </div>
                             <div className="flex items-center justify-between gap-3 mt-2">
-                              <QuantityStepper
-                                value={qty}
-                                onChange={(newQty) => updateCartItemQty(key, newQty)}
-                              />
+                              <QuantityReadOnly value={qty} />
                               <span className="text-sm font-medium text-[#374151]">{formatPrice(lineTotal)}</span>
                             </div>
                           </div>

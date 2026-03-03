@@ -12,24 +12,25 @@ const axiosAuth = axios.create({
   },
 });
 
-// Attach token automatically
+// Attach token from cookie or localStorage (so first request after refresh has token)
 axiosAuth.interceptors.request.use(
   (config) => {
-    const token = Cookies.get("token"); 
+    const token = Cookies.get("token") || (typeof localStorage !== "undefined" ? localStorage.getItem("token") : null);
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// On 401: redirect to login but do NOT clear cookie/localStorage here.
-// Session is only cleared on the login page after verifying the token (avoids F5 logout bug
-// where a single 401 would wipe a valid session).
+// On 401: clear session and notify auth context. Do NOT redirect here.
 axiosAuth.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
-      window.location.href = "/login";
+    if (error.response?.status === 401 && typeof window !== "undefined") {
+      Cookies.remove("token", { path: "/" });
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      window.dispatchEvent(new CustomEvent("auth:session-expired"));
     }
     return Promise.reject(error);
   }

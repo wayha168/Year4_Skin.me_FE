@@ -9,10 +9,16 @@ import { useRouter } from "next/navigation";
 // Create Auth Context
 const AuthContext = createContext({});
 
-// Restore user from cookie + localStorage (client-only). Call only in useEffect so it never runs on server.
+// Get token from cookie first, then localStorage (so refresh keeps session even if cookie is delayed).
+function getStoredToken() {
+  if (typeof window === "undefined") return null;
+  return Cookies.get("token") || localStorage.getItem("token");
+}
+
+// Restore user from token + localStorage (client-only). Call only in useEffect so it never runs on server.
 function restoreSession() {
   if (typeof window === "undefined") return null;
-  const token = Cookies.get("token");
+  const token = getStoredToken();
   if (!token) return null;
   try {
     const saved = localStorage.getItem("user");
@@ -34,10 +40,18 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Restore session from cookie on mount/refresh. Run only on client, only once, and after
-  // the client is ready so cookie/localStorage are available (avoids F5 logout).
+  // When axios gets 401 it clears session and fires this; keep context in sync
   useEffect(() => {
-    if (typeof window === "undefined" || initDone.current) return;
+    const onSessionExpired = () => setUser(null);
+    window.addEventListener("auth:session-expired", onSessionExpired);
+    return () => window.removeEventListener("auth:session-expired", onSessionExpired);
+  }, []);
+
+  // Restore session from cookie on mount/refresh. Reset initDone on cleanup so that
+  // React Strict Mode remounts run restore again (avoids stuck loading/logout on refresh).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (initDone.current) return;
     initDone.current = true;
 
     const runRestore = () => {
@@ -47,28 +61,35 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
         return;
       }
-      const token = Cookies.get("token");
+      const token = getStoredToken();
       if (token) {
-        fetchUser(token).finally(() => {});
+        // Keep user as logged-in with stub so navbar doesn't flash logout; fetch profile after a tick
+        setUser({ token });
+        setLoading(false);
+        setTimeout(() => fetchUser(), 150);
         return;
       }
       setLoading(false);
     };
 
-    // Defer so cookie/localStorage are definitely available (fixes refresh logout)
-    const t = window.setTimeout(runRestore, 0);
-    return () => clearTimeout(t);
+    const t = window.setTimeout(runRestore, 100);
+    return () => {
+      clearTimeout(t);
+      initDone.current = false;
+    };
   }, []);
 
   // Fetch current user info (only clear session on 401; keep user on other errors)
-  const fetchUser = async (token) => {
+  const fetchUser = async () => {
     try {
       const response = await axiosAuth.get("/users/user-profile");
       if (response.status === 200) {
         const userData = response.data?.data ?? response.data;
         if (userData) {
+          const token = getStoredToken();
           setUser({ ...userData, token });
           localStorage.setItem("user", JSON.stringify(userData));
+          if (token && !localStorage.getItem("token")) localStorage.setItem("token", token);
         }
       }
     } catch (err) {
@@ -76,12 +97,13 @@ export const AuthProvider = ({ children }) => {
       if (status === 401) {
         Cookies.remove("token", { path: "/" });
         localStorage.removeItem("user");
+        localStorage.removeItem("token");
         setUser(null);
         if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
           window.location.href = "/login";
         }
       }
-      // On 404/500/network: keep user from cookie + localStorage, don't logout
+      // On 404/500/network: keep current user (or stub), don't logout
     } finally {
       setLoading(false);
     }
@@ -110,6 +132,7 @@ export const AuthProvider = ({ children }) => {
           secure: typeof window !== "undefined" && window.location?.protocol === "https:",
         });
         localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", token);
         setUser({ ...userData, token });
         return userData;
       }
@@ -145,6 +168,7 @@ export const AuthProvider = ({ children }) => {
           secure: typeof window !== "undefined" && window.location?.protocol === "https:",
         });
         localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", token);
         setUser({ ...userData, token });
         return userData;
       }
@@ -193,6 +217,7 @@ export const AuthProvider = ({ children }) => {
   const clearSession = () => {
     Cookies.remove("token", { path: "/" });
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
     setUser(null);
   };
 

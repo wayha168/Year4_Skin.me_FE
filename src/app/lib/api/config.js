@@ -1,5 +1,5 @@
 /**
- * API configuration – no backend URL in client code.
+ * API configuration - no backend URL in client code.
  * All requests use same-origin paths; Next.js rewrites proxy to the backend.
  * Set BACKEND_URL in .env.local (server-only) for the real backend; never expose it to the client.
  */
@@ -9,3 +9,11 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api/v1";
 
 /** Base path for uploaded assets (same origin when using rewrites). */
 export const UPLOADS_BASE = process.env.NEXT_PUBLIC_UPLOADS_BASE ?? "";
+
+/**
+ * Chat assistant API host used by the in-app chat UI.
+ * Frontend requests append `/v1/chat` and `/v1/chat/with-image` to this value.
+ */
+export const CHATBOT_API_BASE = (
+  process.env.NEXT_PUBLIC_CHATBOT_API_BASE ?? "https://chatbot.skinme.store"
+).replace(/\/+$/, "");

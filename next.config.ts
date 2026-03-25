@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
     return [
       { source: '/api/v1/:path*', destination: `${BACKEND_URL}/api/v1/:path*` },
       { source: '/uploads/:path*', destination: `${BACKEND_URL}/uploads/:path*` },
+      {
+        source: '/api/chatbot/:path*',
+        destination: 'https://chatbot.skinme.store/:path*',
+      },
     ]
   },
 }

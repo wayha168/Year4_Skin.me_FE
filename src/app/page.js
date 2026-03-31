@@ -92,23 +92,21 @@ export default function Page() {
           {isClient && <Navbar alwaysVisible={true} />}
     
           {/* HERO SECTION */}
-          <div className="flex justify-center items-center w-full h-full bg-gradient-to-b from-[#fddcff] to-[#af6793]  overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[9rem] max-[992px]:h-auto max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-12 max-[760px]:flex-col max-[760px]:gap-20">
-            <div className="absolute bg-[#ab8fff] rounded-[1000px] z-0 left-[-25rem] top-16 w-[30rem] h-[30rem] max-[992px]:hidden"></div>
-            
+          <div className="flex justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[9rem] max-[992px]:min-h-screen max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-12 max-[760px]:flex-col max-[760px]:gap-20">
             <div className="flex flex-col ml-[7rem] justify-center w-[50%] text-[#1f2937] z-[2] max-[992px]:w-[90%] max-[992px]:ml-0">
-              <p className="text-[27px] font-medium text-[#eb61a1] mb-4 max-[600px]:text-[27px]">Welcome to SKIN.ME</p>
-              <p className="text-[44px] font-semibold text-white mb-4 max-[992px]:text-[32px] max-[600px]:text-[35px]">Most Essential Skin Care Product</p>
-              <p className="text-xl text-[#4c4c4c] mb-10 max-[600px]:text-xl">Give you the best skincare products is our mission.</p>
+              <p className="text-[57px] font-bold text-[#3C3C3C] mb-4 max-[600px]:text-[27px]">Welcome to SKIN.ME</p>
+              <p className="text-[43px] font-semibold text-white mb-4 max-[992px]:text-[32px] max-[600px]:text-[35px]">Most Essential Skin Care Product</p>
+              <p className="text-xl text-[#4c4c4c] mb-10 max-[600px]:text-xl">Give you the best skincare | product is our mission.</p>
               <div> 
                 <button 
                   onClick={scrollToProducts} 
-                  className="text-white text-[22px] font-semibold px-[50px] py-3.5 bg-[#eb61a2] rounded-[15px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-base max-[600px]:px-[30px] max-[600px]:py-2.5"
+                  className="text-white text-[22px] font-semibold px-[50px] py-3.5 bg-[#eb61a2] rounded-[7px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-base max-[600px]:px-[30px] max-[600px]:py-2.5"
                 >
                   Shop Now
                 </button>
               </div>
             </div>
-            
+
             <div className="min-[992px]:pt-[5rem] w-[40rem] h-[50rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem] max-[992px]:h-auto ">
              <Image  
               sizes="(max-width: 992px) 100vw, 40rem (max-width: 992px) 100vw, 40rem"  
@@ -122,8 +120,6 @@ export default function Page() {
               fetchPriority="high"
             />
             </div>
-            
-            <div className="absolute bg-[#ab8fff] rounded-[1000px] z-0 right-[-25rem] top-80 w-[30rem] h-[30rem] max-[992px]:hidden max-[760px]:right-[-25rem]"></div>
           </div>
     
       {/* OVERVIEW SECTION */}
@@ -135,21 +131,21 @@ export default function Page() {
           <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] max-[660px]:text-center max-[660px]:px-8">
             This is the overview about our products that you can spend a few minutes to see how they look.
           </div>
-          <div className="flex flex-row gap-4 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-1">
+          <div className="flex flex-row gap-8 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-4">
             <Image
               src={FirstImage}
               alt="Overview 1"
-              width={272}
-              height={272}
-              className="w-[17rem] h-[17rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0 max-[660px]:mr-[-3rem]"
+              width={352}
+              height={352}
+              className="w-[22rem] h-[22rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
               style={{ width: "auto", height: "auto" }}
             />
             <Image
               src={SecondImage}
               alt="Overview 2"
-              width={272}
-              height={272}
-              className="rounded-[10px] w-[17rem] h-[17rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
+              width={352}
+              height={352}
+              className="rounded-[10px] w-[22rem] h-[22rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
               style={{ width: "auto", height: "auto" }}
             />
           </div>
@@ -157,9 +153,8 @@ export default function Page() {
         <div className="mt-28 w-[30rem] h-[30rem] max-[1180px]:mb-40 max-[660px]:mt-4 max-[660px]:mb-0 max-[1180px]:mt-[6.3rem] ">
           <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" style={{ width: "auto", height: "auto" }} />
         </div>
-        <div className="absolute bg-[#ab8fff] rounded-[1000px] z-[0] left-[-24rem] top-[63rem] w-[30rem] h-[30rem] max-[992px]:hidden max-[1180px]:-ml-[160px] max-[760px]:top-[100rem]"></div>
       </div>
-    
+
           {/* PRODUCTS SECTION  */}
           <section id="product" className="py-20 px-8 bg-white text-center max-[1180px]:mt-[-3rem]">
             <div className="max-w-7xl mx-auto">
@@ -235,7 +230,121 @@ export default function Page() {
               )}
             </div>
           </section>
+          {/* CUSTOMER STORIES RECOMMENDATION SECTION */}
+          <div className="bg-[#fff0f7] py-20 px-8">
+            <div className="max-w-7xl mx-auto">
+
+              {/* Header */}
+              <div className="text-center mb-16">
+                <span className="inline-block bg-[#eb61a2] text-white text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full mb-4">
+                  Real Stories
+                </span>
+                <h2 className="text-4xl font-bold text-[#3C3C3C] mb-4">
+                  What Our Community Says
+                </h2>
+                <p className="text-[#777] text-lg max-w-xl mx-auto">
+                  Join thousands of happy customers who transformed their skincare routine with SKIN.ME.
+                </p>
+              </div>
+
+              {/* Featured Large Testimonial */}
+              <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgba(235,97,162,0.12)] p-10 mb-10 flex flex-col md:flex-row items-center gap-8 border border-[#ffd6ec]">
+                <div className="flex-shrink-0 flex flex-col items-center gap-3">
+                  <div className="w-24 h-24 rounded-full bg-[#ffd0ed] flex items-center justify-center text-4xl">
+                    🌸
+                  </div>
+                  <div className="text-center">
+                    <p className="font-bold text-[#3C3C3C] text-lg">Sreymom Chan</p>
+                    <p className="text-[#eb61a2] text-sm font-medium">Verified Buyer ✓</p>
+                    <div className="flex gap-1 justify-center mt-1">
+                      {[1,2,3,4,5].map(i => (
+                        <span key={i} className="text-yellow-400 text-lg">★</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-[#eb61a2] text-5xl font-serif leading-none mb-3">&ldquo;</p>
+                  <p className="text-[#444] text-xl leading-relaxed font-medium italic">
+                    I&apos;ve tried so many skincare brands but SKIN.ME is different. After just two weeks,
+                    my skin felt smoother and my breakouts reduced significantly. The texture is light,
+                    absorbs fast, and smells amazing. I genuinely look forward to my skincare routine now!
+                  </p>
+                  <p className="text-[#eb61a2] text-5xl font-serif leading-none text-right mt-2">&rdquo;</p>
+                  <p className="text-sm text-[#aaa] mt-3">Posted 3 days ago · Phnom Penh, Cambodia</p>
+                </div>
+              </div>
+
+              {/* 3-column smaller testimonials */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  {
+                    emoji: "💆‍♀️",
+                    name: "Dara Heng",
+                    role: "Beauty Blogger",
+                    stars: 5,
+                    text: "Honestly the best moisturizer I have ever used. My skin stays hydrated all day — even in the hot Cambodian weather!",
+                    date: "1 week ago"
+                  },
+                  {
+                    emoji: "🌿",
+                    name: "Lyda Keo",
+                    role: "Yoga Instructor",
+                    stars: 5,
+                    text: "Clean ingredients, beautiful packaging, and it actually works. SKIN.ME is now a non-negotiable part of my morning ritual.",
+                    date: "2 weeks ago"
+                  },
+                  {
+                    emoji: "✨",
+                    name: "Manith Ros",
+                    role: "Student",
+                    stars: 4,
+                    text: "Super affordable and effective. I got the serum and face wash combo — my skin has never looked this good. Will reorder for sure.",
+                    date: "5 days ago"
+                  }
+                ].map((review, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 hover:shadow-[0_8px_25px_rgba(235,97,162,0.18)] transition-shadow duration-300"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-[#ffd0ed] flex items-center justify-center text-2xl flex-shrink-0">
+                        {review.emoji}
+                      </div>
+                      <div>
+                        <p className="font-bold text-[#3C3C3C] text-sm">{review.name}</p>
+                        <p className="text-[#aaa] text-xs">{review.role}</p>
+                      </div>
+                      <div className="ml-auto flex gap-0.5">
+                        {[1,2,3,4,5].map(i => (
+                          <span key={i} className={`text-sm ${i <= review.stars ? "text-yellow-400" : "text-gray-200"}`}>★</span>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-[#555] text-sm leading-relaxed flex-1">{review.text}</p>
+                    <p className="text-xs text-[#ccc]">{review.date}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom stats bar */}
+              <div className="mt-14 grid grid-cols-3 gap-4 text-center">
+                {[
+                  { number: "10,000+", label: "Happy Customers" },
+                  { number: "4.8 / 5", label: "Average Rating" },
+                  { number: "98%", label: "Would Recommend" }
+                ].map((stat, i) => (
+                  <div key={i} className="bg-white rounded-2xl py-6 px-4 border border-[#ffd6ec] shadow-sm">
+                    <p className="text-3xl font-bold text-[#eb61a2] mb-1">{stat.number}</p>
+                    <p className="text-sm text-[#888] font-medium">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </div>
     
+          
           {/* ABOUT US SECTION - unchanged */}
           <div id="aboutus" className="bg-[#ffd0ed] py-20 px-8 text-center">
             <div>
@@ -252,6 +361,7 @@ export default function Page() {
               <Image src={FirstImage} alt="About 4" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
             </div>
           </div>
+          
     
           <Footer />
     </div>

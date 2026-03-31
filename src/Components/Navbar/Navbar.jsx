@@ -62,15 +62,32 @@ const Navbar = ({ alwaysVisible = false }) => {
     };
   }, [handleResize]);
 
-  // Keep navbar always visible when scrolling
-  const handleScroll = useCallback(() => {
-    setVisible(true);
-  }, []);
-
+  // Scroll behavior: hide on scroll down, show on scroll up
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          if (currentScrollY > lastScrollY && currentScrollY > 50) {
+            // Scrolling down & past threshold - hide
+            setVisible(false);
+          } else {
+            // Scrolling up - show
+            setVisible(true);
+          }
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+  }, []);
 
   // Close menu and search when clicking outside
   const handleClickOutside = useCallback((e) => {
@@ -170,59 +187,14 @@ const Navbar = ({ alwaysVisible = false }) => {
     <>
       {/* NORMAL NAVBAR */}
       <nav
-        className={`fixed left-0 w-full bg-[#FFD0ED] shadow-xl transition-all duration-300 z-[9999] h-14 ${visible ? "top-0" : "-top-32"
+        className={`fixed left-0 w-full bg-white shadow-xl transition-all duration-150 z-[9999] h-20 ${visible ? "top-0" : "-top-20"
           }`}
       >
         <div
           ref={navRef}
           className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-full relative"
         >
-          {/* LEFT: Nav icons (Home, Products, About Us) */}
-          {!isSmallMobile && (
-            <div
-              className={`flex items-center gap-6 min-w-0 flex-1 justify-start ${menuOpen && isMobile
-                ? "flex-col absolute left-4 top-14 bg-[#eac1da] py-4 rounded-lg z-10"
-                : "hidden lg:flex"
-                }`}
-            >
-              <Link
-                href="/"
-                onClick={() => safeNavigate("/")}
-                className="text-black/80 hover:text-[#eb61a2] transition-colors p-1"
-                title="Home"
-              >
-                <i className="fa-solid fa-house text-xl"></i>
-              </Link>
-              <Link
-                href="/products"
-                onClick={() => safeNavigate("/products")}
-                className="text-black/80 hover:text-[#eb61a2] transition-colors p-1"
-                title="Products"
-              >
-                <i className="fa-solid fa-shop text-xl"></i>
-              </Link>
-              <Link
-                href="/about-us"
-                onClick={() => safeNavigate("/about-us")}
-                className="text-black/80 hover:text-[#eb61a2] transition-colors p-1"
-                title="About Us"
-              >
-                <i className="fa-solid fa-circle-info text-xl"></i>
-              </Link>
-            </div>
-          )}
-
-          {/* HAMBURGER (tablet only) */}
-          {!isSmallMobile && (
-            <div
-              className="block lg:hidden text-2xl cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 z-20"
-              onClick={toggleMenu}
-            >
-              <i className="fa-solid fa-bars text-gray-700"></i>
-            </div>
-          )}
-
-          {/* CENTER: Logo (hidden when search open) or Search form + results */}
+          {/* LEFT: Logo */}
           {!searchOpen && (
             <Link
               href="/"
@@ -230,15 +202,60 @@ const Navbar = ({ alwaysVisible = false }) => {
                 e.preventDefault();
                 safeNavigate("/");
               }}
-              className={`flex flex-col items-center no-underline select-none absolute left-1/2 -translate-x-1/2 text-gray-600 hover:text-[#eb61a2] transition-colors ${isSmallMobile ? "mx-auto" : ""}`}
+              className="flex flex-col items-start no-underline select-none text-[#eb61a2] flex-shrink-0"
             >
-              <span className="text-2xl font-bold tracking-tight leading-none uppercase">
+              <span className="text-[40px] font-bold tracking-tight leading-none uppercase" style={{ fontSize: '40px' }}>
                 SKIN.ME
               </span>
-              <span className="text-[10px] opacity-90 mt-0.5 tracking-wide ml-10">
+              <span className="text-[10px] opacity-90 mt-0.5 tracking-wide text-black">
                 @Home Of Your Care
               </span>
             </Link>
+          )}
+
+          {/* CENTER: Nav icons (Home, Products, About Us) */}
+          {!isSmallMobile && !searchOpen && (
+            <div
+              className={`flex items-center gap-11 ${menuOpen && isMobile
+                ? "flex-col absolute left-4 top-16 bg-white py-4 rounded-lg z-10 px-6"
+                : "absolute left-1/2 -translate-x-1/2"
+                }`}
+            >
+              <Link
+                href="/"
+                onClick={() => safeNavigate("/")}
+                className="text-black/80 hover:text-[#eb61a2] transition-none p-0"
+                title="Home"
+              >
+                <Image src="/assets/NavbarIcons/Icons Home.png" alt="Home" width={38} height={38} />
+              </Link>
+              <Link
+                href="/products"
+                onClick={() => safeNavigate("/products")}
+                className="text-black/80 hover:text-[#eb61a2] transition-none p-0"
+                title="Products"
+              >
+                <Image src="/assets/NavbarIcons/Icons Products.png" alt="Products" width={38} height={38} />
+              </Link>
+              <Link
+                href="/about-us"
+                onClick={() => safeNavigate("/about-us")}
+                className="text-black/80 hover:text-[#eb61a2] transition-none p-0"
+                title="About Us"
+              >
+                <Image src="/assets/NavbarIcons/Icons About Us.png" alt="About Us" width={38} height={38} />
+              </Link>
+            </div>
+          )}
+
+          {/* HAMBURGER (tablet only) */}
+          {!isSmallMobile && (
+            <div
+              className="block md:hidden text-2xl cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 z-20"
+              onClick={toggleMenu}
+            >
+              <i className="fa-solid fa-bars text-gray-700"></i>
+            </div>
           )}
 
           {searchOpen && !isSmallMobile && (
@@ -337,35 +354,35 @@ const Navbar = ({ alwaysVisible = false }) => {
           {!isSmallMobile && (
             <div
               className={`flex items-center gap-3 min-w-0 flex-1 justify-end ${menuOpen && isMobile
-                ? "flex-col absolute right-4 bg-[#eac1da] top-14 py-4 rounded-lg z-10"
-                : "hidden lg:flex"
+                ? "flex-col absolute right-4 bg-white top-14 py-4 rounded-lg z-10"
+                : "hidden md:flex"
                 }`}
             >
               {!searchOpen && (
                 <button
                   type="button"
                   onClick={openSearch}
-                  className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                  className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                   title="Search products"
                 >
-                  <i className="fa-solid fa-magnifying-glass text-lg"></i>
+                  <Image src="/assets/NavbarIcons/Icons Search.png" alt="Search" width={32} height={32} />
                 </button>
               )}
               <Link
                 href="/favorites"
                 onClick={handleFavoriteClick}
-                className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                 title="Favorites"
               >
-                <i className="fa-solid fa-heart text-lg"></i>
+                <Image src="/assets/NavbarIcons/Icons Favorite.png" alt="Favorites" width={38} height={38} />
               </Link>
               <Link
                 href="/bag_page"
                 onClick={handleBagClick}
-                className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                 title="Bag"
               >
-                <i className="fa-solid fa-bag-shopping text-lg"></i>
+                <Image src="/assets/NavbarIcons/Icons Bage.png" alt="Bag" width={38} height={38} />
               </Link>
               {user ? (
                 <Link
@@ -374,7 +391,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                   className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
                   title="Profile"
                 >
-                  <i className="fa-solid fa-user text-lg"></i>
+                  <Image src="/assets/NavbarIcons/Icons Profile.png" alt="Profile" width={32} height={32} />
                 </Link>
               ) : (
                 <>
@@ -401,46 +418,46 @@ const Navbar = ({ alwaysVisible = false }) => {
 
       {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px): Home, Products, Favorite, Cart, Profile */}
       {isSmallMobile && (
-        <div className="fixed bottom-0 left-0 right-0 w-full bg-[#FFD0ED] h-16 shadow-xl z-[99999] flex justify-between items-center text-gray-600 px-2 sm:px-4">
+        <div className="fixed bottom-0 left-0 right-0 w-full bg-white h-20 shadow-xl z-[99999] flex justify-between items-center text-gray-600 px-2 sm:px-4">
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={() => safeNavigate("/")}
             title="Home"
           >
-            <i className="fa-solid fa-house text-xl" />
+            <Image src="/assets/NavbarIcons/Icons Home.png" alt="Home" width={38} height={38} />
           </button>
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={() => safeNavigate("/products")}
             title="Products"
           >
-            <i className="fa-solid fa-shop text-xl" />
+            <Image src="/assets/NavbarIcons/Icons Products.png" alt="Products" width={38} height={38} />
           </button>
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={handleFavoriteClick}
             title="Favorites"
           >
-            <i className="fa-solid fa-heart text-xl" />
+            <Image src="/assets/NavbarIcons/Icons Favorite.png" alt="Favorites" width={38} height={38} />
           </button>
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={handleBagClick}
             title="Cart"
           >
-            <i className="fa-solid fa-bag-shopping text-xl" />
+            <Image src="/assets/NavbarIcons/Icons Bage.png" alt="Bag" width={38} height={38} />
           </button>
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={() => safeNavigate(user ? "/profile" : "/login")}
             title="Profile"
           >
-            <i className={`fa-solid ${user ? "fa-user" : "fa-right-to-bracket"} text-xl`} />
+            <Image src="/assets/NavbarIcons/Icons Profile.png" alt="Profile" width={32} height={32} />
           </button>
         </div>
       )}

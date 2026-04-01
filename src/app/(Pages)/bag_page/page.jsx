@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
-import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import { updateCartItemQuantity, removeCartItem } from "../../../app/lib/cartUpdateQuantity";
@@ -294,7 +293,6 @@ function BagPage() {
       </main>
 
       <Footer />
-      <MessageWidget />
     </>
   );
 }

@@ -9,7 +9,6 @@ import axiosAuth from "../../../app/lib/api/axiosConfig";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
-import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import { FaShoppingBag } from "react-icons/fa";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
@@ -204,8 +203,6 @@ const FavoritePage = () => {
       </main>
 
       <Footer />
-      <MessageWidget />
-
       <style jsx>{`
         @keyframes fadeInOut {
           0%,

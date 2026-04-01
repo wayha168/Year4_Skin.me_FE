@@ -18,7 +18,6 @@ import {
 } from "react-icons/fa";
 import Loading from "../../../Components/Loading/Loading";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
-import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
 
@@ -307,7 +306,6 @@ const ProfilePage = () => {
         </div>
       </main>
       <Footer />
-      <MessageWidget />
     </>
   );
 };

@@ -4,6 +4,7 @@ import { createContext, useEffect, useState, useContext, useRef } from "react";
 import Cookies from "js-cookie";
 import axiosAuth from "../api/axiosConfig";
 import { API_BASE } from "../api/config";
+import { getGoogleOAuthRedirectUri } from "./googleOAuthRedirect";
 import { useRouter } from "next/navigation";
 
 // Create Auth Context
@@ -109,21 +110,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Google login: fetch backend auth API directly (same as other API calls via API_BASE)
-  const googleLogin = async (code) => {
+  const setLoginError = (message) => setError(message ?? "");
+
+  // POST /api/v1/auth/google — backend must exchange `code` with Google using the same redirectUri the browser used (often "postmessage").
+  const googleLogin = async (code, redirectUri) => {
+    const uri = (redirectUri ?? getGoogleOAuthRedirectUri()).trim() || "postmessage";
     try {
       setError("");
-      const res = await fetch(`${API_BASE}/auth/google`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
+      const { data: body } = await axiosAuth.post("/auth/google", { code, redirectUri: uri });
+      const userData = body?.data ?? body;
+      const token = userData?.jwtToken;
 
-      if (res.ok && data?.data?.jwtToken) {
-        const token = data.data.jwtToken;
-        const userData = data.data;
+      if (token) {
 
         Cookies.set("token", token, {
           expires: 7,
@@ -136,11 +134,12 @@ export const AuthProvider = ({ children }) => {
         setUser({ ...userData, token });
         return userData;
       }
-      setError(data?.message || "Google sign-in failed");
+      setError(body?.message || "Google sign-in failed");
       return null;
     } catch (err) {
       console.error("Google login error:", err);
-      setError("Network error");
+      const msg = err?.response?.data?.message || err?.message || "Google sign-in failed";
+      setError(typeof msg === "string" ? msg : "Google sign-in failed");
       return null;
     }
   };
@@ -247,7 +246,9 @@ export const AuthProvider = ({ children }) => {
   // any child from firing an API request before the token is restored from the cookie,
   // which would otherwise get 401 and the axios interceptor would clear the session (F5 logout).
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, googleLogin, signup, logout, clearSession, isAdmin }}>
+    <AuthContext.Provider
+      value={{ user, loading, error, login, googleLogin, signup, logout, clearSession, isAdmin, setLoginError }}
+    >
       {loading ? (
         <div className="flex items-center justify-center min-h-screen bg-white" aria-label="Loading">
           <div className="w-10 h-10 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />

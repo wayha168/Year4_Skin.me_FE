@@ -123,35 +123,33 @@ export default function Page() {
           </div>
     
       {/* OVERVIEW SECTION */}
-      <div className="flex flex-row items-center justify-center relative max-[1180px]:mt-16 max-[1180px]:flex-col max-[660px]:flex-col max-[660px]:my-0 max-[660px]:mx-auto">
-        <div className="flex flex-col justify-center items-center w-[30rem] mx-0 mr-32 ml-4 z-[5] max-[660px]:w-full max-[660px]:mx-0 max-[660px]:mb-8">
-          <div className="mb-5 text-[#eb61a1] text-[35px] font-bold font-[Arial,Helvetica,sans-serif]">
-            Let's Have A Look
+      <div className="flex flex-row items-center justify-center relative gap-[3rem] max-[1180px]:mt-16 max-[1180px]:flex-col max-[660px]:flex-col max-[660px]:my-0 max-[660px]:mx-auto">
+        <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] max-[660px]:w-full max-[660px]:mx-0 max-[660px]:mb-8">
+          <div className=" text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full">
+            LET'S HAVE A LOOK
           </div>
-          <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif]">
+          <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] text-left w-full">
             This is the overview about our products that you can spend a few minutes to see how they look.
           </div>
-          <div className="flex flex-row gap-8 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-4">
+          <div className="flex flex-row gap-4 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-4">
             <Image
               src={FirstImage}
               alt="Overview 1"
               width={352}
               height={352}
-              className="w-[22rem] h-[22rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
-              style={{ width: "auto", height: "auto" }}
+              className="w-[18rem] h-[18rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
             />
             <Image
               src={SecondImage}
               alt="Overview 2"
               width={352}
               height={352}
-              className="rounded-[10px] w-[22rem] h-[22rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
-              style={{ width: "auto", height: "auto" }}
+              className="rounded-[10px] w-[18rem] h-[18rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
             />
           </div>
         </div>
-        <div className="mt-28 w-[30rem] h-[30rem] max-[1180px]:mb-40 max-[660px]:mt-4 max-[660px]:mb-0 max-[1180px]:mt-[6.3rem] ">
-          <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" style={{ width: "auto", height: "auto" }} />
+        <div className="mt-28 w-[38rem] h-[38rem] max-[1180px]:mb-40 max-[660px]:mt-4 max-[660px]:mb-0 max-[1180px]:mt-[6.3rem] ">
+          <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" />
         </div>
       </div>
 

@@ -94,13 +94,13 @@ export default function Page() {
           {/* HERO SECTION */}
           <div className="flex justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[9rem] max-[992px]:min-h-screen max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-12 max-[760px]:flex-col max-[760px]:gap-20">
             <div className="flex flex-col ml-[7rem] justify-center w-[50%] text-[#1f2937] z-[2] max-[992px]:w-[90%] max-[992px]:ml-0">
-              <p className="text-[57px] font-bold text-[#3C3C3C] mb-4 max-[600px]:text-[27px]">Welcome to SKIN.ME</p>
-              <p className="text-[43px] font-semibold text-white mb-4 max-[992px]:text-[32px] max-[600px]:text-[35px]">Most Essential Skin Care Product</p>
-              <p className="text-xl text-[#4c4c4c] mb-10 max-[600px]:text-xl">Give you the best skincare | product is our mission.</p>
+              <p className="text-[57px] font-bold text-[#3C3C3C] max-[600px]:text-[27px]">WELCOME TO SKIN.ME</p>
+              <p className="tracking-[-0.05em] text-[44px] font-semibold text-white mb-4 max-[992px]:text-[32px] max-[600px]:text-[35px]">Most Essential Skin Care Product</p>
+              <p className="opacity-[0.8] text-[20px] text-[#4c4c4c] mb-10 max-[600px]:text-xl">Give you the best skincare | product is our mission.</p>
               <div> 
                 <button 
                   onClick={scrollToProducts} 
-                  className="text-white text-[22px] font-semibold px-[50px] py-3.5 bg-[#eb61a2] rounded-[7px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-base max-[600px]:px-[30px] max-[600px]:py-2.5"
+                  className="opacity-[1] text-white text-[30px] font-semibold px-[50px] py-3.5 bg-[#FA4497] rounded-[7px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-base max-[600px]:px-[30px] max-[600px]:py-2.5"
                 >
                   Shop Now
                 </button>
@@ -125,10 +125,10 @@ export default function Page() {
       {/* OVERVIEW SECTION */}
       <div className="flex flex-row items-center justify-center relative max-[1180px]:mt-16 max-[1180px]:flex-col max-[660px]:flex-col max-[660px]:my-0 max-[660px]:mx-auto">
         <div className="flex flex-col justify-center items-center w-[30rem] mx-0 mr-32 ml-4 z-[5] max-[660px]:w-full max-[660px]:mx-0 max-[660px]:mb-8">
-          <div className="mb-5 text-[#eb61a1] text-[35px] font-bold font-[Arial,Helvetica,sans-serif] max-[660px]:text-center">
+          <div className="mb-5 text-[#eb61a1] text-[35px] font-bold font-[Arial,Helvetica,sans-serif]">
             Let's Have A Look
           </div>
-          <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] max-[660px]:text-center max-[660px]:px-8">
+          <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif]">
             This is the overview about our products that you can spend a few minutes to see how they look.
           </div>
           <div className="flex flex-row gap-8 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-4">

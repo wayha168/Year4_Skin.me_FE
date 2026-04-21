@@ -153,16 +153,34 @@ export default function Page() {
         </div>
       </div>
 
+      {/* LOGO MOVING SECTION */}
+      <div className="bg-[#0A3D3F] py-16 overflow-hidden">
+        <div className="flex animate-marquee whitespace-nowrap">
+          <span className="text-5xl font-bold text-[#FF0000] mx-12 font-serif italic">Emidi</span>
+          <span className="text-5xl font-extrabold text-[#854DFF] mx-12 font-sans tracking-wider">Pka</span>
+          <span className="text-5xl font-medium text-white mx-12 font-mono">Le</span>
+          <span className="text-5xl font-bold text-[#DB14CD] mx-12 font-bold uppercase tracking-widest">Magi</span>
+          <span className="text-5xl font-semibold text-[#FF0000] mx-12 font-serif">CETAPHIL</span>
+          <span className="text-5xl font-bold text-[#854DFF] mx-12 font-sans uppercase">Scarface</span>
+          <span className="text-5xl font-bold text-white mx-12 font-serif italic">Emidi</span>
+          <span className="text-5xl font-extrabold text-[#DB14CD] mx-12 font-sans tracking-wider">Pka</span>
+          <span className="text-5xl font-medium text-[#FF0000] mx-12 font-mono">Le</span>
+          <span className="text-5xl font-bold text-[#854DFF] mx-12 font-bold uppercase tracking-widest">Magi</span>
+          <span className="text-5xl font-semibold text-white mx-12 font-serif">CETAPHIL</span>
+          <span className="text-5xl font-bold text-[#DB14CD] mx-12 font-sans uppercase">Scarface</span>
+        </div>
+      </div>
+
           {/* PRODUCTS SECTION  */}
           <section id="product" className="py-20 px-8 bg-white text-center max-[1180px]:mt-[-3rem]">
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-12 px-5 uppercase">
-                <h2 className="text-4xl text-[#eb61a2] font-bold max-[600px]:text-[28px]">Products</h2>
+                <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[600px]:text-[28px]">OUR PRODUCTS</h2>
                 <button 
-                  className="bg-[#eb61a2] text-white border-none px-6 py-3 rounded-2xl text-xl cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[600px]:text-sm"
+                  className="bg-[#eb61a2] text-white border-none px-[3rem] py-3 rounded-[0.5rem] text-[1.5rem] cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[600px]:text-sm"
                   onClick={() => router.push("/products")}
                 >
-                  All Products
+                  View All
                 </button>
               </div>
     
@@ -234,44 +252,19 @@ export default function Page() {
 
               {/* Header */}
               <div className="text-center mb-16">
-                <span className="inline-block bg-[#eb61a2] text-white text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full mb-4">
-                  Real Stories
-                </span>
-                <h2 className="text-4xl font-bold text-[#3C3C3C] mb-4">
-                  What Our Community Says
+                <h2 className="text-[4rem] font-bold text-[#3C3C3C] mb-4">
+                  RECOMMENDATIONS
                 </h2>
-                <p className="text-[#777] text-lg max-w-xl mx-auto">
-                  Join thousands of happy customers who transformed their skincare routine with SKIN.ME.
+                <p className="text-[#777] text-lg text-left">
+                  These reviews are based on feedback from real users who have used our products for more than 7 days.
+                  During this time, customers experience the effectiveness, texture, and overall performance of our skincare solutions.
+                  Average rating: 4.5 / 5
+                  We continuously use this feedback to improve our products and deliver the best possible experience.
                 </p>
               </div>
 
               {/* Featured Large Testimonial */}
-              <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgba(235,97,162,0.12)] p-10 mb-10 flex flex-col md:flex-row items-center gap-8 border border-[#ffd6ec]">
-                <div className="flex-shrink-0 flex flex-col items-center gap-3">
-                  <div className="w-24 h-24 rounded-full bg-[#ffd0ed] flex items-center justify-center text-4xl">
-                    🌸
-                  </div>
-                  <div className="text-center">
-                    <p className="font-bold text-[#3C3C3C] text-lg">Sreymom Chan</p>
-                    <p className="text-[#eb61a2] text-sm font-medium">Verified Buyer ✓</p>
-                    <div className="flex gap-1 justify-center mt-1">
-                      {[1,2,3,4,5].map(i => (
-                        <span key={i} className="text-yellow-400 text-lg">★</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <p className="text-[#eb61a2] text-5xl font-serif leading-none mb-3">&ldquo;</p>
-                  <p className="text-[#444] text-xl leading-relaxed font-medium italic">
-                    I&apos;ve tried so many skincare brands but SKIN.ME is different. After just two weeks,
-                    my skin felt smoother and my breakouts reduced significantly. The texture is light,
-                    absorbs fast, and smells amazing. I genuinely look forward to my skincare routine now!
-                  </p>
-                  <p className="text-[#eb61a2] text-5xl font-serif leading-none text-right mt-2">&rdquo;</p>
-                  <p className="text-sm text-[#aaa] mt-3">Posted 3 days ago · Phnom Penh, Cambodia</p>
-                </div>
-              </div>
+             
 
               {/* 3-column smaller testimonials */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -359,8 +352,6 @@ export default function Page() {
               <Image src={FirstImage} alt="About 4" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
             </div>
           </div>
-          
-    
           <Footer />
     </div>
   );

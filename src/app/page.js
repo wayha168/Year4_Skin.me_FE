@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useCallback, useMemo } from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import {useRouter,  useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -10,9 +10,96 @@ import Footer from "../Components/Footer/Footer.jsx";
 import useUserActions from "../Components/Hooks/userUserActions.js";
 import useAuthContext from "./lib/Authentication/AuthContext.jsx";
 import LoginFirst from "../Components/LoginFirst/LoginFirst.js";
-import { FaCartPlus, FaHeart } from "react-icons/fa";
+import { FaCartPlus, FaHeart, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { getProductImageUrl } from "./lib/productImage.js";
 import { formatPrice } from "./lib/formatPrice.js";
+
+function useDragScroll(ref) {
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const velocity = useRef(0);
+  const lastX = useRef(0);
+  const lastTime = useRef(0);
+  const momentumAnimation = useRef(null);
+
+  const stopMomentum = useCallback(() => {
+    if (momentumAnimation.current) {
+      cancelAnimationFrame(momentumAnimation.current);
+      momentumAnimation.current = null;
+    }
+  }, []);
+
+  const applyMomentum = useCallback(() => {
+    if (!ref.current) return;
+
+    const container = ref.current;
+    const friction = 0.95;
+    const minVelocity = 0.5;
+
+    if (Math.abs(velocity.current) > minVelocity) {
+      container.scrollLeft += velocity.current;
+      velocity.current *= friction;
+      momentumAnimation.current = requestAnimationFrame(applyMomentum);
+    } else {
+      momentumAnimation.current = null;
+    }
+  }, [ref]);
+
+  const handleMouseDown = useCallback((e) => {
+    if (!ref.current) return;
+    stopMomentum();
+    isDragging.current = true;
+    startX.current = e.pageX - ref.current.offsetLeft;
+    scrollLeft.current = ref.current.scrollLeft;
+    lastX.current = e.pageX;
+    lastTime.current = Date.now();
+    velocity.current = 0;
+    ref.current.style.cursor = "grabbing";
+  }, [ref, stopMomentum]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (!ref.current) return;
+    if (isDragging.current) {
+      isDragging.current = false;
+      ref.current.style.cursor = "grab";
+      applyMomentum();
+    }
+  }, [ref, applyMomentum]);
+
+  const handleMouseUp = useCallback(() => {
+    if (!ref.current) return;
+    if (isDragging.current) {
+      isDragging.current = false;
+      ref.current.style.cursor = "grab";
+      applyMomentum();
+    }
+  }, [ref, applyMomentum]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!ref.current || !isDragging.current) return;
+    e.preventDefault();
+    const x = e.pageX - ref.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    ref.current.scrollLeft = scrollLeft.current - walk;
+
+    // Calculate velocity
+    const now = Date.now();
+    const dt = now - lastTime.current;
+    if (dt > 0) {
+      velocity.current = (e.pageX - lastX.current) * 1.5;
+      lastX.current = e.pageX;
+      lastTime.current = now;
+    }
+  }, [ref]);
+
+  return {
+    onMouseDown: handleMouseDown,
+    onMouseLeave: handleMouseLeave,
+    onMouseUp: handleMouseUp,
+    onMouseMove: handleMouseMove,
+  };
+}
 
 export default function Page() {
     const FirstImage = "/assets/first_image.png"
@@ -34,16 +121,45 @@ export default function Page() {
       const section = document.getElementById("product");
     if (section) {
       const navbarHeight = document.querySelector("nav")?.offsetHeight || 0;
-    
+
     // 🔥 THIS IS THE KEY LINE - Change this number to control position
       const extraOffset = -120; // Adjust this value!
-    
+
     // Apply the offset to the scroll calculation
       const y = section.getBoundingClientRect().top + window.scrollY - navbarHeight - extraOffset;
-    
+
      window.scrollTo({ top: y, behavior: "smooth" });
   }
 }, []);
+
+      const testimonialsRef = useRef(null);
+      const leftGradientRef = useRef(null);
+      const rightGradientRef = useRef(null);
+      const dragScrollHandlers = useDragScroll(testimonialsRef);
+
+      // Control gradient visibility based on scroll position
+      useEffect(() => {
+        const container = testimonialsRef.current;
+        const leftGradient = leftGradientRef.current;
+        const rightGradient = rightGradientRef.current;
+
+        if (!container || !leftGradient || !rightGradient) return;
+
+        const updateGradients = () => {
+          const scrollLeft = container.scrollLeft;
+          const maxScroll = container.scrollWidth - container.clientWidth;
+          const isAtLeft = scrollLeft <= 0;
+          const isAtRight = scrollLeft >= maxScroll - 5;
+
+          leftGradient.style.opacity = isAtLeft ? "0" : "1";
+          rightGradient.style.opacity = isAtRight ? "0" : "1";
+        };
+
+        container.addEventListener("scroll", updateGradients);
+        updateGradients();
+
+        return () => container.removeEventListener("scroll", updateGradients);
+      }, []);
     
       useEffect(() => {
         if (searchParams.get("scroll") === "product") {
@@ -172,7 +288,7 @@ export default function Page() {
       </div>
 
           {/* PRODUCTS SECTION  */}
-          <section id="product" className="py-20 px-8 bg-white text-center max-[1180px]:mt-[-3rem]">
+          <section id="product" className="py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem]">
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-12 px-5 uppercase">
                 <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[600px]:text-[28px]">OUR PRODUCTS</h2>
@@ -255,7 +371,7 @@ export default function Page() {
                 <h2 className="text-[4rem] font-bold text-[#3C3C3C] mb-4">
                   RECOMMENDATIONS
                 </h2>
-                <p className="text-[#777] text-lg text-left">
+                <p className="text-[#000] text-[1.5rem] text-left font-sans">
                   These reviews are based on feedback from real users who have used our products for more than 7 days.
                   During this time, customers experience the effectiveness, texture, and overall performance of our skincare solutions.
                   Average rating: 4.5 / 5
@@ -266,62 +382,137 @@ export default function Page() {
               {/* Featured Large Testimonial */}
              
 
-              {/* 3-column smaller testimonials */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                  {
-                    emoji: "💆‍♀️",
-                    name: "Dara Heng",
-                    role: "Beauty Blogger",
-                    stars: 5,
-                    text: "Honestly the best moisturizer I have ever used. My skin stays hydrated all day — even in the hot Cambodian weather!",
-                    date: "1 week ago"
-                  },
-                  {
-                    emoji: "🌿",
-                    name: "Lyda Keo",
-                    role: "Yoga Instructor",
-                    stars: 5,
-                    text: "Clean ingredients, beautiful packaging, and it actually works. SKIN.ME is now a non-negotiable part of my morning ritual.",
-                    date: "2 weeks ago"
-                  },
-                  {
-                    emoji: "✨",
-                    name: "Manith Ros",
-                    role: "Student",
-                    stars: 4,
-                    text: "Super affordable and effective. I got the serum and face wash combo — my skin has never looked this good. Will reorder for sure.",
-                    date: "5 days ago"
-                  }
-                ].map((review, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 hover:shadow-[0_8px_25px_rgba(235,97,162,0.18)] transition-shadow duration-300"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-[#ffd0ed] flex items-center justify-center text-2xl flex-shrink-0">
-                        {review.emoji}
+              {/* 3-column smaller testimonials with click scroll */}
+              <div className="relative">
+                {/* Left scroll button with shadow */}
+                <button
+                  onClick={() => {
+                    const container = document.getElementById('testimonials-container');
+                    if (container) container.scrollBy({ left: -380, behavior: 'smooth' });
+                  }}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -ml-6"
+                >
+                  <FaChevronLeft size={20} />
+                </button>
+
+                {/* Right scroll button with shadow */}
+                <button
+                  onClick={() => {
+                    const container = document.getElementById('testimonials-container');
+                    if (container) container.scrollBy({ left: 380, behavior: 'smooth' });
+                  }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -mr-6"
+                >
+                  <FaChevronRight size={20} />
+                </button>
+
+                {/* Gradient shadows on both sides */}
+                <div ref={leftGradientRef} className="absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-[#fff0f7] to-transparent z-5 pointer-events-none transition-opacity duration-300"></div>
+                <div ref={rightGradientRef} className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-[#fff0f7] to-transparent z-5 pointer-events-none transition-opacity duration-300"></div>
+
+                <div
+                  ref={testimonialsRef}
+                  id="testimonials-container"
+                  className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide cursor-grab select-none"
+                  {...dragScrollHandlers}
+                >
+                  {[
+                    {
+                      image: "/assets/ImagesInRecommendation/profile_image.png",
+                      name: "Dara Heng",
+                      role: "Beauty Blogger",
+                      stars: 5,
+                      text: "Honestly the best moisturizer I have ever used. My skin stays hydrated all day — even in the hot Cambodian weather!",
+                      date: "1 week ago"
+                    },
+                    {
+                      image: "/assets/ImagesInRecommendation/phol_sophea_image.png",
+                      name: "Lyda Keo",
+                      role: "Yoga Instructor",
+                      stars: 5,
+                      text: "Clean ingredients, beautiful packaging, and it actually works. SKIN.ME is now a non-negotiable part of my morning ritual.",
+                      date: "2 weeks ago"
+                    },
+                    {
+                      image: "/assets/ImagesInRecommendation/bro_jirim_image.png",
+                      name: "Manith Ros",
+                      role: "Student",
+                      stars: 4,
+                      text: "Super affordable and effective. I got the serum and face wash combo — my skin has never looked this good. Will reorder for sure.",
+                      date: "5 days ago"
+                    },
+                    {
+                      image: "/assets/ImagesInRecommendation/obey_iamge.png",
+                      name: "Sokha Chhay",
+                      role: "Influencer",
+                      stars: 5,
+                      text: "Amazing results! My skin has never been this smooth. Highly recommend to everyone!",
+                      date: "3 days ago"
+                    },
+                    {
+                      image: "/assets/ImagesInRecommendation/ohio_image.png",
+                      name: "Kim Heng",
+                      role: "Model",
+                      stars: 5,
+                      text: "Perfect for sensitive skin. Love the natural ingredients and gentle formula.",
+                      date: "1 week ago"
+                    },
+                    {
+                      image: "/assets/ImagesInRecommendation/none_sence_image.png",
+                      name: "Sok Dina",
+                      role: "Content Creator",
+                      stars: 4,
+                      text: "Great value for money. The serum absorbs quickly without leaving any residue.",
+                      date: "4 days ago"
+                    },
+                    {
+                      image: "/assets/ImagesInRecommendation/boss_image.png",
+                      name: "Vichea",
+                      role: "Business Owner",
+                      stars: 5,
+                      text: "Been using for a month now and my skin looks younger and healthier!",
+                      date: "2 weeks ago"
+                    }
+                  ].map((review, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 hover:shadow-[0_8px_25px_rgba(235,97,162,0.18)] transition-shadow duration-300 w-[350px] flex-shrink-0"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Image
+                          src={review.image}
+                          alt={review.name}
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                        />
+                        <div>
+                          <p className="font-bold text-[#3C3C3C] text-sm">{review.name}</p>
+                          <p className="text-[#aaa] text-xs">{review.role}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-[#3C3C3C] text-sm">{review.name}</p>
-                        <p className="text-[#aaa] text-xs">{review.role}</p>
-                      </div>
-                      <div className="ml-auto flex gap-0.5">
-                        {[1,2,3,4,5].map(i => (
-                          <span key={i} className={`text-sm ${i <= review.stars ? "text-yellow-400" : "text-gray-200"}`}>★</span>
-                        ))}
+                      <div className="bg-[#EDEDED] rounded-xl p-4 mt-2 flex flex-col justify-between flex-grow">
+                        <div>
+                          <div className="flex gap-2 mb-2">
+                            {[1,2,3,4,5].map(i => (
+                              <span key={i} className={`text-4xl ${i <= review.stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>★</span>
+                            ))}
+                          </div>
+                          <p className="text-[#555] text-sm leading-relaxed">{review.text}</p>
+                        </div>
+                        <div className="flex justify-end pt-4">
+                          <p className="text-xs text-[#999]">{review.date}</p>
+                        </div>
                       </div>
                     </div>
-                    <p className="text-[#555] text-sm leading-relaxed flex-1">{review.text}</p>
-                    <p className="text-xs text-[#ccc]">{review.date}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {/* Bottom stats bar */}
               <div className="mt-14 grid grid-cols-3 gap-4 text-center">
                 {[
-                  { number: "10,000+", label: "Happy Customers" },
+                  { number: "10,00+", label: "Happy Customers" },
                   { number: "4.8 / 5", label: "Average Rating" },
                   { number: "98%", label: "Would Recommend" }
                 ].map((stat, i) => (

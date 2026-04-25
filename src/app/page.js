@@ -112,9 +112,9 @@ function useDragScroll(ref) {
 }
 
 export default function Page() {
-    const FirstImage = "/assets/first_image.png"
-    const SecondImage = "/assets/second_image.png"
-    const ThirdImage = "/assets/third_image.png"
+    const FirstImage = "/assets/first_image.webp"
+    const SecondImage = "/assets/second_image.webp"
+    const ThirdImage = "/assets/third_image.webp"
     const MainImage = "/assets/product_homepage.webp"
     const router = useRouter();
       const searchParams = useSearchParams();
@@ -541,25 +541,26 @@ export default function Page() {
           <div id="aboutus" className="pt-8 pb-20 px-8 text-center">
             <div className="max-w-7xl mx-auto">
               <p className="text-[4rem] font-bold text-[#000] mb-6">ABOUT US</p>
-              <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed w-full">
-                <span className="font-bold">SKIN.ME</span> is more than skincare — it's a daily ritual of self-respect and renewal.<br></br>
+              <div className="text-[#000] text-[1.5rem] font-sans text-left leading-relaxed w-full">
+                <p className="mb-2"><span className="font-bold">SKIN.ME</span> is more than skincare — it's a daily ritual of self-respect and renewal.</p>
 
-We create minimalist, effective formulas designed for real skin and real lives. Inspired by nature and backed by science, our products are gentle yet powerful.
+                <p className="mb-2">We create minimalist, effective formulas designed for real skin and real lives. Inspired by nature and backed by science, our products are gentle yet powerful.</p>
 
-<span className="font-bold">Our Promise:</span>
-{' '}
-• Clean and safe ingredients
-• Honest and transparent beauty
-• Simple, effective skincare
+                <p className="mb-2"><span className="font-bold">Our Promise:</span></p>
+                <ul className="list-disc list-inside mb-2">
+                  <li>Clean and safe ingredients</li>
+                  <li>Honest and transparent beauty</li>
+                  <li>Simple, effective skincare</li>
+                </ul>
 
-Every product reflects our commitment to quality and care. Join us in redefining skincare with confidence and simplicity.
-              </p>
+                <p>Every product reflects our commitment to quality and care. Join us in redefining skincare with confidence and simplicity.</p>
+              </div>
             </div>
-            <div className="grid grid-cols-4 gap-4 justify-items-center max-[1190px]:scale-95 max-[1000px]:grid-cols-[repeat(2,20rem)] max-[1000px]:justify-center max-[1000px]:scale-110 max-[770px]:pt-8 max-[770px]:grid-cols-[repeat(2,15rem)] max-[770px]:justify-center max-[770px]:scale-110 max-[650px]:grid-cols-1 max-[650px]:justify-center max-[650px]:py-20 max-[650px]:scale-[1.2]">
-              <Image src={FirstImage} alt="About 1" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
-              <Image src={SecondImage} alt="About 2" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
-              <Image src={ThirdImage} alt="About 3" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
-              <Image src={FirstImage} alt="About 4" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" style={{ width: "auto", height: "auto" }} />
+            <div className="grid grid-cols-4 gap-2 mx-[4rem] justify-items-center mt-8 max-[1190px]:scale-95 max-[1000px]:grid-cols-[repeat(2,20rem)] max-[1000px]:justify-center max-[1000px]:scale-110 max-[770px]:pt-8 max-[770px]:grid-cols-[repeat(2,15rem)] max-[770px]:justify-center max-[770px]:scale-110 max-[650px]:grid-cols-1 max-[650px]:justify-center max-[650px]:py-20 max-[650px]:scale-[1.2]">
+              <Image src={FirstImage} alt="About 1" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
+              <Image src={SecondImage} alt="About 2" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
+              <Image src={ThirdImage} alt="About 3" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
+              <Image src={FirstImage} alt="About 4" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
             </div>
           </div>
           <Footer />

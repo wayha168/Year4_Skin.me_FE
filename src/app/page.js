@@ -36,6 +36,13 @@ function useDragScroll(ref) {
     const container = ref.current;
     const friction = 0.95;
     const minVelocity = 0.5;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const currentScroll = container.scrollLeft;
+
+    if (currentScroll <= 0 || currentScroll >= maxScroll) {
+      momentumAnimation.current = null;
+      return;
+    }
 
     if (Math.abs(velocity.current) > minVelocity) {
       container.scrollLeft += velocity.current;
@@ -79,9 +86,12 @@ function useDragScroll(ref) {
   const handleMouseMove = useCallback((e) => {
     if (!ref.current || !isDragging.current) return;
     e.preventDefault();
-    const x = e.pageX - ref.current.offsetLeft;
+    const container = ref.current;
+    const x = e.pageX - container.offsetLeft;
     const walk = (x - startX.current) * 1.5;
-    ref.current.scrollLeft = scrollLeft.current - walk;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const newScrollLeft = scrollLeft.current - walk;
+    container.scrollLeft = Math.max(0, Math.min(newScrollLeft, maxScroll));
 
     // Calculate velocity
     const now = Date.now();
@@ -290,7 +300,7 @@ export default function Page() {
           {/* PRODUCTS SECTION  */}
           <section id="product" className="py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem]">
             <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-12 px-5 uppercase">
+              <div className="flex justify-between items-center mb-12 uppercase">
                 <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[600px]:text-[28px]">OUR PRODUCTS</h2>
                 <button 
                   className="bg-[#eb61a2] text-white border-none px-[3rem] py-3 rounded-[0.5rem] text-[1.5rem] cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[600px]:text-sm"
@@ -363,7 +373,7 @@ export default function Page() {
             </div>
           </section>
           {/* CUSTOMER STORIES RECOMMENDATION SECTION */}
-          <div className="bg-[#fff0f7] py-20 px-8">
+          <div className="bg-[#fff0f7] pt-8 pb-20 px-8">
             <div className="max-w-7xl mx-auto">
 
               {/* Header */}
@@ -371,7 +381,7 @@ export default function Page() {
                 <h2 className="text-[4rem] font-bold text-[#3C3C3C] mb-4">
                   RECOMMENDATIONS
                 </h2>
-                <p className="text-[#000] text-[1.5rem] text-left font-sans">
+                <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed">
                   These reviews are based on feedback from real users who have used our products for more than 7 days.
                   During this time, customers experience the effectiveness, texture, and overall performance of our skincare solutions.
                   Average rating: 4.5 / 5
@@ -528,12 +538,21 @@ export default function Page() {
     
           
           {/* ABOUT US SECTION - unchanged */}
-          <div id="aboutus" className="bg-[#ffd0ed] py-20 px-8 text-center">
-            <div>
-              <p className="text-4xl font-bold text-[#d13e82] mb-6">About Us</p>
-              <p className="text-[22px] text-[#333] max-w-[900px] mx-auto mb-12">
-                SKIN.ME is more than skincare — it's a daily ritual of self-respect and renewal. We craft
-                minimalist, effective formulas designed for real skin and real lives.
+          <div id="aboutus" className="pt-8 pb-20 px-8 text-center">
+            <div className="max-w-7xl mx-auto">
+              <p className="text-[4rem] font-bold text-[#000] mb-6">ABOUT US</p>
+              <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed w-full">
+                <span className="font-bold">SKIN.ME</span> is more than skincare — it's a daily ritual of self-respect and renewal.<br></br>
+
+We create minimalist, effective formulas designed for real skin and real lives. Inspired by nature and backed by science, our products are gentle yet powerful.
+
+<span className="font-bold">Our Promise:</span>
+{' '}
+• Clean and safe ingredients
+• Honest and transparent beauty
+• Simple, effective skincare
+
+Every product reflects our commitment to quality and care. Join us in redefining skincare with confidence and simplicity.
               </p>
             </div>
             <div className="grid grid-cols-4 gap-4 justify-items-center max-[1190px]:scale-95 max-[1000px]:grid-cols-[repeat(2,20rem)] max-[1000px]:justify-center max-[1000px]:scale-110 max-[770px]:pt-8 max-[770px]:grid-cols-[repeat(2,15rem)] max-[770px]:justify-center max-[770px]:scale-110 max-[650px]:grid-cols-1 max-[650px]:justify-center max-[650px]:py-20 max-[650px]:scale-[1.2]">

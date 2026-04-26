@@ -24,6 +24,7 @@ const Navbar = ({ alwaysVisible = false }) => {
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isSmallMobile, setIsSmallMobile] = useState(false);
+  const [isTinyMobile, setIsTinyMobile] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,12 +40,14 @@ const Navbar = ({ alwaysVisible = false }) => {
     setIsClient(true);
     setIsMobile(window.innerWidth <= 1030);
     setIsSmallMobile(window.innerWidth <= 510);
+    setIsTinyMobile(window.innerWidth <= 770);
   }, []);
 
   // Resize handler
   const handleResize = useCallback(() => {
     setIsMobile(window.innerWidth <= 1030);
     setIsSmallMobile(window.innerWidth <= 510);
+    setIsTinyMobile(window.innerWidth <= 770);
     if (window.innerWidth > 1030) setMenuOpen(false);
   }, []);
 
@@ -202,7 +205,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                 e.preventDefault();
                 safeNavigate("/");
               }}
-              className="flex flex-col items-start no-underline select-none text-[#eb61a2] flex-shrink-0"
+              className="flex flex-col items-start no-underline select-none text-[#eb61a2] flex-shrink-0 max-[770px]:items-center max-[770px]:w-full"
             >
               <span className="text-[40px] font-bold tracking-tight leading-none uppercase" style={{ fontSize: '40px' }}>
                 SKIN.ME
@@ -214,9 +217,9 @@ const Navbar = ({ alwaysVisible = false }) => {
           )}
 
           {/* CENTER: Nav icons (Home, Products, About Us) */}
-          {!isSmallMobile && !searchOpen && (
+          {!isSmallMobile && !searchOpen && !isTinyMobile && (
             <div
-              className={`flex items-center gap-11 ${menuOpen && isMobile
+              className={`flex items-center gap-11 max-[1000px]:-ml-16 ${menuOpen && isMobile
                 ? "flex-col absolute left-4 top-16 bg-white py-4 rounded-lg z-10 px-6"
                 : "absolute left-1/2 -translate-x-1/2"
                 }`}
@@ -245,16 +248,6 @@ const Navbar = ({ alwaysVisible = false }) => {
               >
                 <Image src="/assets/NavbarIcons/Icons About Us.png" alt="About Us" width={38} height={38} />
               </Link>
-            </div>
-          )}
-
-          {/* HAMBURGER (tablet only) */}
-          {!isSmallMobile && (
-            <div
-              className="block md:hidden text-2xl cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 z-20"
-              onClick={toggleMenu}
-            >
-              <i className="fa-solid fa-bars text-gray-700"></i>
             </div>
           )}
 
@@ -351,7 +344,7 @@ const Navbar = ({ alwaysVisible = false }) => {
           )}
 
           {/* RIGHT: Search icon (when closed), Favorite, Bag, Profile */}
-          {!isSmallMobile && (
+          {!isSmallMobile && !isTinyMobile && (
             <div
               className={`flex items-center gap-3 min-w-0 flex-1 justify-end ${menuOpen && isMobile
                 ? "flex-col absolute right-4 bg-white top-14 py-4 rounded-lg z-10"
@@ -405,7 +398,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                   <Link
                     href="/signup"
                     onClick={() => safeNavigate("/signup")}
-                    className="px-5 py-2 text-sm font-semibold bg-[#eb61a2] text-white rounded-lg hover:bg-[#d0578f]"
+                    className="px-5 py-2 text-sm font-semibold border-2 border-[#eb61a2] bg-[#eb61a2] text-white rounded-lg hover:bg-[#d0578f] hover:border-[#d0578f]"
                   >
                     Sign Up
                   </Link>
@@ -418,6 +411,52 @@ const Navbar = ({ alwaysVisible = false }) => {
 
       {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px): Home, Products, Favorite, Cart, Profile */}
       {isSmallMobile && (
+        <div className="fixed bottom-0 left-0 right-0 w-full bg-white h-20 shadow-xl z-[99999] flex justify-between items-center text-gray-600 px-2 sm:px-4">
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={() => safeNavigate("/")}
+            title="Home"
+          >
+            <Image src="/assets/NavbarIcons/Icons Home.png" alt="Home" width={38} height={38} />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={() => safeNavigate("/products")}
+            title="Products"
+          >
+            <Image src="/assets/NavbarIcons/Icons Products.png" alt="Products" width={38} height={38} />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={handleFavoriteClick}
+            title="Favorites"
+          >
+            <Image src="/assets/NavbarIcons/Icons Favorite.png" alt="Favorites" width={38} height={38} />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={handleBagClick}
+            title="Cart"
+          >
+            <Image src="/assets/NavbarIcons/Icons Bage.png" alt="Bag" width={38} height={38} />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={() => safeNavigate(user ? "/profile" : "/login")}
+            title="Profile"
+          >
+            <Image src="/assets/NavbarIcons/Icons Profile.png" alt="Profile" width={32} height={32} />
+          </button>
+        </div>
+      )}
+
+      {/* 🚀 TINY MOBILE BOTTOM NAVBAR (< 770px): Home, Products, Favorite, Cart, Profile */}
+      {isTinyMobile && !isSmallMobile && (
         <div className="fixed bottom-0 left-0 right-0 w-full bg-white h-20 shadow-xl z-[99999] flex justify-between items-center text-gray-600 px-2 sm:px-4">
           <button
             type="button"

@@ -218,22 +218,22 @@ export default function Page() {
           {isClient && <Navbar alwaysVisible={true} />}
     
           {/* HERO SECTION */}
-          <div className="flex justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[9rem] max-[992px]:min-h-screen max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-12 max-[760px]:flex-col max-[760px]:gap-20">
+          <div className="flex justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[6rem] max-[992px]:min-h-screen max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-8 max-[992px]:gap-2 max-[600px]:flex-col max-[600px]:gap-20">
             <div className="flex flex-col ml-[7rem] justify-center w-[50%] text-[#1f2937] z-[2] max-[992px]:w-[90%] max-[992px]:ml-0">
-              <p className="text-[57px] font-bold text-[#3C3C3C] max-[600px]:text-[27px]">WELCOME TO SKIN.ME</p>
-              <p className="tracking-[-0.05em] text-[44px] font-semibold text-white mb-4 max-[992px]:text-[32px] max-[600px]:text-[35px]">Most Essential Skin Care Product</p>
-              <p className="opacity-[0.8] text-[20px] text-[#4c4c4c] mb-10 max-[600px]:text-xl">Give you the best skincare | product is our mission.</p>
-              <div> 
-                <button 
-                  onClick={scrollToProducts} 
-                  className="opacity-[1] text-white text-[30px] font-semibold px-[50px] py-3.5 bg-[#FA4497] rounded-[7px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-base max-[600px]:px-[30px] max-[600px]:py-2.5"
+              <p className="text-[57px] font-bold text-[#3C3C3C] max-[992px]:text-[40px] max-[600px]:text-[33px]">WELCOME TO SKIN.ME</p>
+              <p className="tracking-[-0.05em] text-[44px] font-semibold text-white mb-2 max-[992px]:text-[28px] max-[600px]:text-[22px]">Most Essential Skin Care Product</p>
+              <p className="opacity-[0.8] text-[20px] text-[#4c4c4c] mb-4 max-[992px]:text-[16px] max-[600px]:text-sm">Give you the best skincare | product is our mission.</p>
+              <div>
+                <button
+                  onClick={scrollToProducts}
+                  className="opacity-[1] text-white text-[30px] font-semibold px-[50px] py-3.5 bg-[#FA4497] rounded-[7px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-lg max-[600px]:px-[30px] max-[600px]:py-2.5"
                 >
                   Shop Now
                 </button>
               </div>
             </div>
 
-            <div className="min-[992px]:pt-[5rem] w-[40rem] h-[50rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem] max-[992px]:h-auto max-[992px]:scale-95 max-[992px]:w-[35rem] max-[992px]:h-[45rem]">
+            <div className="min-[992px]:pt-[5rem] w-[40rem] h-[50rem] z-[4] max-[600px]:scale-[0.72] max-[600px]:mt-[-13rem] max-[770px]:mt-[-7rem] max-[992px]:h-auto max-[992px]:mt-[-4rem] max-[992px]:scale-75 max-[992px]:w-[26rem] max-[992px]:h-[36rem]">
              <Image  
               sizes="(max-width: 992px) 100vw, 40rem (max-width: 992px) 100vw, 40rem"  
               priority
@@ -249,33 +249,35 @@ export default function Page() {
           </div>
     
       {/* OVERVIEW SECTION */}
-      <div className="flex flex-row items-center justify-center relative gap-[3rem] max-[1180px]:mt-16 max-[1180px]:flex-col max-[660px]:flex-col max-[660px]:my-0 max-[660px]:mx-auto">
-        <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] max-[660px]:w-full max-[660px]:mx-0 max-[660px]:mb-8">
-          <div className=" text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full">
-            LET'S HAVE A LOOK
+      <div className="relative max-[1390px]:[transform:scale(0.9)] max-[1300px]:[transform:scale(0.8)] origin-top">
+        <div className="flex flex-row items-center justify-center relative gap-[3rem] max-[992px]:gap-4 max-[1180px]:mt-16 max-[1180px]:flex-col max-[660px]:flex-col max-[660px]:my-0 max-[660px]:mx-auto">
+          <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] max-[660px]:w-full max-[660px]:mx-0 max-[660px]:mb-8">
+            <div className=" text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full">
+              LET'S HAVE A LOOK
+            </div>
+            <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] text-left w-full">
+              This is the overview about our products that you can spend a few minutes to see how they look.
+            </div>
+            <div className="flex flex-row gap-4 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-4">
+              <Image
+                src={FirstImage}
+                alt="Overview 1"
+                width={352}
+                height={352}
+                className="w-[18rem] h-[18rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
+              />
+              <Image
+                src={SecondImage}
+                alt="Overview 2"
+                width={352}
+                height={352}
+                className="rounded-[10px] w-[18rem] h-[18rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
+              />
+            </div>
           </div>
-          <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] text-left w-full">
-            This is the overview about our products that you can spend a few minutes to see how they look.
+          <div className="mt-28 w-[38rem] h-[38rem] max-[1180px]:mb-40 max-[660px]:mt-4 max-[660px]:mb-0 max-[1180px]:mt-[6.3rem] ">
+            <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" />
           </div>
-          <div className="flex flex-row gap-4 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-4">
-            <Image
-              src={FirstImage}
-              alt="Overview 1"
-              width={352}
-              height={352}
-              className="w-[18rem] h-[18rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
-            />
-            <Image
-              src={SecondImage}
-              alt="Overview 2"
-              width={352}
-              height={352}
-              className="rounded-[10px] w-[18rem] h-[18rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
-            />
-          </div>
-        </div>
-        <div className="mt-28 w-[38rem] h-[38rem] max-[1180px]:mb-40 max-[660px]:mt-4 max-[660px]:mb-0 max-[1180px]:mt-[6.3rem] ">
-          <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" />
         </div>
       </div>
 

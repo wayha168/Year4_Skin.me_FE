@@ -233,7 +233,7 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="min-[992px]:pt-[5rem] w-[40rem] h-[50rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem] max-[992px]:h-auto ">
+            <div className="min-[992px]:pt-[5rem] w-[40rem] h-[50rem] z-[4] max-[760px]:scale-[0.8] max-[760px]:mt-[-10rem] max-[992px]:h-auto max-[992px]:scale-95 max-[992px]:w-[35rem] max-[992px]:h-[45rem]">
              <Image  
               sizes="(max-width: 992px) 100vw, 40rem (max-width: 992px) 100vw, 40rem"  
               priority

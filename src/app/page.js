@@ -218,7 +218,7 @@ export default function Page() {
           {isClient && <Navbar alwaysVisible={true} />}
     
           {/* HERO SECTION */}
-          <div className="flex justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[6rem] max-[992px]:min-h-screen max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-8 max-[992px]:gap-2 max-[600px]:flex-col max-[600px]:gap-20">
+          <div className="flex justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[6rem] max-[992px]:min-h-screen max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-8 max-[992px]:gap-2 max-[600px]:flex-col max-[600px]:gap-20 ">
             <div className="flex flex-col ml-[7rem] justify-center w-[50%] text-[#1f2937] z-[2] max-[992px]:w-[90%] max-[992px]:ml-0">
               <p className="text-[57px] font-bold text-[#3C3C3C] max-[992px]:text-[40px] max-[600px]:text-[33px]">WELCOME TO SKIN.ME</p>
               <p className="tracking-[-0.05em] text-[44px] font-semibold text-white mb-2 max-[992px]:text-[28px] max-[600px]:text-[22px]">Most Essential Skin Care Product</p>
@@ -249,34 +249,36 @@ export default function Page() {
           </div>
     
       {/* OVERVIEW SECTION */}
-      <div className="relative max-[1390px]:[transform:scale(0.9)] max-[1300px]:[transform:scale(0.8)] origin-top">
-        <div className="flex flex-row items-center justify-center relative gap-[3rem] max-[992px]:gap-4 max-[1180px]:mt-16 max-[1180px]:flex-col max-[660px]:flex-col max-[660px]:my-0 max-[660px]:mx-auto">
-          <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] max-[660px]:w-full max-[660px]:mx-0 max-[660px]:mb-8">
-            <div className=" text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full">
+      <div className="py-[4rem] max-[1350px]:mb-[-0.75rem] max-[1350px]:mt-[0.75rem] max-[1300px]:mb-[-7.35rem] max-[1300px]:mt-[2.35rem] max-[1300px]:mb-[-5.35rem] max-[1100px]:mb-[-12.5rem] max-[990px]:mb-[-22.5rem]  max-[990px]:mt-[-2.5rem]    relative max-[1390px]:[transform:scale(0.95)] max-[1300px]:[transform:scale(0.85)] max-[1250px]:[transform:scale(0.83)] max-[1200px]:[transform:scale(0.80)] max-[1150px]:[transform:scale(0.75)] max-[1100px]:[transform:scale(0.70)] max-[660px]:[transform:scale(0.65)] origin-top">
+        <div className="flex flex-row items-center justify-center relative gap-[5rem] max-[990px]:mt-16 max-[990px]:flex-col max-[990px]:items-center max-[990px]:gap-[2rem]">
+          <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] flex-shrink-0 max-[990px]:items-center self-center mt-[1rem]">
+            <div className="text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full max-[990px]:text-center">
               LET'S HAVE A LOOK
             </div>
-            <div className="mb-8 text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] text-left w-full">
+            <div className="mb-[1rem] text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] text-left w-full max-[1390px]:mb-[0.75rem] max-[1300px]:mb-[0.75rem] max-[1250px]:mb-[0.5rem] max-[1200px]:mb-[0.5rem] max-[1150px]:mb-[0.5rem]  max-[660px]:mb-[0.25rem] max-[990px]:text-center">
               This is the overview about our products that you can spend a few minutes to see how they look.
             </div>
-            <div className="flex flex-row gap-4 max-[660px]:justify-center max-[660px]:items-center max-[660px]:gap-4">
-              <Image
-                src={FirstImage}
-                alt="Overview 1"
-                width={352}
-                height={352}
-                className="w-[18rem] h-[18rem] rounded-[10px] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
-              />
-              <Image
-                src={SecondImage}
-                alt="Overview 2"
-                width={352}
-                height={352}
-                className="rounded-[10px] w-[18rem] h-[18rem] max-[1180px]:scale-100 max-[1180px]:mb-[-11rem] max-[1180px]:z-[3] max-[660px]:scale-[0.8] max-[660px]:mb-0"
-              />
+            <div className="flex flex-row gap-[2rem]">
+              <div className="flex flex-row gap-[2rem] flex-shrink-0 max-[990px]:justify-center max-[990px]:items-center">
+                <Image
+                  src={FirstImage}
+                  alt="Overview 1"
+                  width={352}
+                  height={352}
+                  className="w-[18rem] h-[18rem] rounded-[10px] flex-shrink-0"
+                />
+                <Image
+                  src={SecondImage}
+                  alt="Overview 2"
+                  width={352}
+                  height={352}
+                  className="rounded-[10px] w-[18rem] h-[18rem] flex-shrink-0"
+                />
+              </div>
             </div>
           </div>
-          <div className="mt-28 w-[38rem] h-[38rem] max-[1180px]:mb-40 max-[660px]:mt-4 max-[660px]:mb-0 max-[1180px]:mt-[6.3rem] ">
-            <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem] max-[1180px]:scale-100 max-[1180px]:w-[35rem] max-[1180px]:h-[30rem] max-[1180px]:my-auto max-[1180px]:mt-[5.5rem] max-[660px]:mt-[-5.5rem] max-[660px]:w-[90%] max-[660px]:h-auto max-[660px]:mx-auto max-[660px]:scale-[0.9]" />
+          <div className="mt-[8rem] w-[38rem] h-[38rem] flex-shrink-0 max-[1390px]:mt-[7rem] max-[1300px]:mt-[6rem] max-[1250px]:mt-[5rem] max-[1200px]:mt-[4.5rem] max-[1150px]:mt-[4rem] max-[1100px]:mt-[3.5rem] max-[660px]:mt-[3rem] max-[990px]:ml-[1rem]"  >
+            <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem]" />
           </div>
         </div>
       </div>

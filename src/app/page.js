@@ -218,7 +218,7 @@ export default function Page() {
           {isClient && <Navbar alwaysVisible={true} />}
     
           {/* HERO SECTION */}
-          <div className="flex justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[6rem] max-[992px]:min-h-screen max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-8 max-[992px]:gap-2 max-[600px]:flex-col max-[600px]:gap-20 ">
+          <div className="flex justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[6rem] max-[992px]:min-h-screen max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-8 max-[992px]:gap-2 max-[600px]:flex-col max-[600px]:gap-20  max-[600px]:mt-[1rem]">
             <div className="flex flex-col ml-[7rem] justify-center w-[50%] text-[#1f2937] z-[2] max-[992px]:w-[90%] max-[992px]:ml-0">
               <p className="text-[57px] font-bold text-[#3C3C3C] max-[992px]:text-[40px] max-[600px]:text-[33px]">WELCOME TO SKIN.ME</p>
               <p className="tracking-[-0.05em] text-[44px] font-semibold text-white mb-2 max-[992px]:text-[28px] max-[600px]:text-[22px]">Most Essential Skin Care Product</p>
@@ -233,7 +233,7 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="min-[992px]:pt-[5rem] w-[40rem] h-[50rem] z-[4] max-[600px]:scale-[0.72] max-[600px]:mt-[-13rem] max-[770px]:mt-[-7rem] max-[992px]:h-auto max-[992px]:mt-[-4rem] max-[992px]:scale-75 max-[992px]:w-[26rem] max-[992px]:h-[36rem]">
+            <div className="min-[992px]:pt-[5rem] w-[40rem] h-[50rem] z-[4] max-[600px]:scale-[0.72] max-[600px]:mt-[-11.5rem] max-[770px]:mt-[-7rem] max-[992px]:h-auto max-[992px]:mt-[-4rem] max-[992px]:scale-75 max-[992px]:w-[26rem] max-[992px]:h-[36rem]">
              <Image  
               sizes="(max-width: 992px) 100vw, 40rem (max-width: 992px) 100vw, 40rem"  
               priority
@@ -277,37 +277,46 @@ export default function Page() {
               </div>
             </div>
           </div>
-          <div className="mt-[8rem] w-[38rem] h-[38rem] flex-shrink-0 max-[1390px]:mt-[7rem] max-[1300px]:mt-[6rem] max-[1250px]:mt-[5rem] max-[1200px]:mt-[4.5rem] max-[1150px]:mt-[4rem] max-[1100px]:mt-[3.5rem] max-[660px]:mt-[3rem] max-[990px]:ml-[1rem]"  >
+          <div className="mt-[8rem] w-[38rem] h-[38rem] flex-shrink-0 max-[1390px]:mt-[7rem] max-[1300px]:mt-[6rem] max-[1250px]:mt-[5rem] max-[1200px]:mt-[4.5rem] max-[1150px]:mt-[4rem] max-[1100px]:mt-[3.5rem] max-[660px]:mt-[3rem] max-[990px]:ml-[1rem] max-[660px]:mb-[-5rem]"  >
             <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem]" />
           </div>
         </div>
       </div>
 
       {/* LOGO MOVING SECTION */}
-      <div className="bg-[#0A3D3F] py-16 overflow-hidden">
-        <div className="flex animate-marquee whitespace-nowrap">
-          <span className="text-5xl font-bold text-[#FF0000] mx-12 font-serif italic">Emidi</span>
-          <span className="text-5xl font-extrabold text-[#854DFF] mx-12 font-sans tracking-wider">Pka</span>
-          <span className="text-5xl font-medium text-white mx-12 font-mono">Le</span>
-          <span className="text-5xl font-bold text-[#DB14CD] mx-12 font-bold uppercase tracking-widest">Magi</span>
-          <span className="text-5xl font-semibold text-[#FF0000] mx-12 font-serif">CETAPHIL</span>
-          <span className="text-5xl font-bold text-[#854DFF] mx-12 font-sans uppercase">Scarface</span>
-          <span className="text-5xl font-bold text-white mx-12 font-serif italic">Emidi</span>
-          <span className="text-5xl font-extrabold text-[#DB14CD] mx-12 font-sans tracking-wider">Pka</span>
-          <span className="text-5xl font-medium text-[#FF0000] mx-12 font-mono">Le</span>
-          <span className="text-5xl font-bold text-[#854DFF] mx-12 font-bold uppercase tracking-widest">Magi</span>
-          <span className="text-5xl font-semibold text-white mx-12 font-serif">CETAPHIL</span>
-          <span className="text-5xl font-bold text-[#DB14CD] mx-12 font-sans uppercase">Scarface</span>
-        </div>
-      </div>
+<div className="bg-[#0A3D3F] py-16 max-[1000px]:py-12 max-[600px]:py-10 overflow-hidden relative z-[1]">
+  <div className="flex w-max animate-marquee">
+
+    {/* SET 1 */}
+    <div className="flex whitespace-nowrap">
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#FF0000] mx-12 italic">Emidi</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-extrabold text-[#854DFF] mx-12">Pka</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-medium text-white mx-12">Le</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#DB14CD] mx-12 uppercase">Magi</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-semibold text-[#FF0000] mx-12">CETAPHIL</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#854DFF] mx-12 uppercase">Scarface</span>
+    </div>
+
+    {/* SET 2 (exact duplicate) */}
+    <div className="flex whitespace-nowrap">
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#FF0000] mx-12 italic">Emidi</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-extrabold text-[#854DFF] mx-12">Pka</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-medium text-white mx-12">Le</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#DB14CD] mx-12 uppercase">Magi</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-semibold text-[#FF0000] mx-12">CETAPHIL</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#854DFF] mx-12 uppercase">Scarface</span>
+    </div>
+
+  </div>
+</div>
 
           {/* PRODUCTS SECTION  */}
           <section id="product" className="py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem]">
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-12 uppercase">
-                <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[600px]:text-[28px]">OUR PRODUCTS</h2>
-                <button 
-                  className="bg-[#eb61a2] text-white border-none px-[3rem] py-3 rounded-[0.5rem] text-[1.5rem] cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[600px]:text-sm"
+                <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[1000px]:text-[2.5rem] max-[600px]:text-[28px]">OUR PRODUCTS</h2>
+                <button
+                  className="bg-[#eb61a2] text-white border-none px-[3rem] py-3 rounded-[0.5rem] text-[1.5rem] cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[1000px]:text-[1.25rem] max-[600px]:text-sm"
                   onClick={() => router.push("/products")}
                 >
                   View All
@@ -382,10 +391,10 @@ export default function Page() {
 
               {/* Header */}
               <div className="text-center mb-16">
-                <h2 className="text-[4rem] font-bold text-[#3C3C3C] mb-4">
+                <h2 className="text-[4rem] font-bold text-[#3C3C3C] mb-4 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">
                   RECOMMENDATIONS
                 </h2>
-                <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed">
+                <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
                   These reviews are based on feedback from real users who have used our products for more than 7 days.
                   During this time, customers experience the effectiveness, texture, and overall performance of our skincare solutions.
                   Average rating: 4.5 / 5
@@ -490,7 +499,7 @@ export default function Page() {
                   ].map((review, idx) => (
                     <div
                       key={idx}
-                      className="bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 hover:shadow-[0_8px_25px_rgba(235,97,162,0.18)] transition-shadow duration-300 w-[350px] flex-shrink-0"
+                      className="bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 hover:shadow-[0_8px_25px_rgba(235,97,162,0.18)] transition-shadow duration-300 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
                     >
                       <div className="flex items-center gap-3">
                         <Image
@@ -524,15 +533,15 @@ export default function Page() {
               </div>
 
               {/* Bottom stats bar */}
-              <div className="mt-14 grid grid-cols-3 gap-4 text-center">
+              <div className="mt-14 grid grid-cols-3 gap-4 text-center max-[1000px]:mt-10 max-[600px]:mt-8">
                 {[
                   { number: "10,00+", label: "Happy Customers" },
                   { number: "4.8 / 5", label: "Average Rating" },
                   { number: "98%", label: "Would Recommend" }
                 ].map((stat, i) => (
-                  <div key={i} className="bg-white rounded-2xl py-6 px-4 border border-[#ffd6ec] shadow-sm">
-                    <p className="text-3xl font-bold text-[#eb61a2] mb-1">{stat.number}</p>
-                    <p className="text-sm text-[#888] font-medium">{stat.label}</p>
+                  <div key={i} className="bg-white rounded-2xl py-6 px-4 border border-[#ffd6ec] shadow-sm max-[1000px]:py-4 max-[600px]:py-3">
+                    <p className="text-3xl font-bold text-[#eb61a2] mb-1 max-[1000px]:text-2xl max-[600px]:text-xl">{stat.number}</p>
+                    <p className="text-sm text-[#888] font-medium max-[1000px]:text-xs">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -544,8 +553,8 @@ export default function Page() {
           {/* ABOUT US SECTION - unchanged */}
           <div id="aboutus" className="pt-8 pb-20 px-8 text-center">
             <div className="max-w-7xl mx-auto">
-              <p className="text-[4rem] font-bold text-[#000] mb-6">ABOUT US</p>
-              <div className="text-[#000] text-[1.5rem] font-sans text-left leading-relaxed w-full">
+              <p className="text-[4rem] font-bold text-[#000] mb-6 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">ABOUT US</p>
+              <div className="text-[#000] text-[1.5rem] font-sans text-left leading-relaxed w-full max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
                 <p className="mb-2"><span className="font-bold">SKIN.ME</span> is more than skincare — it's a daily ritual of self-respect and renewal.</p>
 
                 <p className="mb-2">We create minimalist, effective formulas designed for real skin and real lives. Inspired by nature and backed by science, our products are gentle yet powerful.</p>
@@ -560,11 +569,11 @@ export default function Page() {
                 <p>Every product reflects our commitment to quality and care. Join us in redefining skincare with confidence and simplicity.</p>
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-2 mx-[4rem] justify-items-center mt-8 scale-105 max-[1190px]:scale-95 max-[1000px]:grid-cols-[repeat(2,20rem)] max-[1000px]:justify-center max-[1000px]:scale-110 max-[770px]:pt-8 max-[770px]:grid-cols-[repeat(2,15rem)] max-[770px]:justify-center max-[770px]:scale-110 max-[650px]:grid-cols-1 max-[650px]:justify-center max-[650px]:py-20 max-[650px]:scale-[1.2]">
-              <Image src={FirstImage} alt="About 1" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
-              <Image src={SecondImage} alt="About 2" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
-              <Image src={ThirdImage} alt="About 3" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
-              <Image src={FirstImage} alt="About 4" width={300} height={300} className="w-full max-w-[18rem] h-[18rem] rounded-[10px] object-cover" />
+            <div className="flex justify-center mt-8 max-w-7xl mx-auto gap-[3rem]">
+              <Image src={FirstImage} alt="About 1" width={280} height={280} className="w-[310px] h-[310px] max-[1400px]:w-[290px] max-[1400px]:h-[290px] max-[1350px]:w-[280px] max-[1350px]:h-[280px] max-[1300px]:w-[260px] max-[1300px]:h-[260px] max-[1250px]:w-[250px] max-[1250px]:h-[250px] max-[1200px]:w-[240px] max-[1200px]:h-[240px] max-[1150px]:w-[230px] max-[1150px]:h-[230px] max-[1050px]:w-[200px] max-[1050px]:h-[200px] max-[1000px]:w-[210px] max-[1000px]:h-[210px] max-[950px]:w-[190px] max-[950px]:h-[190px] rounded-[10px] object-cover" />
+              <Image src={SecondImage} alt="About 2" width={280} height={280} className="w-[310px] h-[310px] max-[1400px]:w-[290px] max-[1400px]:h-[290px] max-[1350px]:w-[280px] max-[1350px]:h-[280px] max-[1300px]:w-[260px] max-[1300px]:h-[260px] max-[1250px]:w-[250px] max-[1250px]:h-[250px] max-[1200px]:w-[240px] max-[1200px]:h-[240px] max-[1150px]:w-[230px] max-[1150px]:h-[230px] max-[1050px]:w-[200px] max-[1050px]:h-[200px] max-[1000px]:w-[210px] max-[1000px]:h-[210px] max-[950px]:w-[190px] max-[950px]:h-[190px] -ml-8 rounded-[10px] object-cover" />
+              <Image src={ThirdImage} alt="About 3" width={280} height={280} className="w-[310px] h-[310px] max-[1400px]:w-[290px] max-[1400px]:h-[290px] max-[1350px]:w-[280px] max-[1350px]:h-[280px] max-[1300px]:w-[260px] max-[1300px]:h-[260px] max-[1250px]:w-[250px] max-[1250px]:h-[250px] max-[1200px]:w-[240px] max-[1200px]:h-[240px] max-[1150px]:w-[230px] max-[1150px]:h-[230px] max-[1050px]:w-[200px] max-[1050px]:h-[200px] max-[1000px]:w-[210px] max-[1000px]:h-[210px] max-[950px]:w-[190px] max-[950px]:h-[190px] -ml-8 rounded-[10px] object-cover" />
+              <Image src={FirstImage} alt="About 4" width={280} height={280} className="w-[310px] h-[310px] max-[1400px]:w-[290px] max-[1400px]:h-[290px] max-[1350px]:w-[280px] max-[1350px]:h-[280px] max-[1300px]:w-[260px] max-[1300px]:h-[260px] max-[1250px]:w-[250px] max-[1250px]:h-[250px] max-[1200px]:w-[240px] max-[1200px]:h-[240px] max-[1150px]:w-[230px] max-[1150px]:h-[230px] max-[1050px]:w-[200px] max-[1050px]:h-[200px] max-[1000px]:w-[210px] max-[1000px]:h-[210px] max-[950px]:w-[190px] max-[950px]:h-[190px] -ml-8 rounded-[10px] object-cover" />
             </div>
           </div>
           <Footer />

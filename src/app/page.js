@@ -14,74 +14,59 @@ import { FaCartPlus, FaHeart, FaChevronLeft, FaChevronRight } from "react-icons/
 import { getProductImageUrl } from "./lib/productImage.js";
 import { formatPrice } from "./lib/formatPrice.js";
 
+function useScrollAnimation() {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(element);
+        }
+      },
+      { threshold: 0.02, rootMargin: "0px 0px -100px 0px" }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return [ref, isVisible];
+}
+
 function useDragScroll(ref) {
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
-  const velocity = useRef(0);
-  const lastX = useRef(0);
-  const lastTime = useRef(0);
-  const momentumAnimation = useRef(null);
-
-  const stopMomentum = useCallback(() => {
-    if (momentumAnimation.current) {
-      cancelAnimationFrame(momentumAnimation.current);
-      momentumAnimation.current = null;
-    }
-  }, []);
-
-  const applyMomentum = useCallback(() => {
-    if (!ref.current) return;
-
-    const container = ref.current;
-    const friction = 0.95;
-    const minVelocity = 0.5;
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    const currentScroll = container.scrollLeft;
-
-    if (currentScroll <= 0 || currentScroll >= maxScroll) {
-      momentumAnimation.current = null;
-      return;
-    }
-
-    if (Math.abs(velocity.current) > minVelocity) {
-      container.scrollLeft += velocity.current;
-      velocity.current *= friction;
-      momentumAnimation.current = requestAnimationFrame(applyMomentum);
-    } else {
-      momentumAnimation.current = null;
-    }
-  }, [ref]);
 
   const handleMouseDown = useCallback((e) => {
     if (!ref.current) return;
-    stopMomentum();
     isDragging.current = true;
     startX.current = e.pageX - ref.current.offsetLeft;
     scrollLeft.current = ref.current.scrollLeft;
-    lastX.current = e.pageX;
-    lastTime.current = Date.now();
-    velocity.current = 0;
     ref.current.style.cursor = "grabbing";
-  }, [ref, stopMomentum]);
+  }, [ref]);
 
   const handleMouseLeave = useCallback(() => {
     if (!ref.current) return;
     if (isDragging.current) {
       isDragging.current = false;
       ref.current.style.cursor = "grab";
-      applyMomentum();
     }
-  }, [ref, applyMomentum]);
+  }, [ref]);
 
   const handleMouseUp = useCallback(() => {
     if (!ref.current) return;
     if (isDragging.current) {
       isDragging.current = false;
       ref.current.style.cursor = "grab";
-      applyMomentum();
     }
-  }, [ref, applyMomentum]);
+  }, [ref]);
 
   const handleMouseMove = useCallback((e) => {
     if (!ref.current || !isDragging.current) return;
@@ -92,15 +77,6 @@ function useDragScroll(ref) {
     const maxScroll = container.scrollWidth - container.clientWidth;
     const newScrollLeft = scrollLeft.current - walk;
     container.scrollLeft = Math.max(0, Math.min(newScrollLeft, maxScroll));
-
-    // Calculate velocity
-    const now = Date.now();
-    const dt = now - lastTime.current;
-    if (dt > 0) {
-      velocity.current = (e.pageX - lastX.current) * 1.5;
-      lastX.current = e.pageX;
-      lastTime.current = now;
-    }
   }, [ref]);
 
   return {
@@ -146,6 +122,8 @@ export default function Page() {
       const leftGradientRef = useRef(null);
       const rightGradientRef = useRef(null);
       const dragScrollHandlers = useDragScroll(testimonialsRef);
+      const [canScrollLeft, setCanScrollLeft] = useState(true);
+      const [canScrollRight, setCanScrollRight] = useState(true);
 
       // Control gradient visibility based on scroll position
       useEffect(() => {
@@ -163,6 +141,9 @@ export default function Page() {
 
           leftGradient.style.opacity = isAtLeft ? "0" : "1";
           rightGradient.style.opacity = isAtRight ? "0" : "1";
+
+          setCanScrollLeft(!isAtLeft);
+          setCanScrollRight(!isAtRight);
         };
 
         container.addEventListener("scroll", updateGradients);
@@ -249,7 +230,10 @@ export default function Page() {
           </div>
     
       {/* OVERVIEW SECTION */}
-      <div className="py-[4rem] max-[1350px]:mb-[-0.75rem] max-[1350px]:mt-[0.75rem] max-[1300px]:mb-[-7.35rem] max-[1300px]:mt-[2.35rem] max-[1300px]:mb-[-5.35rem] max-[1100px]:mb-[-12.5rem] max-[990px]:mb-[-22.5rem]  max-[990px]:mt-[-2.5rem]    relative max-[1390px]:[transform:scale(0.95)] max-[1300px]:[transform:scale(0.85)] max-[1250px]:[transform:scale(0.83)] max-[1200px]:[transform:scale(0.80)] max-[1150px]:[transform:scale(0.75)] max-[1100px]:[transform:scale(0.70)] max-[660px]:[transform:scale(0.65)] origin-top">
+      {(() => {
+        const [overviewRef, overviewVisible] = useScrollAnimation();
+        return (
+        <div ref={overviewRef} className={`py-[4rem] max-[1350px]:mb-[-0.75rem] max-[1350px]:mt-[0.75rem] max-[1300px]:mb-[-7.35rem] max-[1300px]:mt-[2.35rem] max-[1300px]:mb-[-5.35rem] max-[1100px]:mb-[-12.5rem] max-[990px]:mb-[-22.5rem]  max-[990px]:mt-[-2.5rem]    relative max-[1390px]:[transform:scale(0.95)] max-[1300px]:[transform:scale(0.85)] max-[1250px]:[transform:scale(0.83)] max-[1200px]:[transform:scale(0.80)] max-[1150px]:[transform:scale(0.75)] max-[1100px]:[transform:scale(0.70)] max-[660px]:[transform:scale(0.65)] origin-top transition-all duration-1000 ease-out ${overviewVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
         <div className="flex flex-row items-center justify-center relative gap-[5rem] max-[990px]:mt-16 max-[990px]:flex-col max-[990px]:items-center max-[990px]:gap-[2rem]">
           <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] flex-shrink-0 max-[990px]:items-center self-center mt-[1rem]">
             <div className="text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full max-[990px]:text-center">
@@ -282,6 +266,8 @@ export default function Page() {
           </div>
         </div>
       </div>
+        );
+      })()}
 
       {/* LOGO MOVING SECTION */}
 <div className="bg-[#0A3D3F] py-16 max-[1000px]:py-12 max-[600px]:py-10 overflow-hidden relative z-[1]">
@@ -311,18 +297,21 @@ export default function Page() {
 </div>
 
           {/* PRODUCTS SECTION  */}
-          <section id="product" className="py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem]">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-12 uppercase">
-                <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[1000px]:text-[2.5rem] max-[600px]:text-[28px]">OUR PRODUCTS</h2>
-                <button
-                  className="bg-[#eb61a2] text-white border-none px-[3rem] py-3 rounded-[0.5rem] text-[1.5rem] cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[1000px]:text-[1.25rem] max-[600px]:text-sm"
-                  onClick={() => router.push("/products")}
-                >
-                  View All
-                </button>
-              </div>
-    
+          {(() => {
+            const [productRef, productVisible] = useScrollAnimation();
+            return (
+            <section ref={productRef} id="product" className={`py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem] transition-all duration-1000 ease-out delay-200 ${productVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+              <div className="max-w-7xl mx-auto">
+                <div className="flex justify-between items-center mb-12 uppercase">
+                  <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[1000px]:text-[2.5rem] max-[600px]:text-[28px]">OUR PRODUCTS</h2>
+                  <button
+                    className="bg-[#eb61a2] text-white border-none px-[3rem] py-3 rounded-[0.5rem] text-[1.5rem] cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[1000px]:text-[1.25rem] max-[600px]:text-sm"
+                    onClick={() => router.push("/products")}
+                  >
+                    View All
+                  </button>
+                </div>
+
               {loading ? (
                 <p className="text-center text-gray-500 text-lg mt-20">Loading products...</p>
               ) : products.length === 0 ? (
@@ -357,17 +346,17 @@ export default function Page() {
                         </div>
                         <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
                           {brand && (
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                            <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
                               {brand}
                             </span>
                           )}
-                          <h3 className="text-sm font-semibold text-gray-800 truncate" title={p?.name}>
+                          <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p?.name}>
                             {p?.name || "No Name"}
                           </h3>
-                          <p className="text-xs text-gray-500 truncate" title={desc}>
+                          <p className="text-xs text-gray-500 truncate opacity-80" title={desc}>
                             {desc}
                           </p>
-                          <p className="text-sm font-bold text-[#2563eb] mt-1">
+                          <p className="text-sm font-bold text-black mt-1">
                             {formatPrice(p?.price)}
                           </p>
                           <button
@@ -385,8 +374,13 @@ export default function Page() {
               )}
             </div>
           </section>
+            );
+          })()}
           {/* CUSTOMER STORIES RECOMMENDATION SECTION */}
-          <div className="bg-[#fff0f7] pt-8 pb-20 px-8">
+          {(() => {
+            const [recommendRef, recommendVisible] = useScrollAnimation();
+            return (
+          <div ref={recommendRef} className={`bg-[#fff0f7] pt-8 pb-20 px-8 transition-all duration-1000 ease-out delay-300 ${recommendVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
 
               {/* Header */}
@@ -411,9 +405,17 @@ export default function Page() {
                 <button
                   onClick={() => {
                     const container = document.getElementById('testimonials-container');
-                    if (container) container.scrollBy({ left: -380, behavior: 'smooth' });
+                    const cards = container?.querySelectorAll('.testimonial-card');
+                    if (container && cards?.length > 0) {
+                      const gap = 24;
+                      const cardWidth = cards[0].offsetWidth;
+                      const scrollAmount = cardWidth + gap;
+                      const newScrollLeft = container.scrollLeft - scrollAmount;
+                      container.scrollTo({ left: Math.max(0, newScrollLeft), behavior: 'smooth' });
+                    }
                   }}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -ml-6"
+                  disabled={!canScrollLeft}
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -ml-6 max-[600px]:-ml-2 ${!canScrollLeft ? 'opacity-40 cursor-not-allowed' : ''}`}
                 >
                   <FaChevronLeft size={20} />
                 </button>
@@ -422,7 +424,15 @@ export default function Page() {
                 <button
                   onClick={() => {
                     const container = document.getElementById('testimonials-container');
-                    if (container) container.scrollBy({ left: 380, behavior: 'smooth' });
+                    const cards = container?.querySelectorAll('.testimonial-card');
+                    if (container && cards?.length > 0) {
+                      const gap = 24;
+                      const cardWidth = cards[0].offsetWidth;
+                      const scrollAmount = cardWidth + gap;
+                      const maxScroll = container.scrollWidth - container.clientWidth;
+                      const newScrollLeft = container.scrollLeft + scrollAmount;
+                      container.scrollTo({ left: Math.min(maxScroll, newScrollLeft), behavior: 'smooth' });
+                    }
                   }}
                   className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -mr-6"
                 >
@@ -499,7 +509,7 @@ export default function Page() {
                   ].map((review, idx) => (
                     <div
                       key={idx}
-                      className="bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 hover:shadow-[0_8px_25px_rgba(235,97,162,0.18)] transition-shadow duration-300 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
+                      className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 hover:shadow-[0_8px_25px_rgba(235,97,162,0.18)] transition-shadow duration-300 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
                     >
                       <div className="flex items-center gap-3">
                         <Image
@@ -540,7 +550,7 @@ export default function Page() {
                   { number: "98%", label: "Would Recommend" }
                 ].map((stat, i) => (
                   <div key={i} className="bg-white rounded-2xl py-6 px-4 border border-[#ffd6ec] shadow-sm max-[1000px]:py-4 max-[600px]:py-3">
-                    <p className="text-3xl font-bold text-[#eb61a2] mb-1 max-[1000px]:text-2xl max-[600px]:text-xl">{stat.number}</p>
+                    <p className="text-3xl font-bold text-black mb-1 max-[1000px]:text-2xl max-[600px]:text-xl">{stat.number}</p>
                     <p className="text-sm text-[#888] font-medium max-[1000px]:text-xs">{stat.label}</p>
                   </div>
                 ))}
@@ -548,10 +558,14 @@ export default function Page() {
 
             </div>
           </div>
-    
-          
+            );
+          })()}
+
           {/* ABOUT US SECTION - unchanged */}
-          <div id="aboutus" className="pt-8 pb-20 px-8 text-center">
+          {(() => {
+            const [aboutRef, aboutVisible] = useScrollAnimation();
+            return (
+          <div ref={aboutRef} id="aboutus" className={`pt-8 pb-20 px-8 text-center transition-all duration-1000 ease-out delay-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
               <p className="text-[4rem] font-bold text-[#000] mb-6 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">ABOUT US</p>
               <div className="text-[#000] text-[1.5rem] font-sans text-left leading-relaxed w-full max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
@@ -576,6 +590,8 @@ export default function Page() {
               <Image src={FirstImage} alt="About 4" width={280} height={280} className="w-[310px] h-[310px] max-[1400px]:w-[290px] max-[1400px]:h-[290px] max-[1350px]:w-[280px] max-[1350px]:h-[280px] max-[1300px]:w-[260px] max-[1300px]:h-[260px] max-[1250px]:w-[250px] max-[1250px]:h-[250px] max-[1200px]:w-[240px] max-[1200px]:h-[240px] max-[1150px]:w-[230px] max-[1150px]:h-[230px] max-[1050px]:w-[200px] max-[1050px]:h-[200px] max-[1000px]:w-[210px] max-[1000px]:h-[210px] max-[992px]:w-[300px] max-[992px]:h-[300px] max-[800px]:w-[250px] max-[800px]:h-[250px] max-[600px]:w-[160px] max-[600px]:h-[160px] max-[992px]:ml-0 -ml-8 rounded-[10px] object-cover" />
             </div>
           </div>
+            );
+          })()}
           <Footer />
     </div>
   );

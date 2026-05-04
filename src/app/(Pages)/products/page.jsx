@@ -122,30 +122,36 @@ const Products = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="pt-[9rem] px-4 sm:px-6 pb-16 bg-white font-[Poppins,sans-serif]">
+      <main className="pt-0 px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
         {/* ===== Filter Section ===== */}
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center mb-12">
-          <h1 className="text-4xl font-bold text-[#eb61a2]">Our Products</h1>
-          <div className="flex flex-wrap items-center gap-4 mt-6 lg:mt-0">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="py-3 px-5 rounded-xl border-2 border-gray-300 text-base cursor-pointer focus:outline-none focus:border-[#eb61a2] focus:ring-4 focus:ring-pink-100 transition"
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat?.id} value={cat?.id}>
-                  {cat?.name || "Unnamed Category"}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder="Search by name or brand..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="py-3 px-5 rounded-xl border-2 border-gray-300 text-base placeholder-gray-500 focus:outline-none focus:border-[#eb61a2] focus:ring-4 focus:ring-pink-100 transition"
-            />
+        <div className="w-full mb-12">
+          <h1 className="w-full h-[9rem] flex items-end justify-center text-4xl font-bold text-white bg-[#FF85BB] pb-[13px]">Our Products</h1>
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-start gap-4 mt-6 pl-4">
+            <div className="relative">
+              <Image src="/assets/ProductsSortByAndFilterIcons/for sort by.png" alt="Sort" width={20} height={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10" />
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-48 h-12 pl-10 pr-5 rounded-xl border-2 border-[#eb61a1] bg-transparent text-base text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
+              >
+                <option value="">Sort By</option>
+                {categories.map((cat) => (
+                  <option key={cat?.id} value={cat?.id}>
+                    {cat?.name || "Unnamed Category"}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="relative">
+              <Image src="/assets/ProductsSortByAndFilterIcons/for filter.png" alt="Filter" width={20} height={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10" />
+              <input
+                type="text"
+                placeholder="Filter"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-48 h-12 pl-10 pr-5 rounded-xl border-2 border-[#eb61a1] bg-transparent text-base text-[#eb61a1] placeholder-[#eb61a1] focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
+              />
+            </div>
           </div>
         </div>
 
@@ -188,19 +194,19 @@ const Products = () => {
                             <FaHeart className="text-sm" />
                           </button>
                         </div>
-                        <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
+                        <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
                           {brand && (
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                            <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
                               {brand}
                             </span>
                           )}
-                          <h3 className="text-sm font-semibold text-gray-800 truncate" title={p?.name}>
+                          <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p?.name}>
                             {p?.name || "No Name"}
                           </h3>
-                          <p className="text-xs text-gray-500 truncate" title={desc}>
+                          <p className="text-xs text-gray-500 truncate opacity-80" title={desc}>
                             {desc}
                           </p>
-                          <p className="text-sm font-bold text-[#2563eb] mt-1">
+                          <p className="text-sm font-bold text-black mt-1">
                             {formatPrice(p?.price)}
                           </p>
                           <button

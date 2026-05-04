@@ -40,19 +40,19 @@ const ProductCard = ({ product, onAddToCart, onFavorite }) => {
         </button>
       </div>
 
-      <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
+      <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
         {brand && (
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+          <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
             {brand}
           </span>
         )}
-        <h3 className="text-sm font-semibold text-gray-800 truncate" title={product?.name}>
+        <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={product?.name}>
           {product?.name || "No Name"}
         </h3>
-        <p className="text-xs text-gray-500 truncate" title={description}>
+        <p className="text-xs text-gray-500 truncate opacity-80" title={description}>
           {description}
         </p>
-        <p className="text-sm font-bold text-[#2563eb] mt-1">
+        <p className="text-sm font-bold text-black mt-1">
           {formatPrice(product?.price)}
         </p>
         <button

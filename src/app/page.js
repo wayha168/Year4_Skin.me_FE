@@ -4,7 +4,8 @@ import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import {useRouter,  useSearchParams } from "next/navigation";
 import { useState } from "react";
-import axios from "./lib/api/axiosConfig.js";
+import axios from "axios";
+import axiosAuth from "./lib/api/axiosConfig.js";
 import Navbar from "../Components/Navbar/Navbar.jsx";
 import Footer from "../Components/Footer/Footer.jsx";
 import useUserActions from "../Components/Hooks/userUserActions.js";
@@ -165,7 +166,7 @@ export default function Page() {
       useEffect(() => {
         const fetchProducts = async () => {
           try {
-            const res = await axios.get("/products/all");
+            const res = await axios.get("/api/v1/products/all");
             setProducts(res?.data?.data || []);
           } catch (err) {
             console.error("Error fetching products:", err);
@@ -174,7 +175,7 @@ export default function Page() {
           }
         };
         fetchProducts();
-      }, []);
+      }, []); 
     
       const handleFavoriteClick = useCallback(async (productId) => {
         if (!user) {
@@ -199,8 +200,8 @@ export default function Page() {
           {isClient && <Navbar alwaysVisible={true} />}
     
           {/* HERO SECTION */}
-          <div className="flex justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative max-[992px]:flex-col max-[992px]:pt-[6rem] max-[992px]:min-h-screen max-[992px]:text-center max-[992px]:px-4 max-[992px]:py-8 max-[992px]:gap-2 max-[600px]:flex-col max-[600px]:gap-20  max-[600px]:mt-[1rem]">
-            <div className="flex flex-col ml-[7rem] justify-center w-[50%] text-[#1f2937] z-[2] max-[992px]:w-[90%] max-[992px]:ml-0">
+          <div className="flex flex-col md:flex-row justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative px-4 sm:px-8 md:px-16 py-0 max-[767px]:gap-0 md:gap-8">
+            <div className="flex flex-col justify-center w-full md:w-1/2 text-center md:text-left text-[#1f2937] z-[2] max-[767px]:mt-[10vh]">
               <p className="text-[57px] font-bold text-[#3C3C3C] max-[992px]:text-[40px] max-[600px]:text-[33px]">WELCOME TO SKIN.ME</p>
               <p className="tracking-[-0.05em] text-[44px] font-semibold text-white mb-2 max-[992px]:text-[28px] max-[600px]:text-[22px]">Most Essential Skin Care Product</p>
               <p className="opacity-[0.8] text-[20px] text-[#4c4c4c] mb-4 max-[992px]:text-[16px] max-[600px]:text-sm">Give you the best skincare | product is our mission.</p>
@@ -214,14 +215,14 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="min-[992px]:pt-[5rem] w-[40rem] h-[50rem] z-[4] max-[600px]:scale-[0.72] max-[600px]:mt-[-11.5rem] max-[770px]:mt-[-7rem] max-[992px]:h-auto max-[992px]:mt-[-4rem] max-[992px]:scale-75 max-[992px]:w-[26rem] max-[992px]:h-[36rem]">
-             <Image  
-              sizes="(max-width: 992px) 100vw, 40rem (max-width: 992px) 100vw, 40rem"  
+            <div className="w-[20rem] h-[25rem] md:w-1/2 md:h-[50rem] md:mt-4 z-[4]">
+             <Image
+              sizes="(max-width: 768px) 20rem, 50vw"
               priority
-              src={MainImage} 
-              alt="skin product" 
-              width={640} 
-              height={800} 
+              src={MainImage}
+              alt="skin product"
+              width={640}
+              height={800}
               quality={85}
               className="w-full h-full object-contain z-[5]"
               fetchPriority="high"
@@ -231,9 +232,22 @@ export default function Page() {
     
       {/* OVERVIEW SECTION */}
       {(() => {
+        const [noAnimation, setNoAnimation] = useState(false);
+        const [hasAnimated, setHasAnimated] = useState(false);
+        useEffect(() => {
+          const handlePageShow = (event) => {
+            if (event.persisted) {
+              setNoAnimation(true);
+              setHasAnimated(true);
+            }
+          };
+          window.addEventListener('pageshow', handlePageShow);
+          return () => window.removeEventListener('pageshow', handlePageShow);
+        }, []);
         const [overviewRef, overviewVisible] = useScrollAnimation();
+        const finalVisible = overviewVisible || hasAnimated;
         return (
-        <div ref={overviewRef} className={`py-[4rem] max-[1350px]:mb-[-0.75rem] max-[1350px]:mt-[0.75rem] max-[1300px]:mb-[-7.35rem] max-[1300px]:mt-[2.35rem] max-[1300px]:mb-[-5.35rem] max-[1100px]:mb-[-12.5rem] max-[990px]:mb-[-22.5rem]  max-[990px]:mt-[-2.5rem]    relative max-[1390px]:[transform:scale(0.95)] max-[1300px]:[transform:scale(0.85)] max-[1250px]:[transform:scale(0.83)] max-[1200px]:[transform:scale(0.80)] max-[1150px]:[transform:scale(0.75)] max-[1100px]:[transform:scale(0.70)] max-[660px]:[transform:scale(0.65)] origin-top transition-all duration-1000 ease-out ${overviewVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+        <div ref={overviewRef} className={`py-[4rem] max-[1350px]:mb-[-0.75rem] max-[1350px]:mt-[0.75rem] max-[1300px]:mb-[-7.35rem] max-[1300px]:mt-[2.35rem] max-[1300px]:mb-[-5.35rem] max-[1100px]:mb-[-12.5rem] max-[990px]:mb-[-22.5rem]  max-[990px]:mt-[-2.5rem]    relative max-[1390px]:[transform:scale(0.95)] max-[1300px]:[transform:scale(0.85)] max-[1250px]:[transform:scale(0.83)] max-[1200px]:[transform:scale(0.80)] max-[1150px]:[transform:scale(0.75)] max-[1100px]:[transform:scale(0.70)] max-[660px]:[transform:scale(0.65)] origin-top ${noAnimation ? '' : 'transition-all duration-1000 ease-out'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
         <div className="flex flex-row items-center justify-center relative gap-[5rem] max-[990px]:mt-16 max-[990px]:flex-col max-[990px]:items-center max-[990px]:gap-[2rem]">
           <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] flex-shrink-0 max-[990px]:items-center self-center mt-[1rem]">
             <div className="text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full max-[990px]:text-center">
@@ -298,9 +312,22 @@ export default function Page() {
 
           {/* PRODUCTS SECTION  */}
           {(() => {
+            const [noAnimation, setNoAnimation] = useState(false);
+            const [hasAnimated, setHasAnimated] = useState(false);
+            useEffect(() => {
+              const handlePageShow = (event) => {
+                if (event.persisted) {
+                  setNoAnimation(true);
+                  setHasAnimated(true);
+                }
+              };
+              window.addEventListener('pageshow', handlePageShow);
+              return () => window.removeEventListener('pageshow', handlePageShow);
+            }, []);
             const [productRef, productVisible] = useScrollAnimation();
+            const finalVisible = productVisible || hasAnimated;
             return (
-            <section ref={productRef} id="product" className={`py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem] transition-all duration-1000 ease-out delay-200 ${productVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+            <section ref={productRef} id="product" className={`py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem] ${noAnimation ? '' : 'transition-all duration-1000 ease-out delay-200'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
               <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-center mb-12 uppercase">
                   <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[1000px]:text-[2.5rem] max-[600px]:text-[28px]">OUR PRODUCTS</h2>
@@ -378,9 +405,22 @@ export default function Page() {
           })()}
           {/* CUSTOMER STORIES RECOMMENDATION SECTION */}
           {(() => {
+            const [noAnimation, setNoAnimation] = useState(false);
+            const [hasAnimated, setHasAnimated] = useState(false);
+            useEffect(() => {
+              const handlePageShow = (event) => {
+                if (event.persisted) {
+                  setNoAnimation(true);
+                  setHasAnimated(true);
+                }
+              };
+              window.addEventListener('pageshow', handlePageShow);
+              return () => window.removeEventListener('pageshow', handlePageShow);
+            }, []);
             const [recommendRef, recommendVisible] = useScrollAnimation();
+            const finalVisible = recommendVisible || hasAnimated;
             return (
-          <div ref={recommendRef} className={`bg-[#fff0f7] pt-8 pb-20 px-8 transition-all duration-1000 ease-out delay-300 ${recommendVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+          <div ref={recommendRef} className={`bg-[#fff0f7] pt-8 pb-20 px-8 ${noAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
 
               {/* Header */}
@@ -434,7 +474,8 @@ export default function Page() {
                       container.scrollTo({ left: Math.min(maxScroll, newScrollLeft), behavior: 'smooth' });
                     }
                   }}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -mr-6"
+                  disabled={!canScrollRight}
+                  className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -mr-6 max-[600px]:-mr-2 ${!canScrollRight ? 'opacity-40 cursor-not-allowed' : ''}`}
                 >
                   <FaChevronRight size={20} />
                 </button>
@@ -509,7 +550,7 @@ export default function Page() {
                   ].map((review, idx) => (
                     <div
                       key={idx}
-                      className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 hover:shadow-[0_8px_25px_rgba(235,97,162,0.18)] transition-shadow duration-300 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
+                      className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
                     >
                       <div className="flex items-center gap-3">
                         <Image
@@ -563,9 +604,22 @@ export default function Page() {
 
           {/* ABOUT US SECTION - unchanged */}
           {(() => {
+            const [noAnimation, setNoAnimation] = useState(false);
+            const [hasAnimated, setHasAnimated] = useState(false);
+            useEffect(() => {
+              const handlePageShow = (event) => {
+                if (event.persisted) {
+                  setNoAnimation(true);
+                  setHasAnimated(true);
+                }
+              };
+              window.addEventListener('pageshow', handlePageShow);
+              return () => window.removeEventListener('pageshow', handlePageShow);
+            }, []);
             const [aboutRef, aboutVisible] = useScrollAnimation();
+            const finalVisible = aboutVisible || hasAnimated;
             return (
-          <div ref={aboutRef} id="aboutus" className={`pt-8 pb-20 px-8 text-center transition-all duration-1000 ease-out delay-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+          <div ref={aboutRef} id="aboutus" className={`pt-8 pb-20 px-8 text-center ${noAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
               <p className="text-[4rem] font-bold text-[#000] mb-6 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">ABOUT US</p>
               <div className="text-[#000] text-[1.5rem] font-sans text-left leading-relaxed w-full max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
@@ -583,11 +637,11 @@ export default function Page() {
                 <p>Every product reflects our commitment to quality and care. Join us in redefining skincare with confidence and simplicity.</p>
               </div>
             </div>
-            <div className="flex justify-center mt-8 max-w-7xl mx-auto gap-[3rem] max-[992px]:flex-wrap max-[992px]:gap-[1.5rem]">
-              <Image src={FirstImage} alt="About 1" width={280} height={280} className="w-[310px] h-[310px] max-[1400px]:w-[290px] max-[1400px]:h-[290px] max-[1350px]:w-[280px] max-[1350px]:h-[280px] max-[1300px]:w-[260px] max-[1300px]:h-[260px] max-[1250px]:w-[250px] max-[1250px]:h-[250px] max-[1200px]:w-[240px] max-[1200px]:h-[240px] max-[1150px]:w-[230px] max-[1150px]:h-[230px] max-[1050px]:w-[200px] max-[1050px]:h-[200px] max-[1000px]:w-[210px] max-[1000px]:h-[210px] max-[992px]:w-[300px] max-[992px]:h-[300px] max-[800px]:w-[250px] max-[800px]:h-[250px] max-[600px]:w-[160px] max-[600px]:h-[160px] rounded-[10px] object-cover" />
-              <Image src={SecondImage} alt="About 2" width={280} height={280} className="w-[310px] h-[310px] max-[1400px]:w-[290px] max-[1400px]:h-[290px] max-[1350px]:w-[280px] max-[1350px]:h-[280px] max-[1300px]:w-[260px] max-[1300px]:h-[260px] max-[1250px]:w-[250px] max-[1250px]:h-[250px] max-[1200px]:w-[240px] max-[1200px]:h-[240px] max-[1150px]:w-[230px] max-[1150px]:h-[230px] max-[1050px]:w-[200px] max-[1050px]:h-[200px] max-[1000px]:w-[210px] max-[1000px]:h-[210px] max-[992px]:w-[300px] max-[992px]:h-[300px] max-[800px]:w-[250px] max-[800px]:h-[250px] max-[600px]:w-[160px] max-[600px]:h-[160px] max-[992px]:ml-0 -ml-8 rounded-[10px] object-cover" />
-              <Image src={ThirdImage} alt="About 3" width={280} height={280} className="w-[310px] h-[310px] max-[1400px]:w-[290px] max-[1400px]:h-[290px] max-[1350px]:w-[280px] max-[1350px]:h-[280px] max-[1300px]:w-[260px] max-[1300px]:h-[260px] max-[1250px]:w-[250px] max-[1250px]:h-[250px] max-[1200px]:w-[240px] max-[1200px]:h-[240px] max-[1150px]:w-[230px] max-[1150px]:h-[230px] max-[1050px]:w-[200px] max-[1050px]:h-[200px] max-[1000px]:w-[210px] max-[1000px]:h-[210px] max-[992px]:w-[300px] max-[992px]:h-[300px] max-[800px]:w-[250px] max-[800px]:h-[250px] max-[600px]:w-[160px] max-[600px]:h-[160px] max-[992px]:ml-0 -ml-8 rounded-[10px] object-cover" />
-              <Image src={FirstImage} alt="About 4" width={280} height={280} className="w-[310px] h-[310px] max-[1400px]:w-[290px] max-[1400px]:h-[290px] max-[1350px]:w-[280px] max-[1350px]:h-[280px] max-[1300px]:w-[260px] max-[1300px]:h-[260px] max-[1250px]:w-[250px] max-[1250px]:h-[250px] max-[1200px]:w-[240px] max-[1200px]:h-[240px] max-[1150px]:w-[230px] max-[1150px]:h-[230px] max-[1050px]:w-[200px] max-[1050px]:h-[200px] max-[1000px]:w-[210px] max-[1000px]:h-[210px] max-[992px]:w-[300px] max-[992px]:h-[300px] max-[800px]:w-[250px] max-[800px]:h-[250px] max-[600px]:w-[160px] max-[600px]:h-[160px] max-[992px]:ml-0 -ml-8 rounded-[10px] object-cover" />
+            <div className="grid grid-cols-4 gap-[2rem] mt-8 max-w-7xl mx-auto justify-center max-[992px]:grid-cols-2 max-[600px]:gap-[1rem]">
+              <Image src={FirstImage} alt="About 1" width={280} height={280} className="w-full h-auto rounded-[10px] object-cover" />
+              <Image src={SecondImage} alt="About 2" width={280} height={280} className="w-full h-auto rounded-[10px] object-cover" />
+              <Image src={ThirdImage} alt="About 3" width={280} height={280} className="w-full h-auto rounded-[10px] object-cover" />
+              <Image src={FirstImage} alt="About 4" width={280} height={280} className="w-full h-auto rounded-[10px] object-cover" />
             </div>
           </div>
             );

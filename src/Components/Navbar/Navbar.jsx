@@ -230,7 +230,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                 className="text-black/80 hover:text-[#eb61a2] transition-none p-0"
                 title="Home"
               >
-                <Image src="/assets/NavbarIcons/Icons Home.png" alt="Home" width={38} height={38} />
+                <Image src="/assets/NavbarIcons/Icons Home.svg" alt="Home" width={38} height={38} />
               </Link>
               <Link
                 href="/products"
@@ -238,7 +238,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                 className="text-black/80 hover:text-[#eb61a2] transition-none p-0"
                 title="Products"
               >
-                <Image src="/assets/NavbarIcons/Icons Products.png" alt="Products" width={38} height={38} />
+                <Image src="/assets/NavbarIcons/Icons Products.svg" alt="Products" width={38} height={38} />
               </Link>
               <Link
                 href="/about-us"
@@ -246,7 +246,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                 className="text-black/80 hover:text-[#eb61a2] transition-none p-0"
                 title="About Us"
               >
-                <Image src="/assets/NavbarIcons/Icons About Us.png" alt="About Us" width={38} height={38} />
+                <Image src="/assets/NavbarIcons/Icons About Us.svg" alt="About Us" width={38} height={38} />
               </Link>
             </div>
           )}
@@ -358,7 +358,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                   className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                   title="Search products"
                 >
-                  <Image src="/assets/NavbarIcons/Icons Search.png" alt="Search" width={32} height={32} />
+                  <Image src="/assets/NavbarIcons/Icons Search.svg" alt="Search" width={32} height={32} />
                 </button>
               )}
               <Link
@@ -367,7 +367,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                 className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                 title="Favorites"
               >
-                <Image src="/assets/NavbarIcons/Icons Favorite.png" alt="Favorites" width={38} height={38} />
+                <Image src="/assets/NavbarIcons/Icons Favorite.svg" alt="Favorites" width={38} height={38} />
               </Link>
               <Link
                 href="/bag_page"
@@ -375,7 +375,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                 className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                 title="Bag"
               >
-                <Image src="/assets/NavbarIcons/Icons Bage.png" alt="Bag" width={38} height={38} />
+                <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={38} height={38} />
               </Link>
               {user ? (
                 <Link
@@ -418,7 +418,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={() => safeNavigate("/")}
             title="Home"
           >
-            <Image src="/assets/NavbarIcons/Icons Home.png" alt="Home" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Home.svg" alt="Home" width={38} height={38} />
           </button>
           <button
             type="button"
@@ -426,7 +426,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={() => safeNavigate("/products")}
             title="Products"
           >
-            <Image src="/assets/NavbarIcons/Icons Products.png" alt="Products" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Products.svg" alt="Products" width={38} height={38} />
           </button>
           <button
             type="button"
@@ -434,7 +434,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={handleFavoriteClick}
             title="Favorites"
           >
-            <Image src="/assets/NavbarIcons/Icons Favorite.png" alt="Favorites" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Favorite.svg" alt="Favorites" width={38} height={38} />
           </button>
           <button
             type="button"
@@ -442,7 +442,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={handleBagClick}
             title="Cart"
           >
-            <Image src="/assets/NavbarIcons/Icons Bage.png" alt="Bag" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={38} height={38} />
           </button>
           <button
             type="button"
@@ -464,7 +464,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={() => safeNavigate("/")}
             title="Home"
           >
-            <Image src="/assets/NavbarIcons/Icons Home.png" alt="Home" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Home.svg" alt="Home" width={38} height={38} />
           </button>
           <button
             type="button"
@@ -472,7 +472,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={() => safeNavigate("/products")}
             title="Products"
           >
-            <Image src="/assets/NavbarIcons/Icons Products.png" alt="Products" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Products.svg" alt="Products" width={38} height={38} />
           </button>
           <button
             type="button"
@@ -480,7 +480,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={handleFavoriteClick}
             title="Favorites"
           >
-            <Image src="/assets/NavbarIcons/Icons Favorite.png" alt="Favorites" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Favorite.svg" alt="Favorites" width={38} height={38} />
           </button>
           <button
             type="button"
@@ -488,7 +488,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={handleBagClick}
             title="Cart"
           >
-            <Image src="/assets/NavbarIcons/Icons Bage.png" alt="Bag" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={38} height={38} />
           </button>
           <button
             type="button"

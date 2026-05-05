@@ -61,16 +61,16 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Email</label>
+            <label className="text-sm font-medium text-gray-800 block mb-1">Email</label>
             <input
               type="email"
               name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="example@gmail.com"
               required
               disabled={loading}
-              className="w-full p-2 border border-gray-300 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition"
+              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
             />
           </div>
 
@@ -81,23 +81,22 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
               name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Example1234"
               required
               disabled={loading}
-              className="w-full p-2 border border-gray-300 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition"
+              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
             />
+            <div className="text-right mt-1">
+              <Link href="/forgot-password" className="text-[#3C83C1] underline text-sm">Forgot Password?</Link>
+            </div>
           </div>
 
-          <div className="text-right text-sm">
-            <Link href="/forgot-password" className="text-pink-400 hover:underline">
-              Forgot Password?
-            </Link>
-          </div>
+
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full p-3 mt-2 font-bold rounded-lg text-white transition ${loading ? "bg-pink-300 cursor-not-allowed" : "bg-pink-400 hover:bg-pink-500 active:scale-[0.98]"
+            className={`w-full p-3 mt-2 font-bold rounded-lg text-white transition ${loading ? "bg-pink-300 cursor-not-allowed" : "bg-[#F071B4] hover:bg-[#E06AA5] active:scale-[0.98]"
               }`}
           >
             {isLoading ? "Logging in..." : "Login"}
@@ -111,7 +110,7 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
             type="button"
             onClick={onGoogleClick}
             disabled={loading}
-            className="w-full p-3 rounded-lg text-white font-medium flex items-center justify-center gap-2 bg-[#4285f4] hover:bg-[#357ae8] transition disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full p-3 rounded-lg text-white font-bold flex items-center justify-center gap-2 bg-[#F071B4] hover:bg-[#E06AA5] transition disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <FaGoogle /> Continue with Google
           </button>
@@ -123,9 +122,9 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
 
         {loading && <Loading />}
 
-        <p className="mt-4 text-center text-gray-700">
+        <p className="mt-4 text-center text-gray-500 text-sm">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-pink-400 font-bold underline hover:text-pink-500">
+          <Link href="/signup" className="text-[#3C83C1] underline">
             Sign Up
           </Link>
         </p>
@@ -202,23 +201,14 @@ const Login = () => {
 
   if (user && !verifyDone) {
     return (
-      <section className="min-h-screen bg-pink-100 flex items-center justify-center">
+      <section className="min-h-screen bg-[#CCF6F2] flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" aria-label="Verifying" />
       </section>
     );
   }
 
   return (
-    <section className="min-h-screen bg-pink-100 flex items-center justify-center relative overflow-hidden">
-      <Image
-        className="absolute left-0 bottom-0 opacity-20 pointer-events-none"
-        src={MainImage}
-        alt="Main visual"
-        width={600}
-        height={600}
-        priority
-        style={{ width: "auto", height: "auto" }}
-      />
+    <section className="min-h-screen bg-[#CCF6F2] flex items-center justify-center relative overflow-hidden">
 
       {googleClientId ? (
         <GoogleOAuthProvider clientId={googleClientId}>

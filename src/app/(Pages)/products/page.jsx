@@ -128,11 +128,11 @@ const Products = () => {
           <h1 className="w-full h-[9rem] flex items-end justify-center text-4xl font-bold text-white bg-[#FF85BB] pb-[13px]">Our Products</h1>
           <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-start gap-4 mt-6 pl-4">
             <div className="relative">
-              <Image src="/assets/ProductsSortByAndFilterIcons/for sort by.png" alt="Sort" width={20} height={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10" />
+              <img src="/assets/ProductsSortByAndFilterIcons/for sort by.svg" alt="Sort" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-6 h-6" />
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-48 h-12 pl-10 pr-5 rounded-xl border-2 border-[#eb61a1] bg-transparent text-base text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
+                className="w-48 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-2xl text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition appearance-none"
               >
                 <option value="">Sort By</option>
                 {categories.map((cat) => (
@@ -143,14 +143,19 @@ const Products = () => {
               </select>
             </div>
             <div className="relative">
-              <Image src="/assets/ProductsSortByAndFilterIcons/for filter.png" alt="Filter" width={20} height={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10" />
-              <input
-                type="text"
-                placeholder="Filter"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-48 h-12 pl-10 pr-5 rounded-xl border-2 border-[#eb61a1] bg-transparent text-base text-[#eb61a1] placeholder-[#eb61a1] focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
-              />
+              <img src="/assets/ProductsSortByAndFilterIcons/for filter.svg" alt="Filter" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-6 h-6" />
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-48 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-2xl text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition appearance-none"
+              >
+                <option value="">Filter</option>
+                {categories.map((cat) => (
+                  <option key={cat?.id} value={cat?.id}>
+                    {cat?.name || "Unnamed Category"}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

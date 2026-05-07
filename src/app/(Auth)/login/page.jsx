@@ -70,7 +70,7 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
               placeholder="example@gmail.com"
               required
               disabled={loading}
-              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
+              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition placeholder:text-gray-400 placeholder:opacity-100"
             />
           </div>
 
@@ -84,7 +84,7 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
               placeholder="Example1234"
               required
               disabled={loading}
-              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
+              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition placeholder:text-gray-400 placeholder:opacity-100"
             />
             <div className="text-right mt-1">
               <Link href="/forgot-password" className="text-[#3C83C1] underline text-sm">Forgot Password?</Link>
@@ -96,7 +96,7 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full p-3 mt-2 font-bold rounded-lg text-white transition ${loading ? "bg-pink-300 cursor-not-allowed" : "bg-[#F071B4] hover:bg-[#E06AA5] active:scale-[0.98]"
+            className={`w-full p-2 mt-2 font-bold text-xl rounded-lg text-white transition ${loading ? "bg-pink-300 cursor-not-allowed" : "bg-[#F071B4] hover:bg-[#E06AA5] active:scale-[0.98]"
               }`}
           >
             {isLoading ? "Logging in..." : "Login"}
@@ -110,7 +110,7 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
             type="button"
             onClick={onGoogleClick}
             disabled={loading}
-            className="w-full p-3 rounded-lg text-white font-bold flex items-center justify-center gap-2 bg-[#F071B4] hover:bg-[#E06AA5] transition disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full p-2 rounded-lg text-white font-bold text-xl flex items-center justify-center gap-2 bg-[#F071B4] hover:bg-[#E06AA5] transition disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <FaGoogle /> Continue with Google
           </button>

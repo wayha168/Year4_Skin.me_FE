@@ -19,7 +19,7 @@ const Navbar = ({ alwaysVisible = false }) => {
   const router = useRouter();
   const { user } = useAuthContext();
 
-  const [visible, setVisible] = useState(true);
+  const [translateY, setTranslateY] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -65,7 +65,7 @@ const Navbar = ({ alwaysVisible = false }) => {
     };
   }, [handleResize]);
 
-  // Scroll behavior: hide on scroll down, show on scroll up
+  // Scroll behavior: smooth hide/show based on scroll speed
   useEffect(() => {
     let lastScrollY = window.scrollY;
     let ticking = false;
@@ -74,13 +74,9 @@ const Navbar = ({ alwaysVisible = false }) => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
-          if (currentScrollY > lastScrollY && currentScrollY > 50) {
-            // Scrolling down & past threshold - hide
-            setVisible(false);
-          } else {
-            // Scrolling up - show
-            setVisible(true);
-          }
+          const delta = currentScrollY - lastScrollY;
+          // Always adjust translateY based on scroll delta, clamped between -80 (full hide) and 0
+          setTranslateY(prev => Math.max(-80, Math.min(0, prev - delta)));
           lastScrollY = currentScrollY;
           ticking = false;
         });
@@ -90,7 +86,7 @@ const Navbar = ({ alwaysVisible = false }) => {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [translateY]);
 
   // Close menu and search when clicking outside
   const handleClickOutside = useCallback((e) => {
@@ -190,8 +186,8 @@ const Navbar = ({ alwaysVisible = false }) => {
     <>
       {/* NORMAL NAVBAR */}
       <nav
-        className={`fixed left-0 w-full bg-white shadow-xl transition-all duration-150 z-[9999] h-20 ${visible ? "top-0" : "-top-20"
-          }`}
+        className={`fixed left-0 w-full bg-white shadow-xl transition-transform duration-100 ease-out z-[9999] h-20`}
+        style={{ transform: `translateY(${translateY}px)` }}
       >
         <div
           ref={navRef}

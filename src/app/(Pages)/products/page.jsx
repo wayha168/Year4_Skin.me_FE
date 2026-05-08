@@ -29,6 +29,19 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState(searchFromUrl);
   const [loading, setLoading] = useState(true);
+  const [isSortOpen, setIsSortOpen] = useState(false);
+
+  // Disable page scroll when sidebar is open
+  useEffect(() => {
+    if (isSortOpen) {
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.documentElement.style.overflow = 'auto';
+    }
+    return () => {
+      document.documentElement.style.overflow = 'auto';
+    };
+  }, [isSortOpen]);
 
 
   // Sync search term from URL (e.g. when navigating from Navbar search)
@@ -143,18 +156,57 @@ const Products = () => {
           <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-start gap-4 mt-6 pl-4">
             <div className="relative">
               <img src="/assets/ProductsSortByAndFilterIcons/for sort by.svg" alt="Sort" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-6 h-6" />
-              <select
-                value={selectedCategory}
-                onChange={handleCategoryChange}
-                className="w-48 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-2xl text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition appearance-none"
+              <button
+                onClick={() => setIsSortOpen(!isSortOpen)}
+                className="w-48 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-2xl text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
               >
-                <option value="">Sort By</option>
-                {categories.map((cat) => (
-                  <option key={cat?.id} value={cat?.id}>
-                    {cat?.name || "Unnamed Category"}
-                  </option>
-                ))}
-              </select>
+                Sort By
+              </button>
+              {/* Backdrop */}
+              {isSortOpen && (
+                <div
+                  className="fixed inset-0 bg-black/50 z-[10001]"
+                  onClick={() => setIsSortOpen(false)}
+                />
+              )}
+              <div className={`fixed top-0 left-0 w-[30vw] h-screen bg-white border-r shadow-lg z-[10002] transition-transform duration-500 ease-out ${isSortOpen ? 'translate-x-0' : 'translate-x-[-100%]'}`}>
+                <div className="py-4 px-0 relative">
+                  <button
+                    onClick={() => setIsSortOpen(false)}
+                    className="w-18 h-18 text-gray-500 hover:text-gray-700 flex items-center justify-center"
+                  >
+                    <Image
+                      src="/assets/CloseButtonForFilterAndSortBy/close button.svg"
+                      alt="Close"
+                      width={72}
+                      height={72}
+                      unoptimized
+                    />
+                  </button>
+                  <h3 className="text-[2.5rem] font-bold text-center w-full bg-[#EB61A2] text-white py-2">Sort By</h3>
+                  <div
+                    onClick={() => {
+                      setSelectedCategory("");
+                      setIsSortOpen(false);
+                    }}
+                    className="px-4 text-[1.3rem] py-3 hover:bg-gray-100 cursor-pointer rounded"
+                  >
+                    All
+                  </div>
+                  {categories.map((cat) => (
+                    <div
+                      key={cat?.id}
+                      onClick={() => {
+                        setSelectedCategory(cat?.id);
+                        setIsSortOpen(false);
+                      }}
+                      className="px-4 text-[1.3rem] py-3 hover:bg-gray-100 cursor-pointer rounded"
+                    >
+                      {cat?.name || "Unnamed Category"}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="relative">
               <img src="/assets/ProductsSortByAndFilterIcons/for filter.svg" alt="Filter" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-6 h-6" />

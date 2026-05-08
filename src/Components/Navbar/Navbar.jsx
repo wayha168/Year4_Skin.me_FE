@@ -195,7 +195,7 @@ const Navbar = ({ alwaysVisible = false }) => {
       >
         <div
           ref={navRef}
-          className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-full relative"
+          className="max-w-[1280px] mx-auto pl-[13px] pr-4 flex items-center justify-between h-full relative"
         >
           {/* LEFT: Logo */}
           {!searchOpen && (
@@ -262,9 +262,9 @@ const Navbar = ({ alwaysVisible = false }) => {
             >
               <form
                 onSubmit={handleSearchSubmit}
-                className="flex items-center gap-2 bg-white rounded-xl border-2 border-gray-200 shadow-lg pl-4 pr-2 py-2.5 min-h-[48px]"
+                className="flex items-center gap-2 bg-white rounded-xl border-2 border-gray-200 shadow-lg pl-[15px] pr-2 py-2.5 min-h-[48px]"
               >
-                <i className="fa-solid fa-magnifying-glass text-gray-500 text-lg"></i>
+                <i className="fa-solid fa-magnifying-glass text-gray-500 text-xl"></i>
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -379,16 +379,16 @@ const Navbar = ({ alwaysVisible = false }) => {
                 className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                 title="Bag"
               >
-                <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={38} height={38} />
+                <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={36} height={36} />
               </Link>
               {user ? (
                 <Link
                   href="/profile"
                   onClick={() => safeNavigate("/profile")}
-                  className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                  className="text-gray-600 hover:text-[#eb61a2] transition-colors pt-1.5 pr-1.5 pb-1.5 pl-[.7px]"
                   title="Profile"
                 >
-                  <Image src="/assets/NavbarIcons/Icons Profile.png" alt="Profile" width={32} height={32} />
+                  <Image src="/assets/NavbarIcons/Icons Profile.svg" alt="Profile" width={35} height={35} />
                 </Link>
               ) : (
                 <>
@@ -446,7 +446,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={handleBagClick}
             title="Cart"
           >
-            <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={36} height={36} />
           </button>
           <button
             type="button"
@@ -454,7 +454,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={() => safeNavigate(user ? "/profile" : "/login")}
             title="Profile"
           >
-            <Image src="/assets/NavbarIcons/Icons Profile.png" alt="Profile" width={32} height={32} />
+            <Image src="/assets/NavbarIcons/Icons Profile.svg" alt="Profile" width={35} height={35} />
           </button>
         </div>
       )}
@@ -492,7 +492,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={handleBagClick}
             title="Cart"
           >
-            <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={38} height={38} />
+            <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={36} height={36} />
           </button>
           <button
             type="button"
@@ -500,7 +500,7 @@ const Navbar = ({ alwaysVisible = false }) => {
             onClick={() => safeNavigate(user ? "/profile" : "/login")}
             title="Profile"
           >
-            <Image src="/assets/NavbarIcons/Icons Profile.png" alt="Profile" width={32} height={32} />
+            <Image src="/assets/NavbarIcons/Icons Profile.svg" alt="Profile" width={35} height={35} />
           </button>
         </div>
       )}

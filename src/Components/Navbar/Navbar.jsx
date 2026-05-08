@@ -75,7 +75,7 @@ const Navbar = ({ alwaysVisible = false }) => {
         window.requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
           const delta = currentScrollY - lastScrollY;
-          // Always adjust translateY based on scroll delta, clamped between -80 (full hide) and 0
+          // Adjust translateY based on scroll delta for both directions
           setTranslateY(prev => Math.max(-80, Math.min(0, prev - delta)));
           lastScrollY = currentScrollY;
           ticking = false;
@@ -186,7 +186,7 @@ const Navbar = ({ alwaysVisible = false }) => {
     <>
       {/* NORMAL NAVBAR */}
       <nav
-        className={`fixed left-0 w-full bg-white shadow-xl transition-transform duration-100 ease-out z-[9999] h-20`}
+        className={`fixed left-0 w-full bg-white shadow-xl transition-transform duration-50 ease-out z-[9999] h-20`}
         style={{ transform: `translateY(${translateY}px)` }}
       >
         <div

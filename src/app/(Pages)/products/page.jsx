@@ -29,7 +29,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState(searchFromUrl);
   const [loading, setLoading] = useState(true);
-  const [isAnimating, setIsAnimating] = useState(true);
+
 
   // Sync search term from URL (e.g. when navigating from Navbar search)
   useEffect(() => {
@@ -85,22 +85,11 @@ const Products = () => {
 
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
-    setIsAnimating(true);
   };
 
-  useEffect(() => {
-    if (!loading && isAnimating) {
-      const timer = setTimeout(() => setIsAnimating(false), 100);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, isAnimating]);
 
-  useEffect(() => {
-    if (isAnimating) {
-      const timer = setTimeout(() => setIsAnimating(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isAnimating]);
+
+
 
   /* ------------------- FILTER & GROUP PRODUCTS ------------------- */
   const getGroupedAndFilteredProducts = () => {
@@ -197,7 +186,7 @@ const Products = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-8 border-b-[3px] border-[#000000] opacity-[.7] inline-block">
                   {categoryName}
                 </h2>
-                <div className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 z-[1] transition-transform duration-500 ease-out ${isAnimating ? 'translate-x-[-100%]' : 'translate-x-0'}`}>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 z-[1]">
                   {productsInCategory.map((p) => {
                     const brand = typeof p?.brand === "string" ? p.brand : p?.brand?.name ?? "";
                     const desc = p?.description?.trim() || "No description";

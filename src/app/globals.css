@@ -5,6 +5,7 @@
 html, body {
   overflow-x: hidden;
   max-width: 100vw;
+  background-color: #CCF6F2;
 }
 
 @keyframes marquee {

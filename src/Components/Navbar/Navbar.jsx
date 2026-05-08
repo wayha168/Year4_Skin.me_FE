@@ -203,7 +203,11 @@ const Navbar = ({ alwaysVisible = false }) => {
               href="/"
               onClick={(e) => {
                 e.preventDefault();
-                safeNavigate("/");
+                if (window.location.pathname === '/') {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                  safeNavigate("/");
+                }
               }}
               className="flex flex-col items-start no-underline select-none text-[#eb61a2] flex-shrink-0 max-[770px]:items-center max-[770px]:w-full"
             >

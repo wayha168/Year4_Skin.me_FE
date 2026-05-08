@@ -164,9 +164,14 @@ export default function Page() {
       }, []);
 
       useEffect(() => {
+        if (!user) {
+          setProducts([]);
+          setLoading(false);
+          return;
+        }
         const fetchProducts = async () => {
           try {
-            const res = await axios.get("/api/v1/products/all");
+            const res = await axiosAuth.get("/products/all");
             setProducts(res?.data?.data || []);
           } catch (err) {
             console.error("Error fetching products:", err);
@@ -175,7 +180,7 @@ export default function Page() {
           }
         };
         fetchProducts();
-      }, []); 
+      }, [user]); 
     
       const handleFavoriteClick = useCallback(async (productId) => {
         if (!user) {
@@ -289,22 +294,18 @@ export default function Page() {
 
     {/* SET 1 */}
     <div className="flex whitespace-nowrap">
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#FF0000] mx-12 italic">Emidi</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-extrabold text-[#854DFF] mx-12">Pka</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-medium text-white mx-12">Le</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#DB14CD] mx-12 uppercase">Magi</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-semibold text-[#FF0000] mx-12">CETAPHIL</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#854DFF] mx-12 uppercase">Scarface</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#FF0000] mx-12 italic">Local Brand</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-extrabold text-[#854DFF] mx-12">Korean Products</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-medium text-white mx-12">Japan Brand</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#DB14CD] mx-12 uppercase">Bare</span>
     </div>
 
     {/* SET 2 (exact duplicate) */}
     <div className="flex whitespace-nowrap">
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#FF0000] mx-12 italic">Emidi</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-extrabold text-[#854DFF] mx-12">Pka</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-medium text-white mx-12">Le</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#DB14CD] mx-12 uppercase">Magi</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-semibold text-[#FF0000] mx-12">CETAPHIL</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#854DFF] mx-12 uppercase">Scarface</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#FF0000] mx-12 italic">Local Brand</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-extrabold text-[#854DFF] mx-12">Korean Products</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-medium text-white mx-12">Japan Brand</span>
+      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#DB14CD] mx-12 uppercase">Bare</span>
     </div>
 
   </div>
@@ -420,7 +421,7 @@ export default function Page() {
             const [recommendRef, recommendVisible] = useScrollAnimation();
             const finalVisible = recommendVisible || hasAnimated;
             return (
-          <div ref={recommendRef} className={`bg-[#fff0f7] pt-8 pb-20 px-8 ${noAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+          <div ref={recommendRef} className={`bg-white pt-8 pb-20 px-8 ${noAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
 
               {/* Header */}
@@ -481,8 +482,8 @@ export default function Page() {
                 </button>
 
                 {/* Gradient shadows on both sides */}
-                <div ref={leftGradientRef} className="absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-[#fff0f7] to-transparent z-5 pointer-events-none transition-opacity duration-300"></div>
-                <div ref={rightGradientRef} className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-[#fff0f7] to-transparent z-5 pointer-events-none transition-opacity duration-300"></div>
+                <div ref={leftGradientRef} className="absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-white to-transparent z-5 pointer-events-none transition-opacity duration-300"></div>
+                <div ref={rightGradientRef} className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-white to-transparent z-5 pointer-events-none transition-opacity duration-300"></div>
 
                 <div
                   ref={testimonialsRef}
@@ -550,7 +551,7 @@ export default function Page() {
                   ].map((review, idx) => (
                     <div
                       key={idx}
-                      className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(235,97,162,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
+                      className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
                     >
                       <div className="flex items-center gap-3">
                         <Image

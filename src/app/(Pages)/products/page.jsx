@@ -29,6 +29,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState(searchFromUrl);
   const [loading, setLoading] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(true);
 
   // Sync search term from URL (e.g. when navigating from Navbar search)
   useEffect(() => {
@@ -53,6 +54,11 @@ const Products = () => {
 
   /* ------------------- FETCH PRODUCTS ------------------- */
   useEffect(() => {
+    if (!user) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
     const fetchProducts = async () => {
       setLoading(true);
       try {
@@ -66,7 +72,7 @@ const Products = () => {
       }
     };
     fetchProducts();
-  }, []);
+  }, [user]);
 
   /* ------------------- HANDLERS ------------------- */
   const handleAddToCart = async (productId) => {
@@ -76,6 +82,25 @@ const Products = () => {
   const handleFavorite = async (productId) => {
     await addToFavorite(productId);
   };
+
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
+    setIsAnimating(true);
+  };
+
+  useEffect(() => {
+    if (!loading && isAnimating) {
+      const timer = setTimeout(() => setIsAnimating(false), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isAnimating]);
+
+  useEffect(() => {
+    if (isAnimating) {
+      const timer = setTimeout(() => setIsAnimating(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating]);
 
   /* ------------------- FILTER & GROUP PRODUCTS ------------------- */
   const getGroupedAndFilteredProducts = () => {
@@ -131,7 +156,7 @@ const Products = () => {
               <img src="/assets/ProductsSortByAndFilterIcons/for sort by.svg" alt="Sort" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-6 h-6" />
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={handleCategoryChange}
                 className="w-48 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-2xl text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition appearance-none"
               >
                 <option value="">Sort By</option>
@@ -146,7 +171,7 @@ const Products = () => {
               <img src="/assets/ProductsSortByAndFilterIcons/for filter.svg" alt="Filter" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-6 h-6" />
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={handleCategoryChange}
                 className="w-48 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-2xl text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition appearance-none"
               >
                 <option value="">Filter</option>
@@ -172,7 +197,7 @@ const Products = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-8 border-b-[3px] border-[#000000] opacity-[.7] inline-block">
                   {categoryName}
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 z-[1]">
+                <div className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 z-[1] transition-transform duration-500 ease-out ${isAnimating ? 'translate-x-[-100%]' : 'translate-x-0'}`}>
                   {productsInCategory.map((p) => {
                     const brand = typeof p?.brand === "string" ? p.brand : p?.brand?.name ?? "";
                     const desc = p?.description?.trim() || "No description";

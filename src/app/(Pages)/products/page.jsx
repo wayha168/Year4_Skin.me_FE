@@ -31,6 +31,9 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [sortBy, setSortBy] = useState("all");
+  const [subFilterView, setSubFilterView] = useState(null);
+  const [selectedSubFilters, setSelectedSubFilters] = useState({});
 
   // Disable page scroll when sidebar is open
   useEffect(() => {
@@ -106,7 +109,7 @@ const Products = () => {
 
   /* ------------------- FILTER & GROUP PRODUCTS ------------------- */
   const getGroupedAndFilteredProducts = () => {
-    let filtered = products;
+    let filtered = [...products];
 
     // Filter by search term (name or brand)
     if (searchTerm) {
@@ -126,6 +129,30 @@ const Products = () => {
     if (selectedCategory) {
       const categoryId = Number(selectedCategory);
       filtered = filtered.filter((p) => p.category?.id === categoryId);
+    }
+
+    // Apply sort order
+    if (sortBy === "price-high") {
+      filtered.sort((a, b) => (b?.price || 0) - (a?.price || 0));
+    } else if (sortBy === "price-low") {
+      filtered.sort((a, b) => (a?.price || 0) - (b?.price || 0));
+    } else if (sortBy === "new") {
+      // Sort by highest ID (assuming newer products have higher IDs)
+      filtered.sort((a, b) => (b?.id || 0) - (a?.id || 0));
+    } else if (sortBy === "recommended") {
+      // Sort by longest name to shortest
+      filtered.sort((a, b) => (b?.name?.length || 0) - (a?.name?.length || 0));
+    }
+
+    // For price, new, and recommended, don't group by category
+    if (sortBy === "price-high" || sortBy === "price-low" || sortBy === "recommended" || sortBy === "new") {
+      const categoryLabels = {
+        "price-high": "Price High to Low",
+        "price-low": "Price Low to High",
+        "recommended": "Recommended",
+        "new": "What's New"
+      };
+      return { [categoryLabels[sortBy]]: filtered };
     }
 
     // Group filtered products by category
@@ -155,10 +182,10 @@ const Products = () => {
           <h1 className="w-full h-[9rem] flex items-end justify-center text-4xl font-bold text-white bg-[#FF85BB] pb-[13px]">Our Products</h1>
           <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-start gap-4 mt-6 pl-4">
             <div className="relative">
-              <img src="/assets/ProductsSortByAndFilterIcons/for sort by.svg" alt="Sort" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-6 h-6" />
+              <img src="/assets/ProductsSortByAndFilterIcons/for sort by.svg" alt="Sort" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-7 h-7" />
               <button
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="w-48 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-2xl text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
+                className="font-semibold w-30 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-[1.7rem] text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
               >
                 Sort By
               </button>
@@ -171,46 +198,43 @@ const Products = () => {
               )}
               <div className={`fixed top-0 left-0 w-[30vw] h-screen bg-white border-r shadow-lg z-[10002] transition-transform duration-500 ease-out ${isSortOpen ? 'translate-x-0' : 'translate-x-[-100%]'}`}>
                 <div className="p-4 relative h-full flex flex-col">
-                  <div className="relative mb-4 -mx-4 px-4 -mt-4 pt-4 pb-2 bg-[#EB61A2]"> 
+<div className="relative -mx-4 px-4 -mt-4 pt-4 pb-2 bg-[#EB61A2]"> 
                       <button
-                      onClick={() => setIsSortOpen(false)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 w-[3.5rem] h-[3.5rem] text-white hover:text-gray-700 flex items-center justify-center"
-                    >
-                      <div className="relative w-[72px] h-[72px]" style={{filter: 'invert(1)'}}>
-                        <Image
-                          src="/assets/CloseButtonForFilterAndSortBy/close button.svg"
-                          alt="Close"
-                          fill
-                          unoptimized
-                        />
-                      </div>
-                    </button>
-                    <h3 className="text-white text-[2.5rem] font-bold text-center flex-1">
-                      Sort By
-                    </h3>
-                  </div>
-                  <div className="flex flex-col gap-2 flex-1 overflow-y-auto mx-[-1rem]">
-                    <div
-                      onClick={() => {
-                        setSelectedCategory("");
-                        setIsSortOpen(false);
-                      }}
-                      className="px-4  text-[1.3rem] py-3 hover:bg-gray-100 cursor-pointer border-b border-black"
-                    >
-                      All
-                    </div>
-                    {categories.map((cat) => (
-                      <div
-                        key={cat?.id}
-                        onClick={() => {
-                          setSelectedCategory(cat?.id);
-                          setIsSortOpen(false);
-                        }}
-                        className="px-4 text-[1.3rem] py-3 hover:bg-gray-100 cursor-pointer  border-b border-black"
+                        onClick={() => setIsSortOpen(false)}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 w-[3.5rem] h-[3.5rem] text-white hover:text-gray-700 flex items-center justify-center"
                       >
-                        {cat?.name || "Unnamed Category"}
-                      </div>
-                    ))}
+                        <div className="relative w-[72px] h-[72px]" style={{filter: 'invert(1)'}}>
+                          <Image
+                            src="/assets/CloseButtonForFilterAndSortBy/close button.svg"
+                            alt="Close"
+                            fill
+                            unoptimized
+                          />
+                        </div>
+                      </button>
+                      <h3 className="text-white text-[2.5rem] font-bold text-center flex-1">
+                        Sort By
+                      </h3>
+                    </div>
+                    <div className="flex flex-col flex-1 overflow-y-auto pt-2 mx-[-1rem]">
+{[
+                        { value: "all", label: "All Products" },
+                        { value: "recommended", label: "Recommended" },
+                        { value: "new", label: "What's New" },
+                        { value: "price-high", label: "Price High to Low" },
+                        { value: "price-low", label: "Price Low to High" }
+                      ].map((option) => (
+                        <div
+                          key={option.value}
+                          onClick={() => setSortBy(option.value)}
+                          className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
+                        >
+                          <span>{option.label}</span>
+                          <div className={`w-5 h-5 rounded-full border border-black flex items-center justify-center ${sortBy === option.value ? "bg-white" : ""}`}>
+                            {sortBy === option.value && <div className="w-2.5 h-2.5 rounded-full bg-black" />}
+                          </div>
+                        </div>
+                      ))}
                   </div>
                   <div className="p-4">
                     <button
@@ -224,10 +248,10 @@ const Products = () => {
               </div>
             </div>
             <div className="relative">
-              <img src="/assets/ProductsSortByAndFilterIcons/for filter.svg" alt="Filter" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-6 h-6" />
+              <img src="/assets/ProductsSortByAndFilterIcons/for filter.svg" alt="Filter" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-7 h-7" />
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-48 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-2xl text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
+                className="font-semibold flex items-center w-30 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-[1.7rem] text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
               >
                 Filter
               </button>
@@ -240,7 +264,22 @@ const Products = () => {
               )}
               <div className={`fixed top-0 left-0 w-[30vw] h-screen bg-white border-r shadow-lg z-[10002] transition-transform duration-500 ease-out ${isFilterOpen ? 'translate-x-0' : 'translate-x-[-100%]'}`}>
                 <div className="p-4 relative h-full flex flex-col">
-                  <div className="relative mb-4 -mx-4 px-4 -mt-4 pt-4 pb-2 bg-[#EB61A2]">
+                  <div className="relative -mx-4 px-4 -mt-4 pt-4 pb-2 bg-[#EB61A2]">
+                    {subFilterView === "all" && (
+                      <button
+                        onClick={() => setSubFilterView(null)}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3.5rem] h-[3.5rem] text-white hover:text-gray-700 flex items-center justify-center"
+                      >
+                        <div className="relative w-[72px] h-[72px]" style={{filter: 'invert(1)'}}>
+                          <Image
+                            src="/assets/CloseButtonForFilterAndSortBy/Icons Back.svg"
+                            alt="Back"
+                            fill
+                            unoptimized
+                          />
+                        </div>
+                      </button>
+                    )}
                     <button
                       onClick={() => setIsFilterOpen(false)}
                       className="absolute right-0 top-1/2 -translate-y-1/2 w-[3.5rem] h-[3.5rem] text-white hover:text-gray-700 flex items-center justify-center"
@@ -257,34 +296,69 @@ const Products = () => {
                     <h3 className="text-white text-[2.5rem] font-bold text-center flex-1">
                       Filter
                     </h3>
-                  </div>
-                  <div className="flex flex-col gap-2 flex-1 overflow-y-auto">
-                    <div
+                    </div>
+                    <div className="flex flex-col flex-1 overflow-y-auto pt-2 mx-[-1rem]">
+                      <div className="relative w-full h-full overflow-hidden">
+                        {/* Main Filter View - shows Brand, Rating, Age Range */}
+                        <div 
+                          className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
+                            subFilterView === "all" ? "-translate-x-full" : "translate-x-0"
+                          }`}
+                        >
+                          {["Brand", "Rating", "Age Range"].map((filter) => (
+                            <div
+                              key={filter}
+                              onClick={() => setSubFilterView("all")}
+                              className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
+                            >
+                              <span>{filter}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Sub-Filters View (Pka, Lata) - slides in from the right */}
+                        <div 
+                          className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
+                            subFilterView === "all" ? "translate-x-0" : "translate-x-full"
+                          }`}
+                        >
+                          {["Pka", "Lata"].map((subCat) => (
+                            <div
+                              key={subCat}
+                              onClick={() => {
+                                setSelectedSubFilters(prev => ({
+                                  ...prev,
+                                  [subCat]: !prev[subCat]
+                                }));
+                              }}
+                              className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
+                            >
+                              <span>{subCat}</span>
+                              <div className="w-6 h-6 border-2 border-black flex items-center justify-center">
+                                {selectedSubFilters[subCat] && (
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                  </svg>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  <div className="p-4 flex gap-3">
+                    <button
                       onClick={() => {
                         setSelectedCategory("");
-                        setIsFilterOpen(false);
+                        setSelectedSubFilters({});
+                        setSortBy("all");
                       }}
-                      className="px-4 text-[1.3rem] py-3 hover:bg-gray-100 cursor-pointer rounded border-b border-black -mx-4 px-4"
+                      className="flex-1 bg-[#EB61A2] text-white text-[1.3rem] font-bold py-3 rounded-xl hover:bg-[#d64d91] transition"
                     >
-                      All
-                    </div>
-                    {categories.map((cat) => (
-                      <div
-                        key={cat?.id}
-                        onClick={() => {
-                          setSelectedCategory(cat?.id);
-                          setIsFilterOpen(false);
-                        }}
-                        className="px-4 text-[1.3rem] py-3 hover:bg-gray-100 cursor-pointer rounded border-b border-black -mx-4 px-4"
-                      >
-                        {cat?.name || "Unnamed Category"}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="p-4">
+                      CLEAR ALL
+                    </button>
                     <button
                       onClick={() => setIsFilterOpen(false)}
-                      className="w-full border-2 border-[#EB61A2] text-[#EB61A2] text-[1.3rem] font-bold py-3 rounded-xl hover:bg-[#EB61A2] hover:text-white transition"
+                      className="flex-1 border-2 border-[#EB61A2] text-[#EB61A2] text-[1.3rem] font-bold py-3 rounded-xl hover:bg-[#EB61A2] hover:text-white transition"
                     >
                       VIEW ITEMS
                     </button>

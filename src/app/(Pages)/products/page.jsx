@@ -158,14 +158,14 @@ const Products = () => {
       };
     })();
 
-    // Derive age range: 20-30 years most common
-    // Distribution: 2: 10-20, 6: 20-30, 1: 30-40, 1: 40-50
+    // Derive age range: balanced with more 30-40 and 40-50
+    // Distribution per 10 products: 10-20: 1, 20-30: 4, 30-40: 3, 40-50: 2
     const knownAgeRanges = ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"];
     const ageRangeCycle = [
-      "10 - 20 years", "10 - 20 years",  // 2
-      "20 - 30 years", "20 - 30 years", "20 - 30 years", "20 - 30 years", "20 - 30 years", "20 - 30 years",  // 6
-      "30 - 40 years",  // 1
-      "40 - 50 years"   // 1
+      "10 - 20 years",  // 1
+      "20 - 30 years", "20 - 30 years", "20 - 30 years", "20 - 30 years",  // 4
+      "30 - 40 years", "30 - 40 years", "30 - 40 years",  // 3
+      "40 - 50 years", "40 - 50 years"   // 2
     ];
 
     // Derive skin type: all types appear evenly (20% each)

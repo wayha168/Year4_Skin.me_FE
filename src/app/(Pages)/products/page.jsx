@@ -176,10 +176,11 @@ const Products = () => {
     products.forEach((p, idx) => {
       p._ageRange = ageRangeCycle[idx % ageRangeCycle.length];
       p._skinType = skinTypeCycle[idx % skinTypeCycle.length];
+      p._rating = getPriceRating(p?.price || 0);
     });
 
     // Filter by selected sub-filters
-    // Between categories = AND, within each category = OR
+    // Brand and Rating use OR logic, other filters use AND logic
     const activeSubFilters = Object.entries(selectedSubFilters).filter(([_, v]) => v).map(([k]) => k);
     if (activeSubFilters.length > 0) {
       const selectedBrands = activeSubFilters.filter(f => !knownSkinTypes.includes(f) && !knownAgeRanges.includes(f) && !f.endsWith(" Stars"));
@@ -190,14 +191,23 @@ const Products = () => {
       filtered = filtered.filter((p) => {
         const brandName = (getBrand(p) || "").trim().toLowerCase();
         const ageRange = p._ageRange;
-        const rating = getPriceRating(p?.price || 0);
-        // Always use derived skin type for consistent filtering
+        const rating = p._rating;
         const effectiveSkinTypes = [p._skinType];
 
-        if (selectedBrands.length > 0 && !selectedBrands.some(b => b.trim().toLowerCase() === brandName)) return false;
+        // Brand filter (OR with rating)
+        const matchesBrand = selectedBrands.length > 0 && selectedBrands.some(b => b.trim().toLowerCase() === brandName);
+        // Rating filter (OR with brand)
+        const matchesRating = selectedRatings.length > 0 && selectedRatings.includes(rating);
+        
+        // OR logic between Brand and Rating
+        if (selectedBrands.length > 0 || selectedRatings.length > 0) {
+          if (!matchesBrand && !matchesRating) return false;
+        }
+        
+        // Skin type filter (AND with other filters)
         if (selectedSkinTypes.length > 0 && !selectedSkinTypes.some(st => effectiveSkinTypes.includes(st))) return false;
+        // Age range filter (AND with other filters)
         if (selectedAgeRanges.length > 0 && !selectedAgeRanges.includes(ageRange)) return false;
-        if (selectedRatings.length > 0 && !selectedRatings.some(r => rating >= r)) return false;
 
         return true;
       });

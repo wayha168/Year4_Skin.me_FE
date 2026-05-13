@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import LoginFirst from "../LoginFirst/LoginFirst";
@@ -17,7 +17,9 @@ const Loading = dynamic(() => import("../Loading/Loading"), {
 
 const Navbar = ({ alwaysVisible = false }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthContext();
+  const pathname = usePathname();
 
   const [translateY, setTranslateY] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -30,10 +32,13 @@ const Navbar = ({ alwaysVisible = false }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchProducts, setSearchProducts] = useState([]);
   const [searchProductsLoading, setSearchProductsLoading] = useState(false);
+  const [brands, setBrands] = useState([]);
+  const [hoveredFilter, setHoveredFilter] = useState(null);
 
   const navRef = useRef(null);
   const searchInputRef = useRef(null);
   const searchResultsRef = useRef(null);
+  const filterRefs = useRef({});
 
   // Initialize screen size
   useEffect(() => {
@@ -43,12 +48,58 @@ const Navbar = ({ alwaysVisible = false }) => {
     setIsTinyMobile(window.innerWidth <= 770);
   }, []);
 
-  // Resize handler
+  // Fetch brands when user is available
+  useEffect(() => {
+    if (!user) return;
+    const fetchBrands = async () => {
+      try {
+        const res = await axiosAuth.get("/products/all");
+        const fetchedProducts = res?.data?.data || [];
+        const brandSet = new Set();
+        fetchedProducts.forEach(p => {
+          const brandName = typeof p?.brand === "string" ? p.brand : p?.brand?.name;
+          if (brandName) brandSet.add(brandName);
+        });
+        setBrands([...brandSet]);
+      } catch (err) {
+        console.error("Error fetching brands:", err);
+      }
+    };
+    fetchBrands();
+  }, [user]);
+
+  // Read URL params for filters
+  const urlFilters = useMemo(() => {
+    const params = {};
+    if (searchParams.get("brand")) params.brand = searchParams.get("brand").split(",");
+    if (searchParams.get("rating")) params.rating = searchParams.get("rating");
+    if (searchParams.get("ageRange")) params.ageRange = searchParams.get("ageRange");
+    if (searchParams.get("skinType")) params.skinType = searchParams.get("skinType");
+    return params;
+  }, [searchParams]);
+
+  // Handle filter selection with URL update
+  const handleFilterSelect = useCallback((filterType, value) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (filterType === "brand") {
+      const current = params.get("brand")?.split(",") || [];
+      const newBrands = current.includes(value)
+        ? current.filter(b => b !== value)
+        : [...current, value];
+      newBrands.length ? params.set("brand", newBrands.join(",")) : params.delete("brand");
+    } else {
+      const current = params.get(filterType);
+      params.set(filterType, current === value ? "" : value);
+      if (!params.get(filterType)) params.delete(filterType);
+    }
+    const query = params.toString();
+    router.push(query ? `/products?${query}` : "/products");
+  }, [router, searchParams]);
+
   const handleResize = useCallback(() => {
     setIsMobile(window.innerWidth <= 1030);
     setIsSmallMobile(window.innerWidth <= 510);
     setIsTinyMobile(window.innerWidth <= 770);
-    if (window.innerWidth > 1030) setMenuOpen(false);
   }, []);
 
   useEffect(() => {
@@ -406,10 +457,110 @@ const Navbar = ({ alwaysVisible = false }) => {
               )}
             </div>
           )}
-        </div>
-      </nav>
+</div>
+       </nav>
 
-      {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px): Home, Products, Favorite, Cart, Profile */}
+{/* Filter Row - appears below navbar on products page */}
+        {!isSmallMobile && !isTinyMobile && pathname === '/products' && (
+         <div 
+           className="fixed left-0 right-0 top-20 z-[9998] bg-white border-t border-b border-gray-200 shadow-sm"
+           onMouseLeave={() => setHoveredFilter(null)}
+         >
+           <div className="max-w-7xl mx-auto flex items-center justify-center gap-12 h-14 px-4">
+             {["Brand", "Rating", "Age Range", "Skin Type"].map((filter) => (
+               <div
+                 key={filter}
+                 className="relative"
+                 onMouseEnter={() => setHoveredFilter(filter)}
+                 ref={(el) => (filterRefs.current[filter] = el)}
+               >
+                 <button
+                   className="flex items-center gap-1 text-gray-700 hover:text-[#eb61a2] font-medium transition-colors"
+                   type="button"
+                 >
+                   <span>{filter}</span>
+                   <i className="fa-solid fa-chevron-down text-xs"></i>
+                 </button>
+                 
+                 {/* Dropdown */}
+                 {hoveredFilter === filter && (
+                   <div className="absolute top-full left-0 w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
+                     {filter === "Brand" && (
+                       brands.length > 0 ? (
+                         brands.map((brand) => (
+                           <button
+                             key={brand}
+                             onClick={() => {
+                               handleFilterSelect("brand", brand);
+                               setHoveredFilter(null);
+                             }}
+                             className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                               urlFilters.brand?.includes(brand) ? "text-[#eb61a2] font-medium" : "text-gray-700"
+                             }`}
+                           >
+                             {brand}
+                           </button>
+                         ))
+                       ) : (
+                         <div className="px-4 py-2 text-sm text-gray-500">No brands available</div>
+                       )
+                     )}
+                     {filter === "Rating" && [5, 4, 3].map((stars) => (
+                       <button
+                         key={stars}
+                         onClick={() => {
+                           handleFilterSelect("rating", String(stars));
+                           setHoveredFilter(null);
+                         }}
+                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-1 ${
+                           urlFilters.rating === String(stars) ? "text-[#eb61a1] font-medium" : "text-gray-700"
+                         }`}
+                       >
+                         <span>
+                           {[1, 2, 3, 4, 5].map(i => (
+                             <span key={i} className={`text-sm ${i <= stars ? "text-black" : "text-transparent [-webkit-text-stroke:1px_#000]"}`}>★</span>
+                           ))}
+                         </span>
+                         <span>{stars} Stars</span>
+                       </button>
+                     ))}
+                     {filter === "Age Range" && ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"].map((ageRange) => (
+                       <button
+                         key={ageRange}
+                         onClick={() => {
+                           handleFilterSelect("ageRange", ageRange);
+                           setHoveredFilter(null);
+                         }}
+                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                           urlFilters.ageRange === ageRange ? "text-[#eb61a1] font-medium" : "text-gray-700"
+                         }`}
+                       >
+                         {ageRange}
+                       </button>
+                     ))}
+                     {filter === "Skin Type" && ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"].map((skinType) => (
+                       <button
+                         key={skinType}
+                         onClick={() => {
+                           handleFilterSelect("skinType", skinType);
+                           setHoveredFilter(null);
+                         }}
+                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                           urlFilters.skinType === skinType ? "text-[#eb61a1] font-medium" : "text-gray-700"
+                         }`}
+                       >
+                         {skinType}
+                       </button>
+                     ))}
+                   </div>
+                 )}
+               </div>
+             ))}
+           </div>
+         </div>
+       )}
+
+       {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px): Home, Products, Favorite, Cart, Profile */}
       {isSmallMobile && (
         <div className="fixed bottom-0 left-0 right-0 w-full bg-white h-20 shadow-xl z-[99999] flex justify-between items-center text-gray-600 px-2 sm:px-4">
           <button

@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -10,7 +10,7 @@ import axiosAuth from "../../../app/lib/api/axiosConfig";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 
-import { FaCartPlus, FaHeart, FaChevronRight, FaChevronLeft } from "react-icons/fa";
+import { FaCartPlus, FaHeart } from "react-icons/fa";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
@@ -31,30 +31,21 @@ const Products = () => {
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [searchTerm, setSearchTerm] = useState(searchFromUrl);
   const [loading, setLoading] = useState(true);
   const [isSortOpen, setIsSortOpen] = useState(false);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [sortBy, setSortBy] = useState("all");
-  const [subFilterView, setSubFilterView] = useState(null);
-  const [selectedSubFilters, setSelectedSubFilters] = useState({});
+  const [searchTerm, setSearchTerm] = useState(searchFromUrl);
 
-  // Disable page scroll when sidebar is open
-  useEffect(() => {
-    if (isSortOpen || isFilterOpen) {
-      document.documentElement.style.overflow = 'hidden';
-    } else {
-      document.documentElement.style.overflow = 'auto';
-    }
-    return () => {
-      document.documentElement.style.overflow = 'auto';
-    };
-  }, [isSortOpen, isFilterOpen]);
+  // Read filters from URL params
+  const urlFilters = useMemo(() => {
+    const brands = searchParams.get("brand")?.split(",") || [];
+    const rating = searchParams.get("rating");
+    const ageRange = searchParams.get("ageRange");
+    const skinType = searchParams.get("skinType");
+    return { brands, rating, ageRange, skinType };
+  }, [searchParams]);
 
-
-  // Sync search term from URL (e.g. when navigating from Navbar search)
+  // Sync search term from URL
   useEffect(() => {
     setSearchTerm(searchFromUrl);
   }, [searchFromUrl]);
@@ -86,15 +77,7 @@ const Products = () => {
       setLoading(true);
       try {
         const res = await axiosAuth.get("/products/all");
-        const fetchedProducts = res?.data?.data || [];
-        setProducts(fetchedProducts);
-        // Extract unique brands using getBrand helper
-        const brandSet = new Set();
-        fetchedProducts.forEach(p => {
-          const brandName = getBrand(p);
-          if (brandName) brandSet.add(brandName);
-        });
-        setBrands([...brandSet]);
+        setProducts(res?.data?.data || []);
       } catch (err) {
         console.error("Error fetching products:", err);
         setProducts([]);
@@ -112,10 +95,6 @@ const Products = () => {
 
   const handleFavorite = async (productId) => {
     await addToFavorite(productId);
-  };
-
-  const handleCategoryChange = (e) => {
-    setSelectedCategory(e.target.value);
   };
 
 
@@ -139,12 +118,6 @@ const Products = () => {
       );
     }
 
-    // Filter by selected category from dropdown
-    if (selectedCategory) {
-      const categoryId = Number(selectedCategory);
-      filtered = filtered.filter((p) => p.category?.id === categoryId);
-    }
-
     // Derive rating from price: top 20% = 5★, middle 40% = 4★, bottom 40% = 3★
     const getPriceRating = (() => {
       const prices = products.map(p => p?.price || 0).sort((a, b) => a - b);
@@ -159,57 +132,33 @@ const Products = () => {
     })();
 
     // Derive age range: balanced with more 30-40 and 40-50
-    // Distribution per 10 products: 10-20: 1, 20-30: 4, 30-40: 3, 40-50: 2
     const knownAgeRanges = ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"];
     const ageRangeCycle = [
-      "10 - 20 years",  // 1
-      "20 - 30 years", "20 - 30 years", "20 - 30 years", "20 - 30 years",  // 4
-      "30 - 40 years", "30 - 40 years", "30 - 40 years",  // 3
-      "40 - 50 years", "40 - 50 years"   // 2
+      "10 - 20 years",
+      "20 - 30 years", "20 - 30 years", "20 - 30 years", "20 - 30 years",
+      "30 - 40 years", "30 - 40 years", "30 - 40 years",
+      "40 - 50 years", "40 - 50 years"
     ];
 
-    // Derive skin type: all types appear evenly (20% each)
     const knownSkinTypes = ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"];
     const skinTypeCycle = ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"];
 
-    // Create map of product id to index for derived values
-    products.forEach((p, idx) => {
-      p._ageRange = ageRangeCycle[idx % ageRangeCycle.length];
-      p._skinType = skinTypeCycle[idx % skinTypeCycle.length];
-      p._rating = getPriceRating(p?.price || 0);
-    });
-
-    // Filter by selected sub-filters
-    // Brand and Rating use OR logic, other filters use AND logic
-    const activeSubFilters = Object.entries(selectedSubFilters).filter(([_, v]) => v).map(([k]) => k);
-    if (activeSubFilters.length > 0) {
-      const selectedBrands = activeSubFilters.filter(f => !knownSkinTypes.includes(f) && !knownAgeRanges.includes(f) && !f.endsWith(" Stars"));
-      const selectedSkinTypes = activeSubFilters.filter(f => knownSkinTypes.includes(f));
-      const selectedAgeRanges = activeSubFilters.filter(f => knownAgeRanges.includes(f));
-      const selectedRatings = activeSubFilters.filter(f => f.endsWith(" Stars")).map(f => parseInt(f));
-
-      filtered = filtered.filter((p) => {
+    // Apply URL-based filters
+    const { brands, rating, ageRange, skinType } = urlFilters;
+    
+    if (brands.length > 0 || rating || ageRange || skinType) {
+      filtered = filtered.filter((p, idx) => {
+        const productAgeRange = ageRangeCycle[idx % ageRangeCycle.length];
+        const productSkinType = skinTypeCycle[idx % skinTypeCycle.length];
+        const productRating = getPriceRating(p?.price || 0);
         const brandName = (getBrand(p) || "").trim().toLowerCase();
-        const ageRange = p._ageRange;
-        const rating = p._rating;
-        const effectiveSkinTypes = [p._skinType];
 
-        // Brand filter (OR with rating)
-        const matchesBrand = selectedBrands.length > 0 && selectedBrands.some(b => b.trim().toLowerCase() === brandName);
-        // Rating filter (OR with brand)
-        const matchesRating = selectedRatings.length > 0 && selectedRatings.includes(rating);
-        
-        // OR logic between Brand and Rating
-        if (selectedBrands.length > 0 || selectedRatings.length > 0) {
-          if (!matchesBrand && !matchesRating) return false;
-        }
-        
-        // Skin type filter (AND with other filters)
-        if (selectedSkinTypes.length > 0 && !selectedSkinTypes.some(st => effectiveSkinTypes.includes(st))) return false;
-        // Age range filter (AND with other filters)
-        if (selectedAgeRanges.length > 0 && !selectedAgeRanges.includes(ageRange)) return false;
+        const matchesBrand = brands.length === 0 || brands.some(b => b.trim().toLowerCase() === brandName);
+        const matchesRating = !rating || productRating === parseInt(rating);
+        const matchesAge = !ageRange || productAgeRange === ageRange;
+        const matchesSkin = !skinType || productSkinType === skinType;
 
-        return true;
+        return matchesBrand && matchesRating && matchesAge && matchesSkin;
       });
     }
 
@@ -255,14 +204,15 @@ const Products = () => {
 
   const hasProducts = sortedCategories.length > 0;
 
-  return (
+return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="pt-0 px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
-        {/* ===== Filter Section ===== */}
+      <main className="pt-[8.5rem] px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
+        {/* ===== Hero Section ===== */}
         <div className="w-full mb-12">
           <h1 className="w-full h-[9rem] flex items-end justify-center text-4xl font-bold text-white bg-[#FF85BB] pb-[13px]">Our Products</h1>
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-start gap-4 mt-6 pl-4">
+          {/* Sort By Button */}
+          <div className="max-w-7xl mx-auto flex items-center justify-end mt-6 pr-4">
             <div className="relative">
               <img src="/assets/ProductsSortByAndFilterIcons/for sort by.svg" alt="Sort" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-7 h-7" />
               <button
@@ -278,46 +228,46 @@ const Products = () => {
                   onClick={() => setIsSortOpen(false)}
                 />
               )}
-          {/* Sort By part */}
-<div className={`fixed top-0 left-0 w-[30vw] h-screen bg-white/30 backdrop-blur-2xl border-r shadow-lg z-[10002] transition-transform duration-500 ease-out ${isSortOpen ? 'translate-x-0' : 'translate-x-[-100%]'}`}>
+              {/* Sort By Sidebar */}
+              <div className={`fixed top-0 right-0 w-[30vw] h-screen bg-white/30 backdrop-blur-2xl border-l shadow-lg z-[10002] transition-transform duration-500 ease-out ${isSortOpen ? 'translate-x-0' : 'translate-x-[100%]'}`}>
                 <div className="p-4 relative h-full flex flex-col">
                   <div className="relative -mx-4 px-4 -mt-4 pt-4 pb-2 bg-[#EB61A2]">
-                      <button
-                        onClick={() => setIsSortOpen(false)}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 w-[3.5rem] h-[3.5rem] text-white hover:text-gray-700 flex items-center justify-center"
+                    <button
+                      onClick={() => setIsSortOpen(false)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 w-[3.5rem] h-[3.5rem] text-white hover:text-gray-700 flex items-center justify-center"
+                    >
+                      <div className="relative w-[72px] h-[72px]" style={{filter: 'invert(1)'}}>
+                        <Image
+                          src="/assets/CloseButtonForFilterAndSortBy/close button.svg"
+                          alt="Close"
+                          fill
+                          unoptimized
+                        />
+                      </div>
+                    </button>
+                    <h3 className="text-white text-[2.5rem] font-bold text-center flex-1">
+                      Sort By
+                    </h3>
+                  </div>
+                  <div className="flex flex-col flex-1 overflow-y-auto pt-2 mx-[-1rem]">
+                    {[
+                      { value: "all", label: "All Products" },
+                      { value: "recommended", label: "Recommended" },
+                      { value: "new", label: "What's New" },
+                      { value: "price-high", label: "Price High to Low" },
+                      { value: "price-low", label: "Price Low to High" }
+                    ].map((option) => (
+                      <div
+                        key={option.value}
+                        onClick={() => setSortBy(option.value)}
+                        className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
                       >
-                        <div className="relative w-[72px] h-[72px]" style={{filter: 'invert(1)'}}>
-                          <Image
-                            src="/assets/CloseButtonForFilterAndSortBy/close button.svg"
-                            alt="Close"
-                            fill
-                            unoptimized
-                          />
+                        <span>{option.label}</span>
+                        <div className={`w-5 h-5 rounded-full border border-black flex items-center justify-center ${sortBy === option.value ? "bg-white" : ""}`}>
+                          {sortBy === option.value && <div className="w-2.5 h-2.5 rounded-full bg-black" />}
                         </div>
-                      </button>
-                      <h3 className="text-white text-[2.5rem] font-bold text-center flex-1">
-                        Sort By
-                      </h3>
-                    </div>
-                    <div className="flex flex-col flex-1 overflow-y-auto pt-2 mx-[-1rem]">
-{[
-                        { value: "all", label: "All Products" },
-                        { value: "recommended", label: "Recommended" },
-                        { value: "new", label: "What's New" },
-                        { value: "price-high", label: "Price High to Low" },
-                        { value: "price-low", label: "Price Low to High" }
-                      ].map((option) => (
-                        <div
-                          key={option.value}
-                          onClick={() => setSortBy(option.value)}
-                          className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
-                        >
-                          <span>{option.label}</span>
-                          <div className={`w-5 h-5 rounded-full border border-black flex items-center justify-center ${sortBy === option.value ? "bg-white" : ""}`}>
-                            {sortBy === option.value && <div className="w-2.5 h-2.5 rounded-full bg-black" />}
-                          </div>
-                        </div>
-                      ))}
+                      </div>
+                    ))}
                   </div>
                   <div className="p-4">
                     <button
@@ -330,287 +280,8 @@ const Products = () => {
                 </div>
               </div>
             </div>
-
-
-            {/* Filter part */}
-            <div className="relative flex items-center">
-              <div className="relative">
-                <img src="/assets/ProductsSortByAndFilterIcons/for filter.svg" alt="Filter" className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none z-10 w-7 h-7" />
-                <button
-                   onClick={() => {
-                     setIsFilterOpen(true);
-                     setSubFilterView(null);
-                   }}
-                   className="font-semibold flex items-center w-30 h-12 pl-5 pr-10 rounded-xl border-2 border-[#eb61a1] bg-transparent text-[1.7rem] text-[#eb61a1] cursor-pointer focus:outline-none focus:border-[#eb61a1] focus:ring-4 focus:ring-pink-100 transition"
-                 >
-                   Filter
-                 </button>
-              </div>
-{/* Selected Filter Tags with Clear All */}
-{Object.values(selectedSubFilters).some(Boolean) && (
-  <div className="flex flex-wrap items-center gap-2 ml-2 mt-1 z-10 max-w-[60vw]">
-    <button
-      onClick={() => setSelectedSubFilters({})}
-      className="text-[0.9rem] text-[#eb61a1] hover:text-[#d64d91] underline cursor-pointer whitespace-nowrap"
-    >
-      Clear All
-    </button>
-    {Object.entries(selectedSubFilters)
-      .filter(([_, selected]) => selected)
-      .map(([filter]) => (
-        <button
-          key={filter}
-          onClick={() =>
-            setSelectedSubFilters(prev => ({ ...prev, [filter]: false }))
-          }
-          className="inline-flex items-center bg-[#eb61a1] text-white text-[1rem] px-3 py-1 rounded-full hover:bg-[#d64d91] transition whitespace-nowrap"
-          title={`Remove ${filter}`}
-        >
-          {filter}
-          <svg
-            className="ml-2 w-3.5 h-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      ))}
-  </div>
-)}
-{/* Backdrop */}
-               {isFilterOpen && (
-                 <div
-                   className="fixed inset-0 bg-black/50 z-[10001]"
-                   onClick={() => {
-                     setIsFilterOpen(false);
-                     setSubFilterView(null);
-                   }}
-                 />
-               )}
-              <div className={`fixed top-0 left-0 w-[30vw] h-screen bg-white/30 backdrop-blur-2xl border-r shadow-lg z-[10002] transition-transform duration-500 ease-out ${isFilterOpen ? 'translate-x-0' : 'translate-x-[-100%]'}`}>
-                <div className="p-4 relative h-full flex flex-col">
-                  <div className="relative -mx-4 px-4 -mt-4 pt-4 pb-2 bg-[#EB61A2]">
-                    {subFilterView && (
-                      <button
-                        onClick={() => setSubFilterView(null)}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3.5rem] h-[3.5rem] text-white hover:text-gray-700 flex items-center justify-center"
-                      >
-                        <div className="relative w-[72px] h-[72px]" style={{filter: 'invert(1)'}}>
-                          <Image
-                            src="/assets/CloseButtonForFilterAndSortBy/Icons Back.svg"
-                            alt="Back"
-                            fill
-                            unoptimized
-                          />
-                        </div>
-                      </button>
-                    )}
-<button
-                       onClick={() => {
-                         setIsFilterOpen(false);
-                         setSubFilterView(null);
-                       }}
-                       className="absolute right-0 top-1/2 -translate-y-1/2 w-[3.5rem] h-[3.5rem] text-white hover:text-gray-700 flex items-center justify-center"
-                     >
-                      <div className="relative w-[72px] h-[72px]" style={{filter: 'invert(1)'}}>
-                        <Image
-                          src="/assets/CloseButtonForFilterAndSortBy/close button.svg"
-                          alt="Close"
-                          fill
-                          unoptimized
-                        />
-                      </div>
-                    </button>
-                    <h3 className="text-white text-[2.5rem] font-bold text-center flex-1">
-                      Filter
-                    </h3>
-                    </div>
-<div className="flex flex-col flex-1 overflow-y-auto pt-2 mx-[-1rem]">
-                       <div className="relative w-full h-full overflow-hidden">
-                         {/* Main Filter View - shows Brand, Rating, Age Range, Skin Type */}
-                         <div 
-                           className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
-                             subFilterView ? "-translate-x-full" : "translate-x-0"
-                           }`}
-                         >
-                           {["Brand", "Rating", "Age Range", "Skin Type"].map((filter) => (
-                             <div
-                               key={filter}
-                               onClick={() => {
-                                 if (filter === "Skin Type") {
-                                   setSubFilterView("skin-type");
-                                 } else if (filter === "Brand") {
-                                   setSubFilterView("brand");
-                                 } else if (filter === "Age Range") {
-                                   setSubFilterView("age-range");
-                                 } else if (filter === "Rating") {
-                                   setSubFilterView("rating");
-                                 }
-                               }}
-                               className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
-                             >
-                               <span>{filter}</span>
-                             </div>
-                           ))}
-</div>
-                        {/* Brand Sub-Filters View */}
-                        <div 
-                          className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
-                            subFilterView === "brand" ? "translate-x-0" : "translate-x-full"
-                          }`}
-                        >
-                          {loading ? (
-                            <div className="px-4 text-[1.3rem] py-3 text-gray-500">
-                              Loading brands...
-                            </div>
-                          ) : brands.length > 0 ? brands.map((brand) => (
-                            <div
-                              key={brand}
-                              onClick={() => {
-                                setSelectedSubFilters(prev => ({
-                                  ...prev,
-                                  [brand]: !prev[brand]
-                                }));
-                              }}
-                              className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
-                            >
-                              <span>{brand}</span>
-                              <div className="w-6 h-6 border-2 border-black flex items-center justify-center">
-                                {selectedSubFilters[brand] && (
-                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                  </svg>
-                                )}
-                              </div>
-                            </div>
-                          )) : (
-                            <div className="px-4 text-[1.3rem] py-3 text-gray-500">
-                              No brands available
-                            </div>
-                          )}
-                        </div>
-                        {/* Skin Type Sub-Filters View */}
-                        <div 
-                          className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
-                            subFilterView === "skin-type" ? "translate-x-0" : "translate-x-full"
-                          }`}
-                        >
-                          {["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"].map((skinType) => (
-                            <div
-                              key={skinType}
-                              onClick={() => {
-                                setSelectedSubFilters(prev => ({
-                                  ...prev,
-                                  [skinType]: !prev[skinType]
-                                }));
-                              }}
-                              className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
-                            >
-                              <span>{skinType}</span>
-                              <div className="w-6 h-6 border-2 border-black flex items-center justify-center">
-                                {selectedSubFilters[skinType] && (
-                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                  </svg>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        {/* Age Range Sub-Filters View */}
-                        <div 
-                          className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
-                            subFilterView === "age-range" ? "translate-x-0" : "translate-x-full"
-                          }`}
-                        >
-                          {["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"].map((ageRange) => (
-                            <div
-                              key={ageRange}
-                              onClick={() => {
-                                setSelectedSubFilters(prev => ({
-                                  ...prev,
-                                  [ageRange]: !prev[ageRange]
-                                }));
-                              }}
-                              className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
-                            >
-                              <span>{ageRange}</span>
-                              <div className="w-6 h-6 border-2 border-black flex items-center justify-center">
-                                {selectedSubFilters[ageRange] && (
-                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                  </svg>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        {/* Rating Sub-Filters View */}
-                        <div 
-                          className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
-                            subFilterView === "rating" ? "translate-x-0" : "translate-x-full"
-                          }`}
-                        >
-                          {[5, 4, 3].map((stars) => (
-                            <div
-                              key={stars}
-                              onClick={() => {
-                                setSelectedSubFilters(prev => ({
-                                  ...prev,
-                                  [`${stars} Stars`]: !prev[`${stars} Stars`]
-                                }));
-                              }}
-                              className="px-4 text-[1.3rem] py-3 cursor-pointer border-b border-black flex justify-between items-center"
-                            >
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map(i => (
-                                  <span key={i} className={`text-2xl ${i <= stars ? "text-black" : "text-transparent [-webkit-text-stroke:1px_#000]"}`}>★</span>
-                                ))}
-                                <span className="ml-2">{stars} Stars</span>
-                              </div>
-                              <div className="w-6 h-6 border-2 border-black flex items-center justify-center">
-                                {selectedSubFilters[`${stars} Stars`] && (
-                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                  </svg>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  <div className="p-4 flex gap-3">
-                    <button
-                      onClick={() => {
-                        setSelectedCategory("");
-                        setSelectedSubFilters({});
-                        setSortBy("all");
-                      }}
-                      className="flex-1 bg-[#EB61A2] text-white text-[1.3rem] font-bold py-3 rounded-xl hover:bg-[#d64d91] transition"
-                    >
-                      CLEAR ALL
-                    </button>
-                    <button
-                      onClick={() => setIsFilterOpen(false)}
-                      className="flex-1 border-2 border-[#FFFFFF] text-[#FFFFFF] text-[1.3rem] font-bold py-3 rounded-xl hover:bg-[#EB61A2] hover:text-white transition"
-                    >
-                      VIEW ITEMS
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
-        {/* Filter end */}
-
         {/* ===== Products by Category ===== */}
         {loading ? (
           <Loading />

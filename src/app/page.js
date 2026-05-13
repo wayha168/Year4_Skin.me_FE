@@ -4,7 +4,6 @@ import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import {useRouter,  useSearchParams } from "next/navigation";
 import { useState } from "react";
-import axios from "axios";
 import axiosAuth from "./lib/api/axiosConfig.js";
 import Navbar from "../Components/Navbar/Navbar.jsx";
 import Footer from "../Components/Footer/Footer.jsx";
@@ -89,16 +88,13 @@ function useDragScroll(ref) {
 }
 
 export default function Page() {
-    const FirstImage = "/assets/first_image.webp"
-    const SecondImage = "/assets/second_image.webp"
-    const ThirdImage = "/assets/third_image.webp"
-    const MainImage = "/assets/product_homepage.webp"
     const router = useRouter();
       const searchParams = useSearchParams();
     
       const { user } = useAuthContext();
       const { addToCart, addToFavorite } = useUserActions();
       const [products, setProducts] = useState([]);
+      const [categories, setCategories] = useState([]);
       const [loading, setLoading] = useState(true);
       const [isClient, setIsClient] = useState(false);
     
@@ -164,12 +160,21 @@ export default function Page() {
       }, []);
 
       useEffect(() => {
-        if (!user) {
-          setProducts([]);
-          setLoading(false);
-          return;
-        }
+        const fetchCategories = async () => {
+          try {
+            const res = await axiosAuth.get("/categories/all-categories");
+            setCategories(res?.data?.data || []);
+          } catch (err) {
+            console.error("Error fetching categories:", err);
+            setCategories([]);
+          }
+        };
+        fetchCategories();
+      }, []);
+
+      useEffect(() => {
         const fetchProducts = async () => {
+          setLoading(true);
           try {
             const res = await axiosAuth.get("/products/all");
             setProducts(res?.data?.data || []);
@@ -180,7 +185,7 @@ export default function Page() {
           }
         };
         fetchProducts();
-      }, [user]); 
+      }, []); 
     
       const handleFavoriteClick = useCallback(async (productId) => {
         if (!user) {
@@ -199,6 +204,26 @@ export default function Page() {
         }
         await addToCart(productId, 1);
       }, [user, loginFirst, router, addToCart]);
+
+      const featuredProduct = products[0];
+      const overviewProducts = products.slice(0, 3);
+      const recommendationProducts = products.slice(0, 7);
+      const aboutCategories = categories.filter((category) => category?.description?.trim()).slice(0, 4);
+      const averagePrice = products.length
+        ? products.reduce((sum, product) => sum + Number(product?.price || 0), 0) / products.length
+        : 0;
+      const categoryItems = categories;
+      const categoryTextStyles = [
+        "font-bold text-[#FF0000] italic",
+        "font-extrabold text-[#854DFF]",
+        "font-medium text-white",
+        "font-bold text-[#DB14CD] uppercase",
+      ];
+      const stats = [
+        { number: `${products.length}+`, label: "Products Available" },
+        { number: `${categories.length}`, label: "Categories" },
+        { number: formatPrice(averagePrice), label: "Average Price" },
+      ];
 
   return (
     <div className="overflow-x-hidden">
@@ -221,17 +246,20 @@ export default function Page() {
             </div>
 
             <div className="w-[20rem] h-[25rem] md:w-1/2 md:h-[50rem] md:mt-4 z-[4]">
-             <Image
-              sizes="(max-width: 768px) 20rem, 50vw"
-              priority
-              src={MainImage}
-              alt="skin product"
-              width={640}
-              height={800}
-              quality={85}
-              className="w-full h-full object-contain z-[5]"
-              fetchPriority="high"
-            />
+             {featuredProduct && (
+               <Image
+                sizes="(max-width: 768px) 20rem, 50vw"
+                priority
+                src={getProductImageUrl(featuredProduct)}
+                alt={featuredProduct?.name || "skin product"}
+                width={640}
+                height={800}
+                quality={85}
+                className="w-full h-full object-contain z-[5]"
+                fetchPriority="high"
+                unoptimized
+              />
+             )}
             </div>
           </div>
     
@@ -263,26 +291,32 @@ export default function Page() {
             </div>
             <div className="flex flex-row gap-[2rem]">
               <div className="flex flex-row gap-[2rem] flex-shrink-0 max-[990px]:justify-center max-[990px]:items-center">
-                <Image
-                  src={FirstImage}
-                  alt="Overview 1"
-                  width={352}
-                  height={352}
-                  className="w-[18rem] h-[18rem] rounded-[10px] flex-shrink-0"
-                />
-                <Image
-                  src={SecondImage}
-                  alt="Overview 2"
-                  width={352}
-                  height={352}
-                  className="rounded-[10px] w-[18rem] h-[18rem] flex-shrink-0"
-                />
+                {overviewProducts.slice(0, 2).map((product) => (
+                  <Image
+                    key={product.id}
+                    src={getProductImageUrl(product)}
+                    alt={product?.name || "Product overview"}
+                    width={352}
+                    height={352}
+                    className="w-[18rem] h-[18rem] rounded-[10px] flex-shrink-0 object-cover"
+                    unoptimized
+                  />
+                ))}
               </div>
             </div>
           </div>
-          <div className="mt-[8rem] w-[38rem] h-[38rem] flex-shrink-0 max-[1390px]:mt-[7rem] max-[1300px]:mt-[6rem] max-[1250px]:mt-[5rem] max-[1200px]:mt-[4.5rem] max-[1150px]:mt-[4rem] max-[1100px]:mt-[3.5rem] max-[660px]:mt-[3rem] max-[990px]:ml-[1rem] max-[660px]:mb-[-5rem]"  >
-            <Image src={ThirdImage} alt="Overview 3" width={560} height={480} className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem]" />
-          </div>
+          {overviewProducts[2] && (
+            <div className="mt-[8rem] w-[38rem] h-[38rem] flex-shrink-0 max-[1390px]:mt-[7rem] max-[1300px]:mt-[6rem] max-[1250px]:mt-[5rem] max-[1200px]:mt-[4.5rem] max-[1150px]:mt-[4rem] max-[1100px]:mt-[3.5rem] max-[660px]:mt-[3rem] max-[990px]:ml-[1rem] max-[660px]:mb-[-5rem]"  >
+              <Image
+                src={getProductImageUrl(overviewProducts[2])}
+                alt={overviewProducts[2]?.name || "Product overview"}
+                width={560}
+                height={480}
+                className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem]"
+                unoptimized
+              />
+            </div>
+          )}
         </div>
       </div>
         );
@@ -292,21 +326,18 @@ export default function Page() {
 <div className="bg-[#0A3D3F] py-16 max-[1000px]:py-12 max-[600px]:py-10 overflow-hidden relative z-[1]">
   <div className="flex w-max animate-marquee">
 
-    {/* SET 1 */}
-    <div className="flex whitespace-nowrap">
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#FF0000] mx-12 italic">Local Brand</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-extrabold text-[#854DFF] mx-12">Korean Products</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-medium text-white mx-12">Japan Brand</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#DB14CD] mx-12 uppercase">Bare</span>
-    </div>
-
-    {/* SET 2 (exact duplicate) */}
-    <div className="flex whitespace-nowrap">
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#FF0000] mx-12 italic">Local Brand</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-extrabold text-[#854DFF] mx-12">Korean Products</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-medium text-white mx-12">Japan Brand</span>
-      <span className="text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl font-bold text-[#DB14CD] mx-12 uppercase">Bare</span>
-    </div>
+    {[0, 1].map((setIndex) => (
+      <div key={setIndex} className="flex whitespace-nowrap">
+        {categoryItems.map((category, index) => (
+          <span
+            key={`${setIndex}-${category.id ?? category.name}`}
+            className={`text-5xl max-[1000px]:text-4xl max-[600px]:text-3xl mx-12 ${categoryTextStyles[index % categoryTextStyles.length]}`}
+          >
+            {category.name}
+          </span>
+        ))}
+      </div>
+    ))}
 
   </div>
 </div>
@@ -356,7 +387,7 @@ export default function Page() {
                       >
                         <div className="relative h-[200px] bg-gray-100">
                           <Image
-                            src={getProductImageUrl(p, ThirdImage)}
+                            src={getProductImageUrl(p)}
                             alt={p?.name || "Product"}
                             fill
                             className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
@@ -394,9 +425,9 @@ export default function Page() {
                           >
                             <FaCartPlus className="text-base" /> Add to Cart
                           </button>
-                        </div>
-                      </div>
-                    );
+</div>
+                    </div>
+                  );
                   })}
                 </div>
               )}
@@ -491,106 +522,51 @@ export default function Page() {
                   className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide cursor-grab select-none"
                   {...dragScrollHandlers}
                 >
-                  {[
-                    {
-                      image: "/assets/ImagesInRecommendation/profile_image.png",
-                      name: "Dara Heng",
-                      role: "Beauty Blogger",
-                      stars: 5,
-                      text: "Honestly the best moisturizer I have ever used. My skin stays hydrated all day — even in the hot Cambodian weather!",
-                      date: "1 week ago"
-                    },
-                    {
-                      image: "/assets/ImagesInRecommendation/phol_sophea_image.png",
-                      name: "Lyda Keo",
-                      role: "Yoga Instructor",
-                      stars: 5,
-                      text: "Clean ingredients, beautiful packaging, and it actually works. SKIN.ME is now a non-negotiable part of my morning ritual.",
-                      date: "2 weeks ago"
-                    },
-                    {
-                      image: "/assets/ImagesInRecommendation/bro_jirim_image.png",
-                      name: "Manith Ros",
-                      role: "Student",
-                      stars: 4,
-                      text: "Super affordable and effective. I got the serum and face wash combo — my skin has never looked this good. Will reorder for sure.",
-                      date: "5 days ago"
-                    },
-                    {
-                      image: "/assets/ImagesInRecommendation/obey_iamge.png",
-                      name: "Sokha Chhay",
-                      role: "Influencer",
-                      stars: 5,
-                      text: "Amazing results! My skin has never been this smooth. Highly recommend to everyone!",
-                      date: "3 days ago"
-                    },
-                    {
-                      image: "/assets/ImagesInRecommendation/ohio_image.png",
-                      name: "Kim Heng",
-                      role: "Model",
-                      stars: 5,
-                      text: "Perfect for sensitive skin. Love the natural ingredients and gentle formula.",
-                      date: "1 week ago"
-                    },
-                    {
-                      image: "/assets/ImagesInRecommendation/none_sence_image.png",
-                      name: "Sok Dina",
-                      role: "Content Creator",
-                      stars: 4,
-                      text: "Great value for money. The serum absorbs quickly without leaving any residue.",
-                      date: "4 days ago"
-                    },
-                    {
-                      image: "/assets/ImagesInRecommendation/boss_image.png",
-                      name: "Vichea",
-                      role: "Business Owner",
-                      stars: 5,
-                      text: "Been using for a month now and my skin looks younger and healthier!",
-                      date: "2 weeks ago"
-                    }
-                  ].map((review, idx) => (
+                  {recommendationProducts.map((product, idx) => {
+                    const brand = typeof product?.brand === "string" ? product.brand : product?.brand?.name ?? "SKIN.ME";
+                    const stars = Math.max(3, Math.min(5, Math.ceil(Number(product?.price || 0) / Math.max(averagePrice || 1, 1) * 4)));
+                    const text = product?.description?.trim() || product?.name || "Recommended skincare product";
+                    return (
                     <div
-                      key={idx}
+                      key={product.id ?? idx}
                       className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
                     >
                       <div className="flex items-center gap-3">
                         <Image
-                          src={review.image}
-                          alt={review.name}
+                          src={getProductImageUrl(product)}
+                          alt={product?.name || "Recommended product"}
                           width={48}
                           height={48}
                           className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                          unoptimized
                         />
                         <div>
-                          <p className="font-bold text-[#3C3C3C] text-sm">{review.name}</p>
-                          <p className="text-[#aaa] text-xs">{review.role}</p>
+                          <p className="font-bold text-[#3C3C3C] text-sm">{product?.name || "Product"}</p>
+                          <p className="text-[#aaa] text-xs">{brand}</p>
                         </div>
                       </div>
                       <div className="bg-[#EDEDED] rounded-xl p-4 mt-2 flex flex-col justify-between flex-grow">
                         <div>
                           <div className="flex gap-2 mb-2">
                             {[1,2,3,4,5].map(i => (
-                              <span key={i} className={`text-4xl ${i <= review.stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>★</span>
+                              <span key={i} className={`text-4xl ${i <= stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>?</span>
                             ))}
                           </div>
-                          <p className="text-[#555] text-sm leading-relaxed">{review.text}</p>
+                          <p className="text-[#555] text-sm leading-relaxed">{text}</p>
                         </div>
                         <div className="flex justify-end pt-4">
-                          <p className="text-xs text-[#999]">{review.date}</p>
+                          <p className="text-xs text-[#999]">{formatPrice(product?.price)}</p>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+);
+                   })}
+                 </div>
+               </div>
 
               {/* Bottom stats bar */}
               <div className="mt-14 grid grid-cols-3 gap-4 text-center max-[1000px]:mt-10 max-[600px]:mt-8">
-                {[
-                  { number: "10,00+", label: "Happy Customers" },
-                  { number: "4.8 / 5", label: "Average Rating" },
-                  { number: "98%", label: "Would Recommend" }
-                ].map((stat, i) => (
+                {stats.map((stat, i) => (
                   <div key={i} className="bg-white rounded-2xl py-6 px-4 border border-[#ffd6ec] shadow-sm max-[1000px]:py-4 max-[600px]:py-3">
                     <p className="text-3xl font-bold text-black mb-1 max-[1000px]:text-2xl max-[600px]:text-xl">{stat.number}</p>
                     <p className="text-sm text-[#888] font-medium max-[1000px]:text-xs">{stat.label}</p>
@@ -624,27 +600,30 @@ export default function Page() {
             <div className="max-w-7xl mx-auto">
               <p className="text-[4rem] font-bold text-[#000] mb-6 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">ABOUT US</p>
               <div className="text-[#000] text-[1.5rem] font-sans text-left leading-relaxed w-full max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
-                <p className="mb-2"><span className="font-bold">SKIN.ME</span> is more than skincare — it's a daily ritual of self-respect and renewal.</p>
-
-                <p className="mb-2">We create minimalist, effective formulas designed for real skin and real lives. Inspired by nature and backed by science, our products are gentle yet powerful.</p>
-
-                <p className="mb-2"><span className="font-bold">Our Promise:</span></p>
-                <ul className="list-disc list-inside mb-2">
-                  <li>Clean and safe ingredients</li>
-                  <li>Honest and transparent beauty</li>
-                  <li>Simple, effective skincare</li>
-                </ul>
-
-                <p>Every product reflects our commitment to quality and care. Join us in redefining skincare with confidence and simplicity.</p>
-              </div>
-            </div>
+                {aboutCategories.length > 0 ? (
+                  aboutCategories.map((category) => (
+                    <p key={category.id} className="mb-2">
+                      <span className="font-bold">{category.name}</span>
+                      {category.description ? `: ${category.description}` : ""}
+                    </p>
+                  ))
+                ) : (
+                  <p className="mb-2 text-gray-500">No category descriptions available.</p>
+                )}
+              </div>            </div>
             <div className="grid grid-cols-4 gap-[2rem] mt-8 max-w-7xl mx-auto justify-center max-[992px]:grid-cols-2 max-[600px]:gap-[1rem]">
-              <Image src={FirstImage} alt="About 1" width={280} height={280} className="w-full h-auto rounded-[10px] object-cover" />
-              <Image src={SecondImage} alt="About 2" width={280} height={280} className="w-full h-auto rounded-[10px] object-cover" />
-              <Image src={ThirdImage} alt="About 3" width={280} height={280} className="w-full h-auto rounded-[10px] object-cover" />
-              <Image src={FirstImage} alt="About 4" width={280} height={280} className="w-full h-auto rounded-[10px] object-cover" />
-            </div>
-          </div>
+              {products.slice(0, 4).map((product) => (
+                <Image
+                  key={product.id}
+                  src={getProductImageUrl(product)}
+                  alt={product?.name || "Product"}
+                  width={280}
+                  height={280}
+                  className="w-full h-auto rounded-[10px] object-cover"
+                  unoptimized
+                />
+              ))}
+            </div>          </div>
             );
           })()}
           <Footer />

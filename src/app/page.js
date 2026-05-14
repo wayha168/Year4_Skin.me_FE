@@ -4,6 +4,7 @@ import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import {useRouter,  useSearchParams } from "next/navigation";
 import { useState } from "react";
+impo
 import axiosAuth from "./lib/api/axiosConfig.js";
 import Navbar from "../Components/Navbar/Navbar.jsx";
 import Footer from "../Components/Footer/Footer.jsx";
@@ -461,10 +462,9 @@ export default function Page() {
                   RECOMMENDATIONS
                 </h2>
                 <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
-                  These reviews are based on feedback from real users who have used our products for more than 7 days.
-                  During this time, customers experience the effectiveness, texture, and overall performance of our skincare solutions.
-                  Average rating: 4.5 / 5
-                  We continuously use this feedback to improve our products and deliver the best possible experience.
+                  {products.length > 0
+                    ? `Showing ${recommendationProducts.length} recommended products from ${categories.length} categories.`
+                    : "No recommendation data available."}
                 </p>
               </div>
 
@@ -549,7 +549,7 @@ export default function Page() {
                         <div>
                           <div className="flex gap-2 mb-2">
                             {[1,2,3,4,5].map(i => (
-                              <span key={i} className={`text-4xl ${i <= stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>?</span>
+                              <span key={i} className={`text-4xl ${i <= stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>&#9733;</span>
                             ))}
                           </div>
                           <p className="text-[#555] text-sm leading-relaxed">{text}</p>
@@ -579,7 +579,7 @@ export default function Page() {
             );
           })()}
 
-          {/* ABOUT US SECTION - unchanged */}
+          {/* ABOUT US SECTION */}
           {(() => {
             const [noAnimation, setNoAnimation] = useState(false);
             const [hasAnimated, setHasAnimated] = useState(false);

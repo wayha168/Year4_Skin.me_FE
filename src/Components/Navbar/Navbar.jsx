@@ -233,12 +233,16 @@ const Navbar = ({ alwaysVisible = false }) => {
     [safeNavigate]
   );
 
-  return (
+return (
     <>
+      {/* NAVBAR WRAPPER - contains both navbar and filter row */}
+      <div
+        className="fixed left-0 top-0 w-full z-[9999] transition-transform duration-50 ease-out"
+        style={{ transform: `translateY(${translateY}px)` }}
+      >
       {/* NORMAL NAVBAR */}
       <nav
-        className={`fixed left-0 w-full bg-white shadow-xl transition-transform duration-50 ease-out z-[9999] h-20`}
-        style={{ transform: `translateY(${translateY}px)` }}
+        className="w-full bg-white shadow-xl h-20"
       >
         <div
           ref={navRef}
@@ -463,7 +467,7 @@ const Navbar = ({ alwaysVisible = false }) => {
 {/* Filter Row - appears below navbar on products page */}
         {!isSmallMobile && !isTinyMobile && pathname === '/products' && (
          <div 
-           className="fixed left-0 right-0 top-20 z-[9998] bg-white border-t border-b border-gray-200 shadow-sm"
+           className="w-full bg-white border-t border-b border-gray-200 shadow-sm"
            onMouseLeave={() => setHoveredFilter(null)}
          >
            <div className="max-w-7xl mx-auto flex items-center justify-center gap-12 h-14 px-4">
@@ -482,9 +486,9 @@ const Navbar = ({ alwaysVisible = false }) => {
                    <i className="fa-solid fa-chevron-down text-xs"></i>
                  </button>
                  
-                 {/* Dropdown */}
+{/* Dropdown */}
                  {hoveredFilter === filter && (
-                   <div className="absolute top-full left-0 w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
+                   <div className="absolute top-full left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
                      {filter === "Brand" && (
                        brands.length > 0 ? (
                          brands.map((brand) => (
@@ -494,7 +498,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                                handleFilterSelect("brand", brand);
                                setHoveredFilter(null);
                              }}
-                             className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                             className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
                                urlFilters.brand?.includes(brand) ? "text-[#eb61a2] font-medium" : "text-gray-700"
                              }`}
                            >
@@ -502,50 +506,50 @@ const Navbar = ({ alwaysVisible = false }) => {
                            </button>
                          ))
                        ) : (
-                         <div className="px-4 py-2 text-sm text-gray-500">No brands available</div>
+                         <div className="px-5 py-3 text-base text-gray-500">No brands available</div>
                        )
                      )}
-                     {filter === "Rating" && [5, 4, 3].map((stars) => (
+{filter === "Rating" && [5, 4, 3].map((stars) => (
                        <button
                          key={stars}
                          onClick={() => {
                            handleFilterSelect("rating", String(stars));
                            setHoveredFilter(null);
                          }}
-                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center gap-1 ${
+                         className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left flex items-center gap-2 ${
                            urlFilters.rating === String(stars) ? "text-[#eb61a1] font-medium" : "text-gray-700"
                          }`}
                        >
                          <span>
                            {[1, 2, 3, 4, 5].map(i => (
-                             <span key={i} className={`text-sm ${i <= stars ? "text-black" : "text-transparent [-webkit-text-stroke:1px_#000]"}`}>★</span>
+                             <span key={i} className={`text-base ${i <= stars ? "text-black" : "text-transparent [-webkit-text-stroke:1px_#000]"}`}>★</span>
                            ))}
                          </span>
                          <span>{stars} Stars</span>
                        </button>
                      ))}
-                     {filter === "Age Range" && ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"].map((ageRange) => (
+{filter === "Age Range" && ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"].map((ageRange) => (
                        <button
                          key={ageRange}
                          onClick={() => {
                            handleFilterSelect("ageRange", ageRange);
                            setHoveredFilter(null);
                          }}
-                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                         className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
                            urlFilters.ageRange === ageRange ? "text-[#eb61a1] font-medium" : "text-gray-700"
                          }`}
                        >
                          {ageRange}
                        </button>
                      ))}
-                     {filter === "Skin Type" && ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"].map((skinType) => (
+{filter === "Skin Type" && ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"].map((skinType) => (
                        <button
                          key={skinType}
                          onClick={() => {
                            handleFilterSelect("skinType", skinType);
                            setHoveredFilter(null);
                          }}
-                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                         className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
                            urlFilters.skinType === skinType ? "text-[#eb61a1] font-medium" : "text-gray-700"
                          }`}
                        >
@@ -559,6 +563,7 @@ const Navbar = ({ alwaysVisible = false }) => {
            </div>
          </div>
        )}
+      </div>
 
        {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px): Home, Products, Favorite, Cart, Profile */}
       {isSmallMobile && (

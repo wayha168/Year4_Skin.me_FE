@@ -508,12 +508,12 @@ return (
        </nav>
 
 {/* Filter Row - appears below navbar on products page */}
-        {!isSmallMobile && !isTinyMobile && pathname === '/products' && (
+        {pathname === '/products' && (
          <div 
            className="w-full bg-white border-t border-b border-gray-200 shadow-sm"
            onMouseLeave={() => setHoveredFilter(null)}
          >
-           <div className="max-w-7xl mx-auto flex items-center justify-center gap-12 h-14 px-4">
+            <div className="max-w-7xl mx-auto flex items-center justify-center gap-16 max-[1000px]:gap-10 max-[770px]:gap-6 max-[700px]:gap-4 h-14 px-4">
              {["Brand", "Rating", "Age Range", "Skin Type"].map((filter) => (
                <div
                  key={filter}
@@ -521,10 +521,10 @@ return (
                  onMouseEnter={() => setHoveredFilter(filter)}
                  ref={(el) => (filterRefs.current[filter] = el)}
                >
-                 <button
-                   className="flex items-center gap-1 text-gray-700 hover:text-[#eb61a2] font-medium transition-colors"
-                   type="button"
-                 >
+                  <button
+                    className="flex items-center gap-1 text-gray-700 hover:text-[#eb61a2] font-medium transition-colors max-[510px]:text-sm"
+                    type="button"
+                  >
                    <span>{filter}</span>
                    <i className="fa-solid fa-chevron-down text-xs"></i>
                  </button>
@@ -538,11 +538,12 @@ return (
                             <button
                               key={brand}
                               onClick={() => handleFilterSelect("brand", brand)}
-                              className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
+                              className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 transition-colors flex items-center justify-between ${
                                 urlFilters.brand.includes(brand) ? "text-[#eb61a1] font-medium" : "text-gray-700"
                               }`}
                             >
-                              {brand}
+                              <span>{brand}</span>
+                              {urlFilters.brand.includes(brand) && <i className="fa-solid fa-check text-[#eb61a1]"></i>}
                             </button>
                           ))
                         ) : (
@@ -553,40 +554,48 @@ return (
                         <button
                           key={stars}
                           onClick={() => handleFilterSelect("rating", String(stars))}
-                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left flex items-center gap-2 ${
+                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 transition-colors flex items-center justify-between ${
                             urlFilters.rating.includes(String(stars)) ? "text-[#eb61a1] font-medium" : "text-gray-700"
                           }`}
                         >
-                         <span>
-                           {[1, 2, 3, 4, 5].map(i => (
-                             <span key={i} className={`text-base ${i <= stars ? "text-black" : "text-transparent [-webkit-text-stroke:1px_#000]"}`}>★</span>
-                           ))}
-                         </span>
-                         <span>{stars} Stars</span>
-                       </button>
-                     ))}
+                          <div className="flex items-center gap-2">
+                            <span>
+                              {[1, 2, 3, 4, 5].map(i => {
+                                const isSelected = urlFilters.rating.includes(String(stars));
+                                return (
+                                  <span key={i} className={`text-base ${i <= stars ? (isSelected ? "text-[#eb61a1]" : "text-black") : `text-transparent [-webkit-text-stroke:1px_${isSelected ? "#eb61a1" : "#000"}]`}`}>★</span>
+                                );
+                              })}
+                            </span>
+                            <span>{stars} Stars</span>
+                          </div>
+                          {urlFilters.rating.includes(String(stars)) && <i className="fa-solid fa-check text-[#eb61a1]"></i>}
+                        </button>
+                      ))}
 {filter === "Age Range" && ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"].map((ageRange) => (
                         <button
                           key={ageRange}
                           onClick={() => handleFilterSelect("ageRange", ageRange)}
-                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
+                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 transition-colors flex items-center justify-between ${
                             urlFilters.ageRange.includes(ageRange) ? "text-[#eb61a1] font-medium" : "text-gray-700"
                           }`}
                         >
-                         {ageRange}
-                       </button>
-                     ))}
+                          <span>{ageRange}</span>
+                          {urlFilters.ageRange.includes(ageRange) && <i className="fa-solid fa-check text-[#eb61a1]"></i>}
+                        </button>
+                      ))}
 {filter === "Skin Type" && ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"].map((skinType) => (
                         <button
                           key={skinType}
                           onClick={() => handleFilterSelect("skinType", skinType)}
-                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
+                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 transition-colors flex items-center justify-between ${
                             urlFilters.skinType.includes(skinType) ? "text-[#eb61a1] font-medium" : "text-gray-700"
                           }`}
                         >
-                         {skinType}
-                       </button>
-                     ))}
+                          <span>{skinType}</span>
+                          {urlFilters.skinType.includes(skinType) && <i className="fa-solid fa-check text-[#eb61a1]"></i>}
+                        </button>
+                      ))}
                    </div>
                  )}
                </div>
@@ -599,7 +608,7 @@ return (
                   ref={(el) => (filterRefs.current['Selected'] = el)}
                 >
                   <button
-                    className="flex items-center gap-1 text-gray-700 hover:text-[#eb61a2] font-medium transition-colors"
+                    className="flex items-center gap-1 text-gray-700 hover:text-[#eb61a2] font-medium transition-colors max-[510px]:text-sm"
                     type="button"
                   >
                     <span className="text-[#eb61a2]">Selected</span>

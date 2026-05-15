@@ -197,7 +197,7 @@ const Products = () => {
       <main className="pt-[8.5rem] px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
         {/* ===== Hero Section ===== */}
         <div className="w-full -mt-[4.5rem]">
-          <h1 className="w-full h-[9rem] flex items-end justify-center text-4xl font-bold  bg-[#ffffff] text-[#EB61A2] pb-[13px]">
+          <h1 className="w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#ffffff] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
             Our Products
           </h1>
         </div>
@@ -205,10 +205,10 @@ const Products = () => {
         {/* ===== Main Content with Fixed Left Sidebar ===== */}
         <div className="flex ">
           {/* Fixed Left Sidebar */}
-          <div className="w-[200px] bg-white border-r border-gray-200 rounded-[1rem] shadow-lg fixed left-0 top-[8.5rem] h-[calc(100vh-10.5rem)]">
+          <div className="w-[200px] bg-white border-r border-gray-200 shadow-lg fixed left-0 top-[8.5rem] h-[calc(100vh-8.5rem)] ">
             <div className="p-4 flex flex-col h-[calc(100vh-8.5rem)]">
-              <div className="relative -mx-4 px-4 -mt-4 pt-4 pb-3 bg-white border-t rounded-[1rem] border-b border-gray-200">
-                <h3 className="text-[#EB61A2] text-[1.5rem] font-bold text-center">
+              <div className="relative -mx-4 px-4 -mt-4 pt-4 pb-3 bg-white border-t  border-b border-gray-200">
+                <h3 className="text-[#EB61A2] text-[1.5rem] font-bold text-center max-[510px]:scale-90">
                   Sort By
                 </h3>
               </div>
@@ -256,7 +256,7 @@ const Products = () => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-8 border-b-[3px] border-[#000000] opacity-[.7] inline-block">
                       {categoryName}
                     </h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 z-[1]">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 z-[1]">
                       {productsInCategory.map((p) => {
                         const brand =
                           typeof p?.brand === "string"

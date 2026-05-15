@@ -621,13 +621,13 @@ return (
                       selectedFilters.map((filter, idx) => (
                         <div key={idx} className="flex items-center justify-between px-5 py-3 hover:bg-gray-100 transition-colors">
                           <span className="text-gray-700">{filter.label}</span>
-                            <button
-                              onClick={filter.remove}
-                              className="text-[1.5rem] text-red-500 font-bold hover:text-red-700 ml-2"
-                              title="Remove this filter"
-                            >
-                              X
-                            </button>
+                          <button
+                            onClick={filter.remove}
+                            className="text-red-500 hover:text-red-700 ml-2"
+                            title="Remove this filter"
+                          >
+                            <i className="fa-solid fa-xmark text-[1.5rem]"></i>
+                          </button>
                         </div>
                       ))
                     )}

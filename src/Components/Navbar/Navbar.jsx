@@ -531,7 +531,7 @@ return (
                  
 {/* Dropdown */}
                  {hoveredFilter === filter && (
-                   <div className="absolute top-full left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
+                  <div className="absolute top-full left-0 max-[750px]:left-1/2 max-[750px]:-translate-x-1/2 w-64 max-[750px]:w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
                       {filter === "Brand" && (
                         brands.length > 0 ? (
                           brands.map((brand) => (

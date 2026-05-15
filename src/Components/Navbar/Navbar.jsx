@@ -532,33 +532,27 @@ return (
 {/* Dropdown */}
                  {hoveredFilter === filter && (
                    <div className="absolute top-full left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
-                     {filter === "Brand" && (
-                       brands.length > 0 ? (
-                         brands.map((brand) => (
-                           <button
-                             key={brand}
-                             onClick={() => {
-                               handleFilterSelect("brand", brand);
-                               setHoveredFilter(null);
-                             }}
-                             className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
-                               urlFilters.brand?.includes(brand) ? "text-[#eb61a2] font-medium" : "text-gray-700"
-                             }`}
-                           >
-                             {brand}
-                           </button>
-                         ))
-                       ) : (
+                      {filter === "Brand" && (
+                        brands.length > 0 ? (
+                          brands.map((brand) => (
+                            <button
+                              key={brand}
+                              onClick={() => handleFilterSelect("brand", brand)}
+                              className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
+                                urlFilters.brand.includes(brand) ? "text-[#eb61a1] font-medium" : "text-gray-700"
+                              }`}
+                            >
+                              {brand}
+                            </button>
+                          ))
+                        ) : (
                          <div className="px-5 py-3 text-base text-gray-500">No brands available</div>
                        )
                      )}
 {filter === "Rating" && [5, 4, 3].map((stars) => (
                         <button
                           key={stars}
-                          onClick={() => {
-                            handleFilterSelect("rating", String(stars));
-                            setHoveredFilter(null);
-                          }}
+                          onClick={() => handleFilterSelect("rating", String(stars))}
                           className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left flex items-center gap-2 ${
                             urlFilters.rating === String(stars) ? "text-[#eb61a1] font-medium" : "text-gray-700"
                           }`}
@@ -574,10 +568,7 @@ return (
 {filter === "Age Range" && ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"].map((ageRange) => (
                         <button
                           key={ageRange}
-                          onClick={() => {
-                            handleFilterSelect("ageRange", ageRange);
-                            setHoveredFilter(null);
-                          }}
+                          onClick={() => handleFilterSelect("ageRange", ageRange)}
                           className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
                             urlFilters.ageRange === ageRange ? "text-[#eb61a1] font-medium" : "text-gray-700"
                           }`}
@@ -588,10 +579,7 @@ return (
 {filter === "Skin Type" && ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"].map((skinType) => (
                         <button
                           key={skinType}
-                          onClick={() => {
-                            handleFilterSelect("skinType", skinType);
-                            setHoveredFilter(null);
-                          }}
+                          onClick={() => handleFilterSelect("skinType", skinType)}
                           className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
                             urlFilters.skinType === skinType ? "text-[#eb61a1] font-medium" : "text-gray-700"
                           }`}

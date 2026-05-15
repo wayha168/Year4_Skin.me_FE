@@ -15,7 +15,7 @@ const Footer = memo(() => {
   const INSTARGRAM = "/assets/instargram_icon.png";
 
   return (
-    <div className="bg-[#0a3d3f] text-white pb-[2rem] mt-0 max-[770px]:pb-[7rem]">
+    <div className="bg-[#0a3d3f] text-white pb-[2rem] mt-0 max-[770px]:pb-[7rem] relative z-[1]">
       {/* TOP BANNER */}
       <div className="mb-[2rem] flex justify-between items-center h-12 w-full border-b border-white/20 bg-black mt-0">
         <div className="flex justify-between items-center w-full max-w-[1280px] mx-auto px-4">

@@ -71,10 +71,10 @@ const Navbar = ({ alwaysVisible = false }) => {
   // Read URL params for filters
   const urlFilters = useMemo(() => {
     const params = {};
-    if (searchParams.get("brand")) params.brand = searchParams.get("brand").split(",");
-    if (searchParams.get("rating")) params.rating = searchParams.get("rating");
-    if (searchParams.get("ageRange")) params.ageRange = searchParams.get("ageRange");
-    if (searchParams.get("skinType")) params.skinType = searchParams.get("skinType");
+    params.brand = searchParams.get("brand")?.split(",") || [];
+    params.rating = searchParams.get("rating") || "";
+    params.ageRange = searchParams.get("ageRange") || "";
+    params.skinType = searchParams.get("skinType") || "";
     return params;
   }, [searchParams]);
 
@@ -94,6 +94,49 @@ const Navbar = ({ alwaysVisible = false }) => {
     }
     const query = params.toString();
     router.push(query ? `/products?${query}` : "/products");
+  }, [router, searchParams]);
+
+  // Compute selected filters for display
+  const selectedFilters = useMemo(() => {
+    const filters = [];
+    if (urlFilters.brand.length > 0) {
+      urlFilters.brand.forEach(b => {
+        filters.push({
+          label: `Brand: ${b}`,
+          remove: () => handleFilterSelect('brand', b)
+        });
+      });
+    }
+    if (urlFilters.rating) {
+      filters.push({
+        label: `Rating: ${urlFilters.rating} Stars`,
+        remove: () => handleFilterSelect('rating', '')
+      });
+    }
+    if (urlFilters.ageRange) {
+      filters.push({
+        label: `Age Range: ${urlFilters.ageRange}`,
+        remove: () => handleFilterSelect('ageRange', '')
+      });
+    }
+    if (urlFilters.skinType) {
+      filters.push({
+        label: `Skin Type: ${urlFilters.skinType}`,
+        remove: () => handleFilterSelect('skinType', '')
+      });
+    }
+    return filters;
+  }, [urlFilters, handleFilterSelect]);
+
+  // Clear all filters
+  const clearAllFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('brand');
+    params.delete('rating');
+    params.delete('ageRange');
+    params.delete('skinType');
+    const query = params.toString();
+    router.push(query ? `/products?${query}` : '/products');
   }, [router, searchParams]);
 
   const handleResize = useCallback(() => {
@@ -510,16 +553,16 @@ return (
                        )
                      )}
 {filter === "Rating" && [5, 4, 3].map((stars) => (
-                       <button
-                         key={stars}
-                         onClick={() => {
-                           handleFilterSelect("rating", String(stars));
-                           setHoveredFilter(null);
-                         }}
-                         className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left flex items-center gap-2 ${
-                           urlFilters.rating === String(stars) ? "text-[#eb61a1] font-medium" : "text-gray-700"
-                         }`}
-                       >
+                        <button
+                          key={stars}
+                          onClick={() => {
+                            handleFilterSelect("rating", String(stars));
+                            setHoveredFilter(null);
+                          }}
+                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left flex items-center gap-2 ${
+                            urlFilters.rating === String(stars) ? "text-[#eb61a1] font-medium" : "text-gray-700"
+                          }`}
+                        >
                          <span>
                            {[1, 2, 3, 4, 5].map(i => (
                              <span key={i} className={`text-base ${i <= stars ? "text-black" : "text-transparent [-webkit-text-stroke:1px_#000]"}`}>★</span>
@@ -529,40 +572,84 @@ return (
                        </button>
                      ))}
 {filter === "Age Range" && ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"].map((ageRange) => (
-                       <button
-                         key={ageRange}
-                         onClick={() => {
-                           handleFilterSelect("ageRange", ageRange);
-                           setHoveredFilter(null);
-                         }}
-                         className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
-                           urlFilters.ageRange === ageRange ? "text-[#eb61a1] font-medium" : "text-gray-700"
-                         }`}
-                       >
+                        <button
+                          key={ageRange}
+                          onClick={() => {
+                            handleFilterSelect("ageRange", ageRange);
+                            setHoveredFilter(null);
+                          }}
+                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
+                            urlFilters.ageRange === ageRange ? "text-[#eb61a1] font-medium" : "text-gray-700"
+                          }`}
+                        >
                          {ageRange}
                        </button>
                      ))}
 {filter === "Skin Type" && ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"].map((skinType) => (
-                       <button
-                         key={skinType}
-                         onClick={() => {
-                           handleFilterSelect("skinType", skinType);
-                           setHoveredFilter(null);
-                         }}
-                         className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
-                           urlFilters.skinType === skinType ? "text-[#eb61a1] font-medium" : "text-gray-700"
-                         }`}
-                       >
+                        <button
+                          key={skinType}
+                          onClick={() => {
+                            handleFilterSelect("skinType", skinType);
+                            setHoveredFilter(null);
+                          }}
+                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 hover:scale-105 transition-all origin-left ${
+                            urlFilters.skinType === skinType ? "text-[#eb61a1] font-medium" : "text-gray-700"
+                          }`}
+                        >
                          {skinType}
                        </button>
                      ))}
                    </div>
                  )}
                </div>
-             ))}
-           </div>
-         </div>
-       )}
+              ))}
+              {/* Selected Filters - only show if there are selected filters */}
+              {selectedFilters.length > 0 && (
+                <div className="relative">
+                <div
+                  onMouseEnter={() => setHoveredFilter('Selected')}
+                  ref={(el) => (filterRefs.current['Selected'] = el)}
+                >
+                  <button
+                    className="flex items-center gap-1 text-gray-700 hover:text-[#eb61a2] font-medium transition-colors"
+                    type="button"
+                  >
+                    <span className="text-[#eb61a2]">Selected</span>
+                    <i className="fa-solid fa-chevron-down text-xs"></i>
+                  </button>
+                </div>
+
+                {hoveredFilter === 'Selected' && (
+                  <div className="absolute top-full left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
+                    <button
+                      onClick={clearAllFilters}
+                      className="w-full text-left px-5 py-3 text-base text-red-500 hover:bg-gray-100 transition-colors"
+                    >
+                      Clear All
+                    </button>
+                    {selectedFilters.length === 0 ? (
+                      <div className="px-5 py-3 text-base text-gray-500">No filters selected</div>
+                    ) : (
+                      selectedFilters.map((filter, idx) => (
+                        <div key={idx} className="flex items-center justify-between px-5 py-3 hover:bg-gray-100 transition-colors">
+                          <span className="text-gray-700">{filter.label}</span>
+                          <button
+                            onClick={filter.remove}
+                            className="text-red-500 hover:text-red-700 ml-2"
+                            title="Remove this filter"
+                          >
+                            X
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
        {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px): Home, Products, Favorite, Cart, Profile */}

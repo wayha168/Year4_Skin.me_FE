@@ -4,7 +4,6 @@ import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import {useRouter,  useSearchParams } from "next/navigation";
 import { useState } from "react";
-impo
 import axiosAuth from "./lib/api/axiosConfig.js";
 import Navbar from "../Components/Navbar/Navbar.jsx";
 import Footer from "../Components/Footer/Footer.jsx";
@@ -246,7 +245,7 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="w-[20rem] h-[25rem] md:w-1/2 md:h-[50rem] md:mt-4 z-[4]">
+            <div className="w-[20rem] h-[25rem] md:w-1/2 md:h-[50rem] md:mt-4 z-[4] rounded-[20px] overflow-hidden">
              {featuredProduct && (
                <Image
                 sizes="(max-width: 768px) 20rem, 50vw"

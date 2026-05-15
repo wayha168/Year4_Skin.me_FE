@@ -30,21 +30,19 @@ const Products = () => {
   const searchFromUrl = searchParams.get("search") || "";
 
   const [products, setProducts] = useState([]);
-const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("all");
   const [searchTerm, setSearchTerm] = useState(searchFromUrl);
 
-  // Read filters from URL params
   const urlFilters = useMemo(() => {
     const brands = searchParams.get("brand")?.split(",") || [];
-    const rating = searchParams.get("rating");
-    const ageRange = searchParams.get("ageRange");
-    const skinType = searchParams.get("skinType");
+    const rating = searchParams.get("rating") || "";
+    const ageRange = searchParams.get("ageRange") || "";
+    const skinType = searchParams.get("skinType") || "";
     return { brands, rating, ageRange, skinType };
   }, [searchParams]);
 
-  // Sync search term from URL
   useEffect(() => {
     setSearchTerm(searchFromUrl);
   }, [searchFromUrl]);
@@ -52,7 +50,6 @@ const [categories, setCategories] = useState([]);
   const { user } = useAuthContext();
   const { addToCart, addToFavorite, loginFirst } = useUserActions();
 
-  /* ------------------- FETCH CATEGORIES ------------------- */
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -65,7 +62,6 @@ const [categories, setCategories] = useState([]);
     fetchCategories();
   }, []);
 
-  /* ------------------- FETCH PRODUCTS ------------------- */
   useEffect(() => {
     if (!user) {
       setProducts([]);
@@ -87,7 +83,6 @@ const [categories, setCategories] = useState([]);
     fetchProducts();
   }, [user]);
 
-  /* ------------------- HANDLERS ------------------- */
   const handleAddToCart = async (productId) => {
     await addToCart(productId, 1);
   };
@@ -96,20 +91,13 @@ const [categories, setCategories] = useState([]);
     await addToFavorite(productId);
   };
 
-
-
-
-  /* ------------------- FILTER & GROUP PRODUCTS ------------------- */
   const getGroupedAndFilteredProducts = () => {
     let filtered = [...products];
 
-    // Filter by search term (name or brand)
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       const getBrand = (p) =>
-        typeof p?.brand === "string"
-          ? p.brand
-          : p?.brand?.name;
+        typeof p?.brand === "string" ? p.brand : p?.brand?.name;
       filtered = filtered.filter(
         (p) =>
           p?.name?.toLowerCase().includes(term) ||
@@ -117,12 +105,11 @@ const [categories, setCategories] = useState([]);
       );
     }
 
-    // Derive rating from price: top 20% = 5★, middle 40% = 4★, bottom 40% = 3★
     const getPriceRating = (() => {
-      const prices = products.map(p => p?.price || 0).sort((a, b) => a - b);
+      const prices = products.map((p) => p?.price || 0).sort((a, b) => a - b);
       if (prices.length === 0) return () => 3;
-      const p40 = prices[Math.floor(prices.length * 0.40)];
-      const p80 = prices[Math.floor(prices.length * 0.80)];
+      const p40 = prices[Math.floor(prices.length * 0.4)];
+      const p80 = prices[Math.floor(prices.length * 0.8)];
       return (price) => {
         if (price >= p80) return 5;
         if (price >= p40) return 4;
@@ -130,21 +117,17 @@ const [categories, setCategories] = useState([]);
       };
     })();
 
-    // Derive age range: balanced with more 30-40 and 40-50
-    const knownAgeRanges = ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"];
     const ageRangeCycle = [
       "10 - 20 years",
       "20 - 30 years", "20 - 30 years", "20 - 30 years", "20 - 30 years",
       "30 - 40 years", "30 - 40 years", "30 - 40 years",
-      "40 - 50 years", "40 - 50 years"
+      "40 - 50 years", "40 - 50 years",
     ];
 
-    const knownSkinTypes = ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"];
     const skinTypeCycle = ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"];
 
-    // Apply URL-based filters
     const { brands, rating, ageRange, skinType } = urlFilters;
-    
+
     if (brands.length > 0 || rating || ageRange || skinType) {
       filtered = filtered.filter((p, idx) => {
         const productAgeRange = ageRangeCycle[idx % ageRangeCycle.length];
@@ -152,7 +135,9 @@ const [categories, setCategories] = useState([]);
         const productRating = getPriceRating(p?.price || 0);
         const brandName = (getBrand(p) || "").trim().toLowerCase();
 
-        const matchesBrand = brands.length === 0 || brands.some(b => b.trim().toLowerCase() === brandName);
+        const matchesBrand =
+          brands.length === 0 ||
+          brands.some((b) => b.trim().toLowerCase() === brandName);
         const matchesRating = !rating || productRating === parseInt(rating);
         const matchesAge = !ageRange || productAgeRange === ageRange;
         const matchesSkin = !skinType || productSkinType === skinType;
@@ -161,31 +146,31 @@ const [categories, setCategories] = useState([]);
       });
     }
 
-    // Apply sort order
     if (sortBy === "price-high") {
       filtered.sort((a, b) => (b?.price || 0) - (a?.price || 0));
     } else if (sortBy === "price-low") {
       filtered.sort((a, b) => (a?.price || 0) - (b?.price || 0));
     } else if (sortBy === "new") {
-      // Sort by highest ID (assuming newer products have higher IDs)
       filtered.sort((a, b) => (b?.id || 0) - (a?.id || 0));
     } else if (sortBy === "recommended") {
-      // Sort by longest name to shortest
       filtered.sort((a, b) => (b?.name?.length || 0) - (a?.name?.length || 0));
     }
 
-    // For price, new, and recommended, don't group by category
-    if (sortBy === "price-high" || sortBy === "price-low" || sortBy === "recommended" || sortBy === "new") {
+    if (
+      sortBy === "price-high" ||
+      sortBy === "price-low" ||
+      sortBy === "recommended" ||
+      sortBy === "new"
+    ) {
       const categoryLabels = {
         "price-high": "Price High to Low",
         "price-low": "Price Low to High",
-        "recommended": "Recommended",
-        "new": "What's New"
+        recommended: "Recommended",
+        new: "What's New",
       };
       return { [categoryLabels[sortBy]]: filtered };
     }
 
-    // Group filtered products by category
     return filtered.reduce((acc, product) => {
       const categoryName = product.category?.name || "Uncategorized";
       if (!acc[categoryName]) acc[categoryName] = [];
@@ -195,30 +180,31 @@ const [categories, setCategories] = useState([]);
   };
 
   const groupedProducts = getGroupedAndFilteredProducts();
-  
-  // Sort categories by the number of products in descending order
+
   const sortedCategories = Object.entries(groupedProducts).sort(
     (a, b) => b[1].length - a[1].length
   );
 
   const hasProducts = sortedCategories.length > 0;
 
-return (
+  return (
     <>
       <Navbar alwaysVisible={true} />
       <main className="pt-[8.5rem] px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
         {/* ===== Hero Section ===== */}
         <div className="w-full -mt-[4.5rem]">
-          <h1 className="w-full h-[9rem] flex items-end justify-center text-4xl font-bold text-white bg-[#ffffff] text-[#FF85BB] pb-[13px]">Our Products</h1>
+          <h1 className="w-full h-[9rem] flex items-end justify-center text-4xl font-bold  bg-[#ffffff] text-[#EB61A2] pb-[13px]">
+            Our Products
+          </h1>
         </div>
-        
+
         {/* ===== Main Content with Fixed Left Sidebar ===== */}
-        <div className="flex">
-          {/* Fixed Left Sidebar for Sort By */}
-          <div className="w-[18%] min-w-[200px] bg-white/30 backdrop-blur-2xl border-r border-gray-200 shadow-lg sticky top-[8.5rem] h-[calc(100vh-8.5rem)] flex flex-col">
-            <div className="p-4 flex flex-col h-full">
-              <div className="relative -mx-4 px-4 -mt-4 pt-4 pb-3 bg-[#EB61A2]">
-                <h3 className="text-white text-[1.5rem] font-bold text-center">
+        <div className="flex ">
+          {/* Fixed Left Sidebar */}
+          <div className="w-[200px] bg-white border-r border-gray-200 rounded-[1rem] shadow-lg fixed left-0 top-[8.5rem] h-[calc(100vh-10.5rem)]">
+            <div className="p-4 flex flex-col h-[calc(100vh-8.5rem)]">
+              <div className="relative -mx-4 px-4 -mt-4 pt-4 pb-3 bg-white border-t rounded-[1rem] border-b border-gray-200">
+                <h3 className="text-[#EB61A2] text-[1.5rem] font-bold text-center">
                   Sort By
                 </h3>
               </div>
@@ -228,7 +214,7 @@ return (
                   { value: "recommended", label: "Recommended" },
                   { value: "new", label: "What's New" },
                   { value: "price-high", label: "Price High to Low" },
-                  { value: "price-low", label: "Price Low to High" }
+                  { value: "price-low", label: "Price Low to High" },
                 ].map((option) => (
                   <div
                     key={option.value}
@@ -236,8 +222,14 @@ return (
                     className="px-4 text-[1rem] py-3 cursor-pointer border-b border-black/20 flex justify-between items-center hover:bg-white/50 transition"
                   >
                     <span>{option.label}</span>
-                    <div className={`w-5 h-5 rounded-full border border-black flex items-center justify-center ${sortBy === option.value ? "bg-white" : ""}`}>
-                      {sortBy === option.value && <div className="w-2.5 h-2.5 rounded-full bg-black" />}
+                    <div
+                      className={`w-5 h-5 rounded-full border border-black flex items-center justify-center ${
+                        sortBy === option.value ? "bg-white" : ""
+                      }`}
+                    >
+                      {sortBy === option.value && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-black" />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -246,12 +238,13 @@ return (
           </div>
 
           {/* Products Area */}
-          <div className="flex-1 pl-6 pr-4">
-            {/* ===== Products by Category ===== */}
+          <div className="flex-1 pl-6 pr-4 ml-[200px]">
             {loading ? (
               <Loading />
             ) : !hasProducts ? (
-              <p className="text-center text-gray-500 text-lg mt-20">No products found.</p>
+              <p className="text-center text-gray-500 text-lg mt-20">
+                No products found.
+              </p>
             ) : (
               <div className="space-y-16 pt-6">
                 {sortedCategories.map(([categoryName, productsInCategory]) => (
@@ -261,7 +254,10 @@ return (
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 z-[1]">
                       {productsInCategory.map((p) => {
-                        const brand = typeof p?.brand === "string" ? p.brand : p?.brand?.name ?? "";
+                        const brand =
+                          typeof p?.brand === "string"
+                            ? p.brand
+                            : p?.brand?.name ?? "";
                         const desc = p?.description?.trim() || "No description";
                         return (
                           <div
@@ -276,7 +272,11 @@ return (
                                 className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
                                 sizes="(max-width: 600px) 50vw, 200px"
                                 unoptimized
-                                onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                                onClick={() =>
+                                  router.push(
+                                    `/product_details?productId=${p.id}`
+                                  )
+                                }
                               />
                               <button
                                 type="button"
@@ -292,10 +292,16 @@ return (
                                   {brand}
                                 </span>
                               )}
-                              <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p?.name}>
+                              <h3
+                                className="text-[1.15rem] font-bold text-gray-800 truncate"
+                                title={p?.name}
+                              >
                                 {p?.name || "No Name"}
                               </h3>
-                              <p className="text-xs text-gray-500 truncate opacity-80" title={desc}>
+                              <p
+                                className="text-xs text-gray-500 truncate opacity-80"
+                                title={desc}
+                              >
                                 {desc}
                               </p>
                               <p className="text-sm font-bold text-black mt-1">

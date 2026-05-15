@@ -37,9 +37,9 @@ const Products = () => {
 
   const urlFilters = useMemo(() => {
     const brands = searchParams.get("brand")?.split(",") || [];
-    const rating = searchParams.get("rating") || "";
-    const ageRange = searchParams.get("ageRange") || "";
-    const skinType = searchParams.get("skinType") || "";
+    const rating = searchParams.get("rating")?.split(",") || [];
+    const ageRange = searchParams.get("ageRange")?.split(",") || [];
+    const skinType = searchParams.get("skinType")?.split(",") || [];
     return { brands, rating, ageRange, skinType };
   }, [searchParams]);
 
@@ -128,21 +128,25 @@ const Products = () => {
 
     const { brands, rating, ageRange, skinType } = urlFilters;
 
-    if (brands.length > 0 || rating || ageRange || skinType) {
+    if (brands.length > 0 || rating.length > 0 || ageRange.length > 0 || skinType.length > 0) {
       filtered = filtered.filter((p, idx) => {
         const productAgeRange = ageRangeCycle[idx % ageRangeCycle.length];
         const productSkinType = skinTypeCycle[idx % skinTypeCycle.length];
         const productRating = getPriceRating(p?.price || 0);
         const brandName = (getBrand(p) || "").trim().toLowerCase();
 
-        const matchesBrand =
-          brands.length === 0 ||
-          brands.some((b) => b.trim().toLowerCase() === brandName);
-        const matchesRating = !rating || productRating === parseInt(rating);
-        const matchesAge = !ageRange || productAgeRange === ageRange;
-        const matchesSkin = !skinType || productSkinType === skinType;
+        const matchesBrand = brands.some((b) => b.trim().toLowerCase() === brandName);
+        const matchesRating = rating.includes(String(productRating));
+        const matchesAge = ageRange.includes(productAgeRange);
+        const matchesSkin = skinType.includes(productSkinType);
 
-        return matchesBrand && matchesRating && matchesAge && matchesSkin;
+        const activeMatches = [];
+        if (brands.length > 0) activeMatches.push(matchesBrand);
+        if (rating.length > 0) activeMatches.push(matchesRating);
+        if (ageRange.length > 0) activeMatches.push(matchesAge);
+        if (skinType.length > 0) activeMatches.push(matchesSkin);
+
+        return activeMatches.some(m => m);
       });
     }
 

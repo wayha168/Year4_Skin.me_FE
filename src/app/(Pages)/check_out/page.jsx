@@ -3,6 +3,7 @@
 
 import React, { useState, useRef, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "react-toastify";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
@@ -84,6 +85,18 @@ function CheckOutContent() {
   useEffect(() => {
     if (productId) setSingleQty(Math.max(1, parseInt(quantityParam, 10) || 1));
   }, [quantityParam, productId]);
+
+  // Show success toast when redirected from Stripe
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      toast.success("Payment Successfully", {
+        duration: 4000,
+        position: "top-center",
+      });
+      // Clean the URL
+      router.replace("/check_out", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   let totalPrice = "0.00";
   let itemCount = 0;

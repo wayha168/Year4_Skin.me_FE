@@ -123,6 +123,18 @@ export default function Page() {
       const [canScrollRight, setCanScrollRight] = useState(true);
       const [expandedRec, setExpandedRec] = useState({});
 
+      const timeAgo = (dateString) => {
+        if (!dateString) return "Recently";
+        const date = new Date(dateString);
+        const now = new Date("2026-05-16");
+        const diffMs = now - date;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) !== 1 ? 's' : ''} ago`;
+        return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? 's' : ''} ago`;
+      };
+
       // Control gradient visibility based on scroll position
       useEffect(() => {
         const container = testimonialsRef.current;
@@ -578,7 +590,7 @@ export default function Page() {
                             )}
                           </div>
                           <div className="flex justify-end pt-4">
-                            <p className="text-xs text-[#999]">{formatPrice(product?.price)}</p>
+                            <p className="text-xs text-[#999]">{timeAgo(product?.createdAt)}</p>
                           </div>
                        </div>
                      </div>

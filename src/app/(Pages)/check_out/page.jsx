@@ -246,7 +246,7 @@ function CheckOutContent() {
                   <button
                     type="button"
                     className="w-full py-3 rounded-xl border border-[#e5e7eb] bg-white text-[#374151] font-medium hover:bg-[#f9fafb] transition-colors"
-                    onClick={() => router.back()}
+                    onClick={() => router.push("/products")}
                   >
                     ← Continue shopping
                   </button>

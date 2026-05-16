@@ -28,7 +28,7 @@ const MessageWidget = () => {
   const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   // Conditional class for mobile bottom margin
-  const mobileMarginClass = isAuthPage ? "" : "max-[510px]:mb-[4.7rem]";
+  const mobileMarginClass = isAuthPage ? "" : "max-[770px]:mb-[4.7rem]";
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

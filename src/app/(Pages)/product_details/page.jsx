@@ -232,7 +232,7 @@ const ProductDetailsContent = () => {
           {/* Info */}
           <div className="lg:pt-2">
             {brandName && (
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-2">{brandName}</p>
+              <p className="text-[1.3rem] font-medium text-gray-500 uppercase tracking-widest mb-2">{brandName}</p>
             )}
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight leading-tight mb-3">
               {product.name}

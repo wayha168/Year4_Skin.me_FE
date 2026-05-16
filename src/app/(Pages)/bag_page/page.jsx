@@ -192,7 +192,7 @@ function BagPage() {
         </div>
       )}
 
-      <main className="min-h-screen bg-[#f5f5f7] pt-[6.5rem] pb-20 px-4 sm:px-6">
+      <main className="min-h-screen bg-[#CCF6F2] pt-[6.5rem] pb-20 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <header className="mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] tracking-tight">My Bag</h1>
@@ -218,74 +218,76 @@ function BagPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {cartItems.map((item, index) => {
-                  const p = item.product;
-                  const qty = item.quantity ?? 1;
-                  const price = p?.price ?? 0;
-                  const key = item.id ?? item.cartItemId ?? `cart-${p?.id}-${index}`;
-                  const lineTotal = (price * qty).toFixed(2);
-                  const imgSrc = getProductImageUrl(p, DefaultProductImage);
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="flex-1">
+                  <div className="grid grid-cols-1 gap-4 w-[70%]">
+                    {cartItems.map((item, index) => {
+                      const p = item.product;
+                      const qty = item.quantity ?? 1;
+                      const price = p?.price ?? 0;
+                      const key = item.id ?? item.cartItemId ?? `cart-${p?.id}-${index}`;
+                      const lineTotal = (price * qty).toFixed(2);
+                      const imgSrc = getProductImageUrl(p, DefaultProductImage);
 
-                  return (
-                    <div
-                      key={key}
-                      className="bg-white rounded-xl border border-[#eee] shadow-sm overflow-hidden flex flex-col"
-                    >
-                      <div className="flex gap-4 p-4">
-                        <button
-                          type="button"
-                          onClick={() => p?.id && handleProductClick(p.id)}
-                          className="shrink-0 w-[100px] h-[100px] rounded-lg overflow-hidden bg-[#f9fafb] border border-[#eee] focus:outline-none focus:ring-2 focus:ring-[#eb61a2]"
+                      return (
+                        <div
+                          key={key}
+                          className="bg-white rounded-xl border border-[#eee] shadow-sm overflow-hidden flex flex-col max-w-[520px]"
                         >
-                          <Image
-                            src={imgSrc}
-                            alt={p?.name ?? "Product"}
-                            width={100}
-                            height={100}
-                            className="w-full h-full object-cover"
-                            unoptimized
-                          />
-                        </button>
-                        <div className="flex-1 min-w-0 flex flex-col">
-                          <h3 className="font-medium text-[#1a1a1a] truncate text-sm sm:text-base">{p?.name}</h3>
-                          <p className="text-[#9ca3af] text-xs mt-0.5">{p?.brand?.name || "—"}</p>
-                          <p className="text-[#eb61a2] font-semibold text-sm mt-1">{formatPrice(price)}</p>
-                          <div className="mt-2 flex items-center justify-between gap-2">
-                            <QuantityStepper
-                              value={qty}
-                              onChange={(newQty) => updateQty(key, newQty)}
-                            />
-                            <span className="text-sm font-medium text-[#374151]">{formatPrice(lineTotal)}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(key)}
-                            className="mt-2 text-left text-xs text-[#6b7280] hover:text-[#eb61a2] hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                          <div className="flex gap-4 p-4 max-w-[500px]">
+                            <button
+                              type="button"
+                              onClick={() => p?.id && handleProductClick(p.id)}
+                              className="shrink-0 w-[100px] h-[100px] rounded-lg overflow-hidden bg-[#f9fafb] border border-[#eee] focus:outline-none focus:ring-2 focus:ring-[#eb61a2]"
+                            >
+                              <Image
+                                src={imgSrc}
+                                alt={p?.name ?? "Product"}
+                                width={100}
+                                height={100}
+                                className="w-full h-full object-cover"
+                                unoptimized
+                              />
+                            </button>
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <h3 className="font-medium text-[#1a1a1a] truncate text-sm sm:text-base">{p?.name}</h3>
+                              <p className="text-[#9ca3af] text-xs mt-0.5">
+                            {p?.brand ? (typeof p.brand === "string" ? p.brand : p.brand.name) : "—"}
+                          </p>
+                              <p className="text-[#eb61a2] font-semibold text-sm mt-1">{formatPrice(price)}</p>
 
-              <div className="mt-6 bg-white rounded-2xl border border-[#eee] shadow-sm p-5 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <p className="text-[#6b7280] text-sm">Subtotal</p>
-                    <p className="text-xl font-bold text-[#eb61a2]">{formatPrice(total.toFixed(2))}</p>
+                              <div className="mt-2 flex items-center justify-between gap-2">
+                                <QuantityStepper
+                                  value={qty}
+                                  onChange={(newQty) => updateQty(key, newQty)}
+                                />
+                                <span className="text-sm font-medium text-[#374151]">{formatPrice(lineTotal)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleCheckout}
-                    className="w-full sm:w-auto py-3.5 px-8 rounded-xl bg-[#eb61a2] text-white font-semibold hover:bg-[#d94d8c] transition shadow-sm flex items-center justify-center gap-2"
-                  >
-                    <FaShoppingBag className="text-lg" />
-                    Checkout / Make payment
-                  </button>
+                </div>
+
+                <div className="lg:w-80">
+                  <div className="mt-6 lg:mt-0 bg-white rounded-2xl border border-[#eee] shadow-sm p-5 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <p className="text-[#6b7280] text-sm">Subtotal</p>
+                        <p className="text-xl font-bold text-[#eb61a2]">{formatPrice(total.toFixed(2))}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCheckout}
+                        className="w-full sm:w-auto py-3.5 px-8 rounded-xl bg-[#eb61a2] text-white font-semibold hover:bg-[#d94d8c] transition shadow-sm flex items-center justify-center gap-2"
+                      >
+                        <FaShoppingBag className="text-lg" />
+                        Checkout / Make payment
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </>

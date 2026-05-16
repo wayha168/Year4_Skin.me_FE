@@ -259,16 +259,16 @@ const ProductDetailsContent = () => {
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
+                  className="w-11 h-11 flex items-center font-bold text-[1.3rem]  justify-center text-gray-600 hover:bg-[#B0D8D4] transition-colors"
                   aria-label="Decrease quantity"
                 >
                   −
                 </button>
-                <span className="w-12 text-center font-semibold text-gray-900">{quantity}</span>
+                <span className="w-12 text-center  font-semibold text-gray-900">{quantity}</span>
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => q + 1)}
-                  className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
+                  className="w-11 h-11 flex items-center font-bold text-[1.3rem] justify-center text-gray-600 hover:bg-[#B0D8D4 ] transition-colors"
                   aria-label="Increase quantity"
                 >
                   +
@@ -361,7 +361,7 @@ const ProductDetailsContent = () => {
                 href={`/products?search=${encodeURIComponent(brandName)}`}
                 className="text-sm font-medium text-[#eb61a2] hover:underline"
               >
-                View all from {brandName}
+                    View All Products
               </Link>
             )}
           </div>

@@ -530,8 +530,8 @@ return (
                  </button>
                  
 {/* Dropdown */}
-                 {hoveredFilter === filter && (
-                  <div className="absolute top-full left-0 max-[750px]:left-1/2 max-[750px]:-translate-x-1/2 w-64 max-[750px]:w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
+    {hoveredFilter === filter && (
+      <div className={`absolute top-full ${hoveredFilter === 'Skin Type' || hoveredFilter === 'Selected' ? 'left-0 max-[750px]:-left-32' : 'left-0'} w-64 ${hoveredFilter === 'Skin Type' || hoveredFilter === 'Selected' ? 'max-[750px]:w-56' : ''} bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2`}>
                       {filter === "Brand" && (
                         brands.length > 0 ? (
                           brands.map((brand) => (
@@ -617,7 +617,7 @@ return (
                 </div>
 
                 {hoveredFilter === 'Selected' && (
-                  <div className="absolute top-full left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
+                  <div className="absolute top-full left-0 max-[750px]:-left-32 w-64 max-[750px]:w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
                     <button
                       onClick={clearAllFilters}
                       className="w-full text-left font-bold px-5 py-3 text-base text-red-500 hover:bg-gray-100 transition-colors"

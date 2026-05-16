@@ -208,6 +208,16 @@ export default function Page() {
       const featuredProduct = products[0];
       const overviewProducts = products.slice(0, 3);
       const recommendationProducts = products.slice(0, 7);
+
+      const ImagesInRecommendation = [
+        { image: getProductImageUrl(products[0]), name: "Glow Serum", environment_details: "Hydrating & Brightening" },
+        { image: getProductImageUrl(products[1]), name: "Rose Cream", environment_details: "Soothing & Moisturizing" },
+        { image: getProductImageUrl(products[2]), name: "Vitamin C Oil", environment_details: "Antioxidant Rich" },
+        { image: getProductImageUrl(products[3]), name: "Aloe Gel", environment_details: "Calming & Refreshing" },
+        { image: getProductImageUrl(products[4]), name: "Night Repair", environment_details: "Rejuvenating Formula" },
+        { image: getProductImageUrl(products[5]), name: "Sunscreen SPF50", environment_details: "Broad Spectrum Protection" },
+        { image: getProductImageUrl(products[6]), name: "Clay Mask", environment_details: "Deep Cleansing" },
+      ];
       const aboutCategories = categories.filter((category) => category?.description?.trim()).slice(0, 4);
       const averagePrice = products.length
         ? products.reduce((sum, product) => sum + Number(product?.price || 0), 0) / products.length
@@ -245,7 +255,7 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="w-[20rem] h-[25rem] md:w-1/2 md:h-[50rem] md:mt-4 z-[4] rounded-[20px] overflow-hidden">
+            <div className="w-[20rem] h-[25rem] md:w-1/2 md:h-[50rem] md:mt-4 z-[4] rounded-[30px] overflow-hidden flex items-center justify-center">
              {featuredProduct && (
                <Image
                 sizes="(max-width: 768px) 20rem, 50vw"
@@ -255,7 +265,7 @@ export default function Page() {
                 width={640}
                 height={800}
                 quality={85}
-                className="w-full h-full object-contain z-[5]"
+                className="max-w-full max-h-full object-contain z-[5] rounded-[30px] mt-8 max-[767px]:-mt-8"
                 fetchPriority="high"
                 unoptimized
               />
@@ -286,7 +296,7 @@ export default function Page() {
             <div className="text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full max-[990px]:text-center">
               LET'S HAVE A LOOK
             </div>
-            <div className="mb-[1rem] text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] text-left w-full max-[1390px]:mb-[0.75rem] max-[1300px]:mb-[0.75rem] max-[1250px]:mb-[0.5rem] max-[1200px]:mb-[0.5rem] max-[1150px]:mb-[0.5rem]  max-[660px]:mb-[0.25rem] max-[990px]:text-center">
+            <div className="mb-[1rem] text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] text-left w-full max-[1390px]:mb-[0.75rem] max-[1300px]:mb-[0.75rem] max-[1250px]:mb-[0.5rem] max-[1200px]:mb-[0.5rem] max-[1150px]:mb-[0.5rem]  max-[660px]:mb-[1rem] max-[990px]:text-center">
               This is the overview about our products that you can spend a few minutes to see how they look.
             </div>
             <div className="flex flex-row gap-[2rem]">
@@ -461,9 +471,7 @@ export default function Page() {
                   RECOMMENDATIONS
                 </h2>
                 <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
-                  {products.length > 0
-                    ? `Showing ${recommendationProducts.length} recommended products from ${categories.length} categories.`
-                    : "No recommendation data available."}
+                  Discover customer-loved skincare essentials for healthy, glowing skin — curated for every skin type and daily routine.
                 </p>
               </div>
 

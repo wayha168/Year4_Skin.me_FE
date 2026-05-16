@@ -275,7 +275,7 @@ const ProductDetailsContent = () => {
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => q + 1)}
-                  className="w-11 h-11 flex items-center font-bold text-[1.3rem] justify-center text-gray-600 hover:bg-[#B0D8D4 ] transition-colors"
+                  className="w-11 h-11 flex items-center font-bold text-[1.3rem] justify-center text-gray-600 hover:bg-[#B0D8D4] transition-colors"
                   aria-label="Increase quantity"
                 >
                   +

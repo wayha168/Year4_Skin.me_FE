@@ -58,6 +58,7 @@ function BagPage() {
   const { user, loading: authLoading } = useAuthContext();
   const [cartId, setCartId] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
 
@@ -75,6 +76,31 @@ function BagPage() {
         (items[0]?.cartId ?? items[0]?.cart_id ?? null);
       setCartId(cid != null ? String(cid) : null);
       setCartItems(items);
+
+      // Fetch recommended products
+      if (items.length > 0) {
+        const firstProduct = items[0].product;
+        const brandId = firstProduct?.brand?.id;
+        const brandName = typeof firstProduct?.brand === "string" ? firstProduct.brand : firstProduct?.brand?.name;
+
+        try {
+          const res = await axiosAuth.get("/products/all");
+          const allProducts = res.data?.data || [];
+          const recommended = allProducts
+            .filter(p => {
+              if (p.id === firstProduct.id) return false;
+              const pBrandId = p.brand?.id;
+              const pBrandName = typeof p.brand === "string" ? p.brand : p.brand?.name;
+              return (brandId && pBrandId === brandId) || (brandName && pBrandName === brandName);
+            })
+            .slice(0, 5);
+          setRecommendedProducts(recommended);
+        } catch (e) {
+          console.error("Failed to fetch recommended products");
+        }
+      } else {
+        setRecommendedProducts([]);
+      }
     } catch (err) {
       if (err.response?.status === 404) {
         setCartId(null);
@@ -230,9 +256,9 @@ function BagPage() {
             </div>
           ) : (
             <>
-              <div className="flex flex-col lg:flex-row gap-8">
+              <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-1">
-                  <div className="grid grid-cols-1 gap-4 w-[70%]">
+                  <div className="grid grid-cols-1 gap-4 w-[100%]">
                     {cartItems.map((item, index) => {
                       const p = item.product;
                       const qty = item.quantity ?? 1;
@@ -244,9 +270,9 @@ function BagPage() {
                       return (
                         <div
                           key={key}
-                          className="bg-white rounded-xl border border-[#eee] shadow-sm overflow-hidden flex flex-col max-w-[520px]"
+                          className="bg-white rounded-xl border border-[#eee] shadow-sm overflow-hidden flex flex-col w-full"
                         >
-                          <div className="flex gap-4 p-4 max-w-[500px]">
+                            <div className="flex gap-4 p-4 w-full">
                             <button
                               type="button"
                               onClick={() => p?.id && handleProductClick(p.id)}
@@ -284,8 +310,8 @@ function BagPage() {
                   </div>
                 </div>
 
-                <div className="lg:w-80">
-                  <div className="mt-6 lg:mt-0 bg-white rounded-2xl border border-[#eee] shadow-sm p-5 sm:p-6">
+                 <div className="lg:w-96">
+                   <div className="mt-6 lg:mt-0 bg-white rounded-2xl border border-[#eee] shadow-sm p-5 sm:p-6">
                     <p className="text-center text-2xl font-bold text-[#1a1a1a] mb-4">Total</p>
                     <div className="flex justify-between items-center mb-4">
                       <p className="text-[#000000] font-medium text-[1.25rem]">Subtotal</p>
@@ -322,7 +348,53 @@ function BagPage() {
                     </button>
                   </div>
                 </div>
-              </div>
+               </div>
+
+              {/* Recommended Products */}
+              {recommendedProducts.length > 0 && (
+                <div className="mt-16 pt-10 border-t border-gray-200 max-w-5xl mx-auto">
+                  <h2 className="text-xl font-semibold text-gray-900 tracking-tight mb-8 px-4">Recommended with</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 px-4">
+                    {recommendedProducts.map((p) => (
+                      <div
+                        key={p.id}
+                        className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)]"
+                      >
+                        <div className="relative h-[200px] bg-gray-100">
+                          <Image
+                            src={getProductImageUrl(p)}
+                            alt={p.name}
+                            fill
+                            className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                            onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToFavorite(p.id);
+                            }}
+                            className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
+                          >
+                            <FaHeart className="text-sm" />
+                          </button>
+                        </div>
+                        <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
+                          <h3 className="text-[1.15rem] font-bold text-gray-800 truncate">{p.name}</h3>
+                          <p className="text-sm font-bold text-black mt-1">{formatPrice(p.price)}</p>
+                          <button
+                            type="button"
+                            onClick={() => addToCart(p.id, 1)}
+                            className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                          >
+                            <FaCartPlus className="text-base" /> Add to Cart
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

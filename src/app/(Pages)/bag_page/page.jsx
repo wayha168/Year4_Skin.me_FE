@@ -288,8 +288,29 @@ function BagPage() {
                   <div className="mt-6 lg:mt-0 bg-white rounded-2xl border border-[#eee] shadow-sm p-5 sm:p-6">
                     <p className="text-center text-2xl font-bold text-[#1a1a1a] mb-4">Total</p>
                     <div className="flex justify-between items-center mb-4">
-                      <p className="text-[#6b7280] text-sm">Subtotal</p>
+                      <p className="text-[#000000] font-medium text-[1.25rem]">Subtotal</p>
                       <p className="text-xl font-bold text-[#eb61a2]">{formatPrice(total.toFixed(2))}</p>
+                    </div>
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="text-[#000000] font-medium text-[1.25rem]">Free Delivery</p>
+                      <div className="relative group">
+                        <Image 
+                          src="/assets/BagPage/theImportIcon.svg" 
+                          alt="Important" 
+                          width={28} 
+                          height={28} 
+                          className="cursor-help"
+                        />
+                        <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-sm hidden group-hover:block z-50">
+                          <p className="font-semibold mb-1">Free Delivery Benefits</p>
+                          <ul className="list-disc list-inside text-[#6b7280] space-y-1">
+                            <li>Free shipping on orders over $50</li>
+                            <li>3-5 business days delivery</li>
+                            <li>Track your package in real-time</li>
+                            <li>Easy returns within 30 days</li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
                     <button
                       type="button"

@@ -9,3 +9,6 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api/v1";
 
 /** Base path for uploaded assets (same origin when using rewrites). */
 export const UPLOADS_BASE = process.env.NEXT_PUBLIC_UPLOADS_BASE ?? "";
+
+/** Base URL for the separate chatbot service. */
+export const CHATBOT_API_BASE = (process.env.NEXT_PUBLIC_CHATBOT_API_BASE ?? "https://chatbot.skinme.store").replace(/\/+$/, "");

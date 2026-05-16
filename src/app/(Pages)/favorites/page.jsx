@@ -165,6 +165,9 @@ const FavoritePage = () => {
         </div>
 
         <div className="px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] tracking-tight">My Favorite</h1>
+          </div>
 
         {loading ? (
           <p className="text-center text-gray-500 text-lg mt-20">

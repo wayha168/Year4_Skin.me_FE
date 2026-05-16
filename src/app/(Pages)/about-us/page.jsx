@@ -47,6 +47,12 @@ const AboutUsPage = () => {
           </h1>
         </div>
 
+        <div className="px-4 sm:px-6">
+          <div className="max-w-7xl mt-4 mx-auto -mb-[4rem]">
+            <h1 className="text-2xl sm:text-3xl font-bold opacity-100 text-[#EB61A1]">SKIN.ME</h1>
+          </div>
+        </div>
+
         {/* ===== Original About Us Content ===== */}
         {(() => {
           const [noAnimation, setNoAnimation] = useState(false);

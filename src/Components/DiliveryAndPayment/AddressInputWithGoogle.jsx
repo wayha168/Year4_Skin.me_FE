@@ -22,9 +22,15 @@ export default function AddressInputWithGoogle({ value, onChange, required, plac
   onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (!apiKey || scriptLoaded) return;
+    if (!apiKey) return;
     if (window.google?.maps?.places) {
       setScriptLoaded(true);
+      return;
+    }
+    // Prevent duplicate script injection
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existingScript) {
+      existingScript.onload = () => setScriptLoaded(true);
       return;
     }
     const script = document.createElement("script");
@@ -33,8 +39,7 @@ export default function AddressInputWithGoogle({ value, onChange, required, plac
     script.defer = true;
     script.onload = () => setScriptLoaded(true);
     document.head.appendChild(script);
-    return () => {};
-  }, [apiKey, scriptLoaded]);
+  }, [apiKey]);
 
   useEffect(() => {
     if (!scriptLoaded || !mapContainerRef.current || !window.google?.maps || mapRef.current) return;

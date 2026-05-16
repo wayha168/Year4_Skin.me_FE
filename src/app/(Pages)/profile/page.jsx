@@ -109,9 +109,17 @@ const ProfilePage = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="min-h-screen bg-gray-100 pt-14 sm:pt-20 pb-20 sm:pb-16 px-4 font-[Poppins,sans-serif]">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#eb61a2]">My Profile</h1>
+      <main className="pt-[5rem] px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
+        {/* ===== Hero Section ===== */}
+        <div className="w-full mb-[1rem] -mt-[4.5rem]">
+          <h1 className="w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold bg-[#ffffff] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+            Profile
+          </h1>
+        </div>
+
+        <div className="px-4 sm:px-6">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <h1 className="text-2xl sm:text-3xl font-bold opacity-70 text-[#000000]">My Account</h1>
 
           {/* 1. User Info Card */}
           <section className="bg-white rounded-2xl shadow-md overflow-hidden">
@@ -304,6 +312,7 @@ const ProfilePage = () => {
               </div>
             </div>
           </section>
+         </div>
         </div>
       </main>
       <Footer />

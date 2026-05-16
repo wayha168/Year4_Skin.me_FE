@@ -257,7 +257,7 @@ function BagPage() {
         <div className="px-4 sm:px-6">
           <div className="max-w-5xl mx-auto">
             <header className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] tracking-tight">Items</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] tracking-tight">My Items</h1>
               <p className="text-[#6b7280] text-sm mt-1">
                 {cartItems.length ? `${itemCount} item${itemCount !== 1 ? "s" : ""} in your bag` : "Your bag is empty"}
               </p>

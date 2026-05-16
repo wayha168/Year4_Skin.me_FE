@@ -15,24 +15,36 @@ import { formatPrice } from "../../../app/lib/formatPrice";
 
 const DefaultProductImage = "/assets/third_image.png";
 
-function QuantityStepper({ value, min = 1, onChange, disabled }) {
+function QuantityStepper({ value, min = 1, onChange, disabled, onRemove }) {
+  const isOne = value <= min;
+
   return (
     <div className="inline-flex items-center border border-[#e5e7eb] rounded-lg overflow-hidden bg-white">
       <button
         type="button"
-        onClick={() => onChange(Math.max(min, value - 1))}
-        disabled={disabled || value <= min}
-        className="w-8 h-8 flex items-center justify-center text-[#374151] hover:bg-[#f9fafb] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm"
-        aria-label="Decrease quantity"
+        onClick={isOne ? onRemove : () => onChange(Math.max(min, value - 1))}
+        disabled={disabled}
+        className="w-8 h-8 flex items-center justify-center text-[#374151] hover:bg-[#f9fafb] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-[1rem] font-bold"
+        aria-label={isOne ? "Remove item" : "Decrease quantity"}
       >
-        −
+        {isOne ? (
+          <Image 
+            src="/assets/DeleteFavorite/DeleteIcon.svg" 
+            alt="Remove" 
+            width={14} 
+            height={14} 
+            className="[filter:brightness(0)_saturate(100%)_invert(13%)_sepia(98%)_saturate(7473%)_hue-rotate(0deg)_brightness(1)_contrast(1)] "
+          />
+        ) : (
+          "−"
+        )}
       </button>
       <span className="w-8 text-center text-sm font-semibold text-[#1a1a1a] tabular-nums">{value}</span>
       <button
         type="button"
         onClick={() => onChange(value + 1)}
         disabled={disabled}
-        className="w-8 h-8 flex items-center justify-center text-[#374151] hover:bg-[#f9fafb] transition-colors text-sm"
+        className="w-8 h-8 flex items-center justify-center text-[#374151] hover:bg-[#f9fafb] transition-colors text-sm  text-[18px] font-bold"
         aria-label="Increase quantity"
       >
         +
@@ -250,18 +262,19 @@ function BagPage() {
                               />
                             </button>
                             <div className="flex-1 min-w-0 flex flex-col justify-center">
-                              <h3 className="font-medium text-[#1a1a1a] truncate text-sm sm:text-base">{p?.name}</h3>
+                              <h3 className="font-bold text-[#1a1a1a] truncate text-sm sm:text-base">{p?.name}</h3>
                               <p className="text-[#9ca3af] text-xs mt-0.5">
                             {p?.brand ? (typeof p.brand === "string" ? p.brand : p.brand.name) : "—"}
                           </p>
-                              <p className="text-[#eb61a2] font-semibold text-sm mt-1">{formatPrice(price)}</p>
+                              <p className="text-[#eb61a2] font-semibold text-sm mt-1">Price {formatPrice(price)}</p>
 
                               <div className="mt-2 flex items-center justify-between gap-2">
-                                <QuantityStepper
-                                  value={qty}
-                                  onChange={(newQty) => updateQty(key, newQty)}
-                                />
-                                <span className="text-sm font-medium text-[#374151]">{formatPrice(lineTotal)}</span>
+                                 <QuantityStepper
+                                   value={qty}
+                                   onChange={(newQty) => updateQty(key, newQty)}
+                                   onRemove={() => handleRemoveItem(key)}
+                                 />
+                                <span className="text-sm font-medium opacity-60  text-[#636363]">Subtotal {formatPrice(lineTotal)}</span>
                               </div>
                             </div>
                           </div>
@@ -273,20 +286,19 @@ function BagPage() {
 
                 <div className="lg:w-80">
                   <div className="mt-6 lg:mt-0 bg-white rounded-2xl border border-[#eee] shadow-sm p-5 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div>
-                        <p className="text-[#6b7280] text-sm">Subtotal</p>
-                        <p className="text-xl font-bold text-[#eb61a2]">{formatPrice(total.toFixed(2))}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleCheckout}
-                        className="w-full sm:w-auto py-3.5 px-8 rounded-xl bg-[#eb61a2] text-white font-semibold hover:bg-[#d94d8c] transition shadow-sm flex items-center justify-center gap-2"
-                      >
-                        <FaShoppingBag className="text-lg" />
-                        Checkout / Make payment
-                      </button>
+                    <p className="text-center text-2xl font-bold text-[#1a1a1a] mb-4">Total</p>
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="text-[#6b7280] text-sm">Subtotal</p>
+                      <p className="text-xl font-bold text-[#eb61a2]">{formatPrice(total.toFixed(2))}</p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={handleCheckout}
+                      className="w-full py-3.5 px-8 rounded-xl bg-[#eb61a2] text-white font-semibold hover:bg-[#d94d8c] transition shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <FaShoppingBag className="text-lg" />
+                      Checkout / Make payment
+                    </button>
                   </div>
                 </div>
               </div>

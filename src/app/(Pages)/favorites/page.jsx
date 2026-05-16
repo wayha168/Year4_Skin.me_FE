@@ -148,6 +148,7 @@ const FavoritePage = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
+      
 
       {notification && (
         <div className="fixed top-20 right-[30px] bg-[#ff0011] text-white font-semibold px-5 py-2.5 rounded-[10px] z-[9999] shadow-[0_4px_10px_rgba(0,0,0,0.2)] animate-[fadeInOut_3s_ease]">
@@ -155,10 +156,15 @@ const FavoritePage = () => {
         </div>
       )}
 
-      <main className="pt-[9rem] px-4 sm:px-6 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
-        <div className="max-w-7xl mx-auto mb-12">
-          <h1 className="text-4xl font-bold text-[#eb61a2]">My Favorites</h1>
+      <main className="pt-[5rem] px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
+        {/* ===== Hero Section ===== */}
+        <div className="w-full mb-[2rem] -mt-[4.5rem]">
+          <h1 className="w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#ffffff] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+            Favorites
+          </h1>
         </div>
+
+        <div className="px-4 sm:px-6">
 
         {loading ? (
           <p className="text-center text-gray-500 text-lg mt-20">
@@ -307,8 +313,9 @@ const FavoritePage = () => {
                 </div>
               ))}
             </div>
-          </section>
-        )}
+           </section>
+         )}
+        </div>
       </main>
 
       <Footer />

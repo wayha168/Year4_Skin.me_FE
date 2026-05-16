@@ -425,10 +425,19 @@ const ProductDetailsPage = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="pt-24 sm:pt-28 pb-20 bg-[#CCF6F2] font-[Poppins,sans-serif] px-4 sm:px-6">
-        <Suspense fallback={<Loading />}>
-          <ProductDetailsContent />
-        </Suspense>
+      <main className="pt-[5rem] px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
+        {/* ===== Hero Section ===== */}
+        <div className="w-full mb-[1rem] -mt-[4.5rem]">
+          <h1 className="w-full h-[9rem] flex items-end justify-center  text-4xl font-bold  bg-[#ffffff] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+            Product Detail
+          </h1>
+        </div>
+
+        <div className="px-4 sm:px-6">
+          <Suspense fallback={<Loading />}>
+            <ProductDetailsContent />
+          </Suspense>
+        </div>
       </main>
       <Footer />
     </>

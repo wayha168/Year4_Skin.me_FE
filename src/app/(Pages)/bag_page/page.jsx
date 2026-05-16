@@ -246,14 +246,22 @@ function BagPage() {
         </div>
       )}
 
-      <main className="min-h-screen bg-[#CCF6F2] pt-[6.5rem] pb-20 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto">
-          <header className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] tracking-tight">My Bag</h1>
-            <p className="text-[#6b7280] text-sm mt-1">
-              {cartItems.length ? `${itemCount} item${itemCount !== 1 ? "s" : ""} in your bag` : "Your bag is empty"}
-            </p>
-          </header>
+      <main className="pt-[5rem] px-0 pb-20 bg-[#CCF6F2] font-[Poppins,sans-serif]">
+        {/* ===== Hero Section ===== */}
+        <div className="w-full mb-[1rem] -mt-[4.5rem]">
+          <h1 className="w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#ffffff] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+            Bags
+          </h1>
+        </div>
+
+        <div className="px-4 sm:px-6">
+          <div className="max-w-5xl mx-auto">
+            <header className="mb-6">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] tracking-tight">Items</h1>
+              <p className="text-[#6b7280] text-sm mt-1">
+                {cartItems.length ? `${itemCount} item${itemCount !== 1 ? "s" : ""} in your bag` : "Your bag is empty"}
+              </p>
+            </header>
 
           {loading ? (
             <div className="flex justify-center py-16">
@@ -430,6 +438,7 @@ function BagPage() {
               )}
             </>
           )}
+         </div>
         </div>
       </main>
 

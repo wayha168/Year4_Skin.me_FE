@@ -366,50 +366,52 @@ const ProductDetailsContent = () => {
             )}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
-            {relatedProducts.map((p) => (
-              <div
-                key={p.id}
-                className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200"
-              >
-                <div
-                  className="relative aspect-square bg-gray-50 cursor-pointer"
-                  onClick={() => router.push(`/product_details?productId=${p.id}`)}
-                  onKeyDown={(e) => e.key === "Enter" && router.push(`/product_details?productId=${p.id}`)}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <Image
-                    src={getProductImageUrl(p, DefaultImage)}
-                    alt={p?.name || "Product"}
-                    fill
-                    className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                    sizes="(max-width: 640px) 50vw, 20vw"
-                    unoptimized
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
-                    className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-gray-600 hover:text-[#eb61a2] transition-colors shadow-sm"
-                    aria-label="Add to favorites"
-                  >
-                    <FaHeart className="text-sm" />
-                  </button>
-                </div>
-                <div className="p-4 flex flex-col flex-1">
-                  <h3 className="text-sm font-semibold text-gray-900 truncate mb-1" title={p?.name}>
-                    {p?.name || "No Name"}
-                  </h3>
-                  <p className="text-sm font-semibold text-[#eb61a2] mb-3">{formatPrice(p?.price)}</p>
-                  <button
-                    type="button"
-                    onClick={() => addToCart(p.id, 1)}
-                    className="mt-auto w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-[#eb61a2] hover:bg-[#d13e82] transition-colors"
-                  >
-                    Add to Bag
-                  </button>
-                </div>
-              </div>
-            ))}
+             {relatedProducts.map((p) => (
+               <div
+                 key={p.id}
+                 className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+               >
+                 <div className="relative h-[200px] bg-gray-100">
+                   <Image
+                     src={getProductImageUrl(p, DefaultImage)}
+                     alt={p?.name || "Product"}
+                     fill
+                     className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                     sizes="(max-width: 600px) 50vw, 200px"
+                     unoptimized
+                     onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                   />
+                   <button
+                     type="button"
+                     onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
+                     className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
+                   >
+                     <FaHeart className="text-sm" />
+                   </button>
+                 </div>
+                 <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
+                   <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                     {typeof p.brand === "string" ? p.brand : p.brand?.name || ""}
+                   </span>
+                   <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
+                     {p.name}
+                   </h3>
+                   <p className="text-xs text-gray-500 truncate opacity-80">
+                     {p.description?.trim() || "No description"}
+                   </p>
+                   <p className="text-sm font-bold text-black mt-1">
+                     {formatPrice(p.price)}
+                   </p>
+                   <button
+                     type="button"
+                     onClick={() => addToCart(p.id, 1)}
+                     className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                   >
+                     <FaCartPlus className="text-base" /> Add to Cart
+                   </button>
+                 </div>
+               </div>
+             ))}
           </div>
         </section>
       )}
@@ -422,7 +424,7 @@ const ProductDetailsPage = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="pt-24 sm:pt-28 pb-20 bg-white font-[Poppins,sans-serif] px-4 sm:px-6">
+      <main className="pt-24 sm:pt-28 pb-20 bg-[#CCF6F2] font-[Poppins,sans-serif] px-4 sm:px-6">
         <Suspense fallback={<Loading />}>
           <ProductDetailsContent />
         </Suspense>

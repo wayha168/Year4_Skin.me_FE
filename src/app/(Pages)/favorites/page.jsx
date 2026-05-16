@@ -19,6 +19,7 @@ const ThirdImage = "/assets/third_image.png";
 
 const FavoritePage = () => {
   const [favorites, setFavorites] = useState([]);
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
 
@@ -45,7 +46,33 @@ const FavoritePage = () => {
         const { data } = await axiosAuth.get(`/favorites/user/${userId}`, {
           withCredentials: true,
         });
-        setFavorites(data?.data || []);
+        const favs = data?.data || [];
+        setFavorites(favs);
+
+        // Fetch recommended products from same brand
+        if (favs.length > 0) {
+          const firstProduct = favs[0].product;
+          const brandId = firstProduct?.brand?.id;
+          const brandName = typeof firstProduct?.brand === "string" ? firstProduct.brand : firstProduct?.brand?.name;
+
+          try {
+            const res = await axiosAuth.get("/products/all");
+            const allProducts = res.data?.data || [];
+            const recommended = allProducts
+              .filter(p => {
+                if (p.id === firstProduct.id) return false;
+                const pBrandId = p.brand?.id;
+                const pBrandName = typeof p.brand === "string" ? p.brand : p.brand?.name;
+                return (brandId && pBrandId === brandId) || (brandName && pBrandName === brandName);
+              })
+              .slice(0, 5);
+            setRecommendedProducts(recommended);
+          } catch (e) {
+            console.error("Failed to fetch recommended products");
+          }
+        } else {
+          setRecommendedProducts([]);
+        }
       } catch (err) {
         console.error("Error fetching favorites:", err);
 
@@ -127,7 +154,7 @@ const FavoritePage = () => {
         </div>
       )}
 
-      <main className="pt-[9rem] px-4 sm:px-6 pb-16 bg-white font-[Poppins,sans-serif]">
+      <main className="pt-[9rem] px-4 sm:px-6 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
         <div className="max-w-7xl mx-auto mb-12">
           <h1 className="text-4xl font-bold text-[#eb61a2]">My Favorites</h1>
         </div>
@@ -216,7 +243,48 @@ const FavoritePage = () => {
                 );
               })}
             </div>
-          </div>
+           </div>
+         )}
+
+        {/* Recommended with – same brand */}
+        {recommendedProducts.length > 0 && (
+          <section className="max-w-7xl mx-auto mt-16 pt-10 border-t border-gray-200">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-8 px-4">
+              <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Recommended with</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 px-4">
+              {recommendedProducts.map((p) => (
+                <div
+                  key={p.id}
+                  className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200"
+                >
+                  <div
+                    className="relative aspect-square bg-gray-50 cursor-pointer flex items-center justify-center"
+                    onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                  >
+                    <Image
+                      src={getProductImageUrl(p)}
+                      alt={p.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="p-4 flex flex-col flex-1">
+                    <h3 className="text-sm font-semibold text-gray-900 truncate mb-1">{p.name}</h3>
+                    <p className="text-sm font-semibold text-[#eb61a2] mb-3">{formatPrice(p.price)}</p>
+                    <button
+                      type="button"
+                      onClick={() => addToCart(p.id, 1)}
+                      className="mt-auto w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-[#eb61a2] hover:bg-[#d13e82] transition-colors"
+                    >
+                      Add to Bag
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
       </main>
 

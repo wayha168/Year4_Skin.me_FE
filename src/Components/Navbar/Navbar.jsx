@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { FaStar, FaRegStar } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
@@ -558,17 +559,18 @@ return (
                             urlFilters.rating.includes(String(stars)) ? "text-[#eb61a1] font-medium" : "text-gray-700"
                           }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <span>
-                              {[1, 2, 3, 4, 5].map(i => {
-                                const isSelected = urlFilters.rating.includes(String(stars));
-                                return (
-                                  <span key={i} className={`text-base ${i <= stars ? (isSelected ? "text-[#eb61a1]" : "text-black") : `text-transparent [-webkit-text-stroke:1px_${isSelected ? "#eb61a1" : "#000"}]`}`}>★</span>
-                                );
-                              })}
-                            </span>
-                            <span>{stars} Stars</span>
-                          </div>
+                           <div className="flex items-center gap-2">
+                             <span className="flex">
+                               {[1,2,3,4,5].map(i => {
+                                 const isSelected = urlFilters.rating.includes(String(stars));
+                                 const color = isSelected ? "#eb61a1" : "#000";
+                                 return i <= stars 
+                                   ? <FaStar key={i} className="text-base" style={{color}} /> 
+                                   : <FaRegStar key={i} className="text-base" style={{color}} />;
+                               })}
+                             </span>
+                             <span>{stars} Stars</span>
+                           </div>
                           {urlFilters.rating.includes(String(stars)) && <i className="fa-solid fa-check text-[#eb61a1]"></i>}
                         </button>
                       ))}

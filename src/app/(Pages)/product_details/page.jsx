@@ -140,15 +140,21 @@ const ProductDetailsContent = () => {
     <>
       <div className="max-w-6xl mx-auto">
         {/* Breadcrumb / back */}
-        <div className="mb-6">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="text-sm text-gray-500 hover:text-[#eb61a2] transition-colors"
-          >
-            ← Back
-          </button>
-        </div>
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="group"
+            >
+              <Image 
+                src="/assets/BackProductsDetail/BackButtonForProductDetail.svg" 
+                alt="Back" 
+                width={100} 
+                height={100} 
+                className="transition-all duration-200  group-hover:[filter:brightness(0)_saturate(100%)_invert(42%)_sepia(93%)_saturate(1352%)_hue-rotate(300deg)_brightness(1)_contrast(1)]"
+              />
+            </button>
+          </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-start">
           {/* Gallery with hover/touch zoom */}
@@ -259,7 +265,8 @@ const ProductDetailsContent = () => {
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-11 h-11 flex items-center font-bold text-[1.3rem]  justify-center text-gray-600 hover:bg-[#B0D8D4] transition-colors"
+                  disabled={quantity === 1}
+                  className={`w-11 h-11 flex items-center font-bold text-[1.3rem] justify-center transition-colors ${quantity === 1 ? "text-[#CACACA] cursor-not-allowed" : "text-gray-600 hover:bg-[#B0D8D4]"}`}
                   aria-label="Decrease quantity"
                 >
                   −

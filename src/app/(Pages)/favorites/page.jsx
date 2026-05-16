@@ -9,8 +9,9 @@ import axiosAuth from "../../../app/lib/api/axiosConfig";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
+import useUserActions from "../../../Components/Hooks/userUserActions";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
-import { FaShoppingBag } from "react-icons/fa";
+import { FaCartPlus, FaHeart } from "react-icons/fa";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
 
@@ -22,6 +23,7 @@ const FavoritePage = () => {
   const [notification, setNotification] = useState("");
 
   const { user, loading: authLoading } = useAuthContext();
+  const { addToCart } = useUserActions();
   const router = useRouter();
   const userId = user?.id;
 
@@ -99,6 +101,10 @@ const FavoritePage = () => {
     router.push("/check_out");
   }, [router]);
 
+  const handleAddToCartFromFavorite = useCallback(async (productId) => {
+    await addToCart(productId, 1);
+  }, [addToCart]);
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -147,53 +153,64 @@ const FavoritePage = () => {
                 return (
                   <div
                     key={product.id}
-                    className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] p-4 flex flex-col justify-between transition-[transform_0.3s_ease,box-shadow_0.3s_ease] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+                    className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                   >
-                    <div className="relative">
+                    <div className="relative h-[200px] bg-gray-100">
                       <Image
-                        onClick={() => handleProductClick(product.id)}
                         src={imgSrc}
                         alt={product.name}
-                        width={400}
-                        height={400}
-                        loading="lazy"
+                        fill
+                        className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                        sizes="(max-width: 600px) 50vw, 200px"
                         unoptimized
-                        style={{ width: "auto", height: "auto" }}
-                        className="w-full h-[200px] object-cover rounded-2xl cursor-pointer transition-transform duration-300 hover:scale-105 max-[600px]:h-[200px]"
+                        onClick={() => handleProductClick(product.id)}
                         onError={(e) => (e.currentTarget.src = ThirdImage)}
                       />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFavorite(product.id)}
+                        className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
+                      >
+                        <FaHeart className="text-sm" />
+                      </button>
                     </div>
 
-                    <div className="flex flex-col justify-between px-3 py-2.5 flex-grow z-[100]">
-                      <div>
-                        <h3 className="text-base font-semibold text-left text-[#2d3748] leading-tight overflow-hidden text-ellipsis whitespace-nowrap max-[600px]:text-base">
-                          {product.name}
-                        </h3>
-                        {(product.brand != null) && (
-                          <p className="text-sm text-gray-600 text-center mt-1">
-                            {typeof product.brand === "object" ? product.brand?.name : product.brand}
-                          </p>
-                        )}
-                        <p className="flex justify-center text-base font-bold text-left text-[#2563eb] my-1.5 max-[600px]:text-sm">
-                          {formatPrice(product.price)}
-                        </p>
-                      </div>
+                    <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
+                      {(product.brand != null) && (
+                        <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                          {typeof product.brand === "object" ? product.brand?.name : product.brand}
+                        </span>
+                      )}
+                      <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={product.name}>
+                        {product.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 truncate opacity-80" title={product.description}>
+                        {product.description?.trim() || "No description"}
+                      </p>
+                      <p className="text-sm font-bold text-black mt-1">
+                        {formatPrice(product.price)}
+                      </p>
 
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={handleCheckout}
-                          className="mt-auto bg-[#d13e82] border-none rounded-xl px-5 py-2.5 text-white font-semibold cursor-pointer flex items-center justify-center gap-2 text-[0.95rem] shadow-[0_4px_12px_rgba(209,62,130,0.3)] transition-all duration-300 hover:bg-[#c32c70] hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_6px_15px_rgba(209,62,130,0.4)] active:-translate-y-px active:scale-[0.98] active:shadow-[0_4px_10px_rgba(209,62,130,0.3)] z-[100]"
-                        >
-                          <FaShoppingBag className="text-[1.1rem] transition-transform duration-300" />
-                          Check Out
-                        </button>
-                        <button
-                          onClick={() => handleRemoveFavorite(product.id)}
-                          className="text-[#d13e82] font-medium hover:underline text-sm"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddToCartFromFavorite(product.id)}
+                        className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                      >
+                        <FaCartPlus className="text-base" /> Add to Cart
+                      </button>
+                      <button
+                        onClick={() => handleRemoveFavorite(product.id)}
+                        className="relative flex items-center justify-center gap-1.5 text-[#d13e82] font-medium text-sm mt-1 transition-all duration-200 hover:scale-[1.02] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-[#d13e82] after:transition-all after:duration-300 hover:after:w-full"
+                      >
+                        <Image  className="mt-[1rem]"
+                          src="/assets/DeleteFavorite/DeleteIcon.svg" 
+                          alt="Delete" 
+                          width={12} 
+                          height={12} 
+                          className="[filter:brightness(0)_saturate(100%)_invert(42%)_sepia(93%)_saturate(1352%)_hue-rotate(300deg)_brightness(1)_contrast(1)]"
+                        />
+                        Remove
+                      </button>
                     </div>
                   </div>
                 );

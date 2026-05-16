@@ -187,12 +187,12 @@ const ProductDetailsContent = () => {
                 <div
                   className="absolute pointer-events-none rounded-full border-2 border-white shadow-xl bg-no-repeat z-10"
                   style={{
-                    width: 140,
-                    height: 140,
-                    left: zoom.lensX - 70,
-                    top: zoom.lensY - 70,
+                    width: 250,
+                    height: 250,
+                    left: zoom.lensX - 90,
+                    top: zoom.lensY - 90,
                     backgroundImage: `url(${mainImageSrc})`,
-                    backgroundSize: "250%",
+                    backgroundSize: "600%",
                     backgroundPosition: `${zoom.x}% ${zoom.y}%`,
                   }}
                 />

@@ -1,21 +1,31 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { FaComments, FaWandSparkles } from "react-icons/fa6";
+import useAuthContext from "../../app/lib/Authentication/AuthContext";
 
 const AUTH_PAGES = new Set(["/login", "/signup"]);
 
 export default function MessageWidget() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuthContext();
 
   if (pathname === "/chatbot") return null;
 
   const mobileMarginClass = AUTH_PAGES.has(pathname) ? "" : "max-[510px]:mb-[4.7rem]";
 
+  const handleChatClick = () => {
+    if (!authLoading && !user) {
+      router.push("/login?redirect=/chatbot");
+    } else {
+      router.push("/chatbot");
+    }
+  };
+
   return (
-    <Link
-      href="/chatbot"
+    <button
+      onClick={handleChatClick}
       className={`fixed bottom-5 right-5 z-[999] flex items-center gap-3 rounded-full border border-white/60 bg-[linear-gradient(135deg,#eb61a2_0%,#ff9f6e_100%)] px-4 py-3 text-white shadow-[0_18px_40px_rgba(235,97,162,0.35)] transition-transform duration-200 hover:scale-[1.02] ${mobileMarginClass}`}
       aria-label="Open Skin.me assistant"
     >
@@ -31,6 +41,6 @@ export default function MessageWidget() {
           Chat, upload skin images, get help
         </span>
       </span>
-    </Link>
+    </button>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
+import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import {
   FaArrowUp,
   FaImage,
@@ -13,12 +15,7 @@ import {
 import { FaWandSparkles } from "react-icons/fa6";
 import { CHATBOT_API_BASE } from "../../app/lib/api/config";
 
-const QUICK_PROMPTS = [
-  "Suggest a skincare routine for sensitive skin.",
-  "What ingredients help with acne and dark spots?",
-  "Please analyze my skin image and explain what you see.",
-  "Recommend products for dry skin and redness.",
-];
+
 
 const WELCOME_MESSAGE =
   "Hello! I’m Skin.me Assistant. I can help with skincare questions, product guidance, and skin image analysis.";
@@ -146,23 +143,87 @@ function extractReply(payload) {
 }
 
 export default function ChatAssistantPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuthContext();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login?redirect=/chatbot");
+    }
+  }, [user, authLoading, router]);
+
   const composerInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const endRef = useRef(null);
 
-  const [messages, setMessages] = useState(() => [
-    {
-      id: "welcome",
-      role: "assistant",
-      text: WELCOME_MESSAGE,
-      html: formatAssistantHtml(WELCOME_MESSAGE),
-      images: [],
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    },
-  ]);
+  // Multi-chat history (in-memory only)
+  const [chats, setChats] = useState(() => {
+    const initialChat = {
+      id: Date.now().toString(),
+      title: "New Chat",
+      messages: [
+        {
+          id: "welcome",
+          role: "assistant",
+          text: WELCOME_MESSAGE,
+          html: formatAssistantHtml(WELCOME_MESSAGE),
+          images: [],
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ],
+    };
+    return [initialChat];
+  });
+
+  const [currentChatId, setCurrentChatId] = useState(() => chats[0].id);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+
+  const currentChat = chats.find((c) => c.id === currentChatId);
+  const messages = currentChat?.messages || [];
+
+  // Create new chat
+  const createNewChat = () => {
+    const newChat = {
+      id: Date.now().toString(),
+      title: "New Chat",
+      messages: [
+        {
+          id: "welcome",
+          role: "assistant",
+          text: WELCOME_MESSAGE,
+          html: formatAssistantHtml(WELCOME_MESSAGE),
+          images: [],
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ],
+    };
+    setChats((prev) => [newChat, ...prev]);
+    setCurrentChatId(newChat.id);
+    setInput("");
+    setSelectedImage(null);
+  };
+
+  // Switch to existing chat
+  const switchChat = (chatId) => {
+    setCurrentChatId(chatId);
+    setInput("");
+    setSelectedImage(null);
+  };
+
+  // Delete a chat
+  const deleteChat = (chatId) => {
+    if (chats.length === 1) return; // Don't delete the last chat
+
+    const newChats = chats.filter((c) => c.id !== chatId);
+    setChats(newChats);
+
+    if (currentChatId === chatId) {
+      setCurrentChatId(newChats[0].id);
+    }
+  };
 
   const selectedImagePreview = useMemo(
     () => (selectedImage ? URL.createObjectURL(selectedImage) : null),
@@ -238,7 +299,19 @@ export default function ChatAssistantPage() {
       localImage: selectedImagePreview,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Update current chat messages
+    setChats((prevChats) =>
+      prevChats.map((chat) =>
+        chat.id === currentChatId
+          ? {
+              ...chat,
+              title: chat.title === "New Chat" ? trimmed.slice(0, 30) : chat.title,
+              messages: [...chat.messages, userMessage],
+            }
+          : chat
+      )
+    );
+
     setInput("");
     setLoading(true);
 
@@ -251,30 +324,42 @@ export default function ChatAssistantPage() {
         : await sendText(trimmed);
 
       const responseText = result.text || ERROR_MESSAGE;
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          text: responseText,
-          html: formatAssistantHtml(responseText),
-          images: result.images || [],
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+
+      const assistantMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        text: responseText,
+        html: formatAssistantHtml(responseText),
+        images: result.images || [],
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === currentChatId
+            ? { ...chat, messages: [...chat.messages, assistantMessage] }
+            : chat
+        )
+      );
     } catch (error) {
       console.error("Chat assistant error:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-error-${Date.now()}`,
-          role: "assistant",
-          text: ERROR_MESSAGE,
-          html: formatAssistantHtml(ERROR_MESSAGE),
-          images: [],
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+
+      const errorMessage = {
+        id: `assistant-error-${Date.now()}`,
+        role: "assistant",
+        text: ERROR_MESSAGE,
+        html: formatAssistantHtml(ERROR_MESSAGE),
+        images: [],
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === currentChatId
+            ? { ...chat, messages: [...chat.messages, errorMessage] }
+            : chat
+        )
+      );
     } finally {
       setLoading(false);
       composerInputRef.current?.focus();
@@ -322,18 +407,49 @@ export default function ChatAssistantPage() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-[28px] border border-[#f0d7e3] bg-white/85 p-5 shadow-[0_16px_32px_rgba(83,33,58,0.06)] backdrop-blur">
-          <p className="text-sm font-semibold text-[#1f2937]">Helpful starters</p>
-          <div className="mt-4 space-y-3">
-            {QUICK_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => handleSend(prompt)}
-                className="w-full rounded-2xl border border-[#f0d7e3] bg-[#fffafc] px-4 py-3 text-left text-sm leading-6 text-[#4b5563] transition hover:border-[#eb61a2] hover:bg-[#fff2f8]"
+        {/* Chat History */}
+        <div className="mt-5 rounded-[28px] border border-[#f0d7e3] bg-white/85 p-5 shadow-[0_16px_32px_rgba(83,33,58,0.06)] backdrop-blur flex-1 overflow-y-auto">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-[#1f2937]">Chat History</p>
+            <button
+              onClick={createNewChat}
+              className="text-xs px-3 py-1 rounded-full bg-[#eb61a2] text-white hover:bg-[#d94d8c] transition"
+            >
+              + New
+            </button>
+          </div>
+
+          <div className="space-y-1">
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => switchChat(chat.id)}
+                className={`group flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition ${
+                  currentChatId === chat.id
+                    ? "bg-[#fff2f8] border border-[#eb61a2]"
+                    : "hover:bg-[#fff8fb]"
+                }`}
               >
-                {prompt}
-              </button>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#1f2937] truncate">
+                    {chat.title}
+                  </p>
+                  <p className="text-[11px] text-[#6b7280]">
+                    {chat.messages.length} messages
+                  </p>
+                </div>
+                {chats.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteChat(chat.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 p-1"
+                  >
+                    <FaTrashAlt className="text-xs" />
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FaHome } from "react-icons/fa";
 import { FaWandSparkles } from "react-icons/fa6";
-import ChatAssistantPage from "../../Components/Chatbot/ChatAssistantPage";
+import ChatAssistantPage from "../../Components/Chatbot/ChatAssistantPage.jsx";
 
 export default function ChatbotPage() {
   return (

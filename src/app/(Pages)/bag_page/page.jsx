@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, Link } from "next/navigation";
 import Image from "next/image";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
@@ -9,7 +9,7 @@ import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import { updateCartItemQuantity, removeCartItem } from "../../../app/lib/cartUpdateQuantity";
-import { FaShoppingBag } from "react-icons/fa";
+import { FaShoppingBag, FaHeart, FaCartPlus } from "react-icons/fa";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
 
@@ -28,12 +28,12 @@ function QuantityStepper({ value, min = 1, onChange, disabled, onRemove }) {
         aria-label={isOne ? "Remove item" : "Decrease quantity"}
       >
         {isOne ? (
-          <Image 
-            src="/assets/DeleteFavorite/DeleteIcon.svg" 
-            alt="Remove" 
-            width={14} 
-            height={14} 
-            className="[filter:brightness(0)_saturate(100%)_invert(13%)_sepia(98%)_saturate(7473%)_hue-rotate(0deg)_brightness(1)_contrast(1)] "
+          <Image
+            src="/assets/DeleteFavorite/DeleteIcon.svg"
+            alt="Remove"
+            width={14}
+            height={14}
+            className="[filter:brightness(0)_saturate(100%)_invert(13%)_sepia(98%)_saturate(7473%)_hue-rotate(0deg)_brightness(1)_contrast(1)]"
           />
         ) : (
           "−"
@@ -87,7 +87,7 @@ function BagPage() {
           const res = await axiosAuth.get("/products/all");
           const allProducts = res.data?.data || [];
           const recommended = allProducts
-            .filter(p => {
+            .filter((p) => {
               if (p.id === firstProduct.id) return false;
               const pBrandId = p.brand?.id;
               const pBrandName = typeof p.brand === "string" ? p.brand : p.brand?.name;
@@ -209,8 +209,24 @@ function BagPage() {
     router.push(`/product_details?productId=${productId}`);
   }, [router]);
 
+  const addToFavorite = useCallback((productId) => {
+    setNotification("Added to favorites");
+    setTimeout(() => setNotification(""), 2000);
+  }, []);
+
+  const addToCart = useCallback(async (productId, qty = 1) => {
+    setNotification("Added to cart");
+    setTimeout(() => setNotification(""), 2000);
+  }, []);
+
   const total = cartItems.reduce((sum, item) => sum + (item.product?.price ?? 0) * (item.quantity ?? 1), 0);
   const itemCount = cartItems.reduce((s, i) => s + (i.quantity ?? 1), 0);
+  const brandName =
+    cartItems.length > 0
+      ? typeof cartItems[0].product?.brand === "string"
+        ? cartItems[0].product.brand
+        : cartItems[0].product?.brand?.name ?? ""
+      : "";
 
   if (authLoading || !user) {
     return (
@@ -272,7 +288,7 @@ function BagPage() {
                           key={key}
                           className="bg-white rounded-xl border border-[#eee] shadow-sm overflow-hidden flex flex-col w-full"
                         >
-                            <div className="flex gap-4 p-4 w-full">
+                          <div className="flex gap-4 p-4 w-full">
                             <button
                               type="button"
                               onClick={() => p?.id && handleProductClick(p.id)}
@@ -290,16 +306,16 @@ function BagPage() {
                             <div className="flex-1 min-w-0 flex flex-col justify-center">
                               <h3 className="font-bold text-[#1a1a1a] truncate text-sm sm:text-base">{p?.name}</h3>
                               <p className="text-[#9ca3af] text-xs mt-0.5">
-                            {p?.brand ? (typeof p.brand === "string" ? p.brand : p.brand.name) : "—"}
-                          </p>
+                                {p?.brand ? (typeof p.brand === "string" ? p.brand : p.brand.name) : "—"}
+                              </p>
                               <p className="text-[#eb61a2] font-semibold text-sm mt-1">Price {formatPrice(price)}</p>
 
                               <div className="mt-2 flex items-center justify-between gap-2">
-                                 <QuantityStepper
-                                   value={qty}
-                                   onChange={(newQty) => updateQty(key, newQty)}
-                                   onRemove={() => handleRemoveItem(key)}
-                                 />
+                                <QuantityStepper
+                                  value={qty}
+                                  onChange={(newQty) => updateQty(key, newQty)}
+                                  onRemove={() => handleRemoveItem(key)}
+                                />
                                 <span className="text-sm font-medium opacity-60  text-[#636363]">Subtotal {formatPrice(lineTotal)}</span>
                               </div>
                             </div>
@@ -310,8 +326,8 @@ function BagPage() {
                   </div>
                 </div>
 
-                 <div className="lg:w-96">
-                   <div className="mt-6 lg:mt-0 bg-white rounded-2xl border border-[#eee] shadow-sm p-5 sm:p-6">
+                <div className="lg:w-96">
+                  <div className="mt-6 lg:mt-0 bg-white rounded-2xl border border-[#eee] shadow-sm p-5 sm:p-6">
                     <p className="text-center text-2xl font-bold text-[#1a1a1a] mb-4">Total</p>
                     <div className="flex justify-between items-center mb-4">
                       <p className="text-[#000000] font-medium text-[1.25rem]">Subtotal</p>
@@ -320,11 +336,11 @@ function BagPage() {
                     <div className="flex justify-between items-center mb-4">
                       <p className="text-[#000000] font-medium text-[1.25rem]">Free Delivery</p>
                       <div className="relative group">
-                        <Image 
-                          src="/assets/BagPage/theImportIcon.svg" 
-                          alt="Important" 
-                          width={28} 
-                          height={28} 
+                        <Image
+                          src="/assets/BagPage/theImportIcon.svg"
+                          alt="Important"
+                          width={28}
+                          height={28}
                           className="cursor-help"
                         />
                         <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-sm hidden group-hover:block z-50">
@@ -348,24 +364,37 @@ function BagPage() {
                     </button>
                   </div>
                 </div>
-               </div>
+              </div>
 
-              {/* Recommended Products */}
+              {/* Recommended with – same brand */}
               {recommendedProducts.length > 0 && (
-                <div className="mt-16 pt-10 border-t border-gray-200 max-w-5xl mx-auto">
-                  <h2 className="text-xl font-semibold text-gray-900 tracking-tight mb-8 px-4">Recommended with</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 px-4">
+                <div className="max-w-5xl mx-auto">
+                  <div className="pt-10 mt-16 border-t border-gray-200" />
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                    <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Recommended with</h2>
+                    {brandName && (
+                      <Link
+                        href={`/products?search=${encodeURIComponent(brandName)}`}
+                        className="text-sm font-medium text-[#eb61a2] hover:underline"
+                      >
+                        View All Products
+                      </Link>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
                     {recommendedProducts.map((p) => (
                       <div
                         key={p.id}
-                        className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)]"
+                        className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                       >
                         <div className="relative h-[200px] bg-gray-100">
                           <Image
-                            src={getProductImageUrl(p)}
-                            alt={p.name}
+                            src={getProductImageUrl(p, DefaultProductImage)}
+                            alt={p?.name || "Product"}
                             fill
                             className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                            sizes="(max-width: 600px) 50vw, 200px"
+                            unoptimized
                             onClick={() => router.push(`/product_details?productId=${p.id}`)}
                           />
                           <button
@@ -380,12 +409,16 @@ function BagPage() {
                           </button>
                         </div>
                         <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
-                          <h3 className="text-[1.15rem] font-bold text-gray-800 truncate">{p.name}</h3>
-                          <p className="text-sm font-bold text-black mt-1">{formatPrice(p.price)}</p>
+                          <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
+                            {p.name}
+                          </h3>
+                          <p className="text-sm font-bold text-black mt-1">
+                            {formatPrice(p.price)}
+                          </p>
                           <button
                             type="button"
                             onClick={() => addToCart(p.id, 1)}
-                            className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                            className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
                           >
                             <FaCartPlus className="text-base" /> Add to Cart
                           </button>

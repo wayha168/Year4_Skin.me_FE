@@ -396,27 +396,21 @@ const ProductDetailsContent = () => {
                      <FaHeart className="text-sm" />
                    </button>
                  </div>
-                 <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
-                   <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
-                     {typeof p.brand === "string" ? p.brand : p.brand?.name || ""}
-                   </span>
-                   <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
-                     {p.name}
-                   </h3>
-                   <p className="text-xs text-gray-500 truncate opacity-80">
-                     {p.description?.trim() || "No description"}
-                   </p>
-                   <p className="text-sm font-bold text-black mt-1">
-                     {formatPrice(p.price)}
-                   </p>
-                   <button
-                     type="button"
-                     onClick={() => addToCart(p.id, 1)}
-                     className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
-                   >
-                     <FaCartPlus className="text-base" /> Add to Cart
-                   </button>
-                 </div>
+                  <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
+                    <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
+                      {p.name}
+                    </h3>
+                    <p className="text-sm font-bold text-black mt-1">
+                      {formatPrice(p.price)}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => addToCart(p.id, 1)}
+                      className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                    >
+                      <FaCartPlus className="text-base" /> Add to Cart
+                    </button>
+                  </div>
                </div>
              ))}
           </div>

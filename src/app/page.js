@@ -10,7 +10,7 @@ import Footer from "../Components/Footer/Footer.jsx";
 import useUserActions from "../Components/Hooks/userUserActions.js";
 import useAuthContext from "./lib/Authentication/AuthContext.jsx";
 import LoginFirst from "../Components/LoginFirst/LoginFirst.js";
-import { FaCartPlus, FaHeart, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaCartPlus, FaHeart, FaChevronLeft, FaChevronRight, FaChevronDown } from "react-icons/fa";
 import { getProductImageUrl } from "./lib/productImage.js";
 import { formatPrice } from "./lib/formatPrice.js";
 
@@ -121,6 +121,7 @@ export default function Page() {
       const dragScrollHandlers = useDragScroll(testimonialsRef);
       const [canScrollLeft, setCanScrollLeft] = useState(true);
       const [canScrollRight, setCanScrollRight] = useState(true);
+      const [expandedRec, setExpandedRec] = useState({});
 
       // Control gradient visibility based on scroll position
       useEffect(() => {
@@ -210,13 +211,13 @@ export default function Page() {
       const recommendationProducts = products.slice(0, 7);
 
       const ImagesInRecommendation = [
-        { image: getProductImageUrl(products[0]), name: "Glow Serum", environment_details: "Hydrating & Brightening" },
-        { image: getProductImageUrl(products[1]), name: "Rose Cream", environment_details: "Soothing & Moisturizing" },
-        { image: getProductImageUrl(products[2]), name: "Vitamin C Oil", environment_details: "Antioxidant Rich" },
-        { image: getProductImageUrl(products[3]), name: "Aloe Gel", environment_details: "Calming & Refreshing" },
-        { image: getProductImageUrl(products[4]), name: "Night Repair", environment_details: "Rejuvenating Formula" },
-        { image: getProductImageUrl(products[5]), name: "Sunscreen SPF50", environment_details: "Broad Spectrum Protection" },
-        { image: getProductImageUrl(products[6]), name: "Clay Mask", environment_details: "Deep Cleansing" },
+        { image: "/assets/ImagesInRecommendation/boss_image.png", name: "Boss Glow", role: "Influencer" },
+        { image: "/assets/ImagesInRecommendation/none_sence_image.png", name: "None Sense", role: "Skincare Expert" },
+        { image: "/assets/ImagesInRecommendation/ohio_image.png", name: "Ohio Fresh", role: "Beauty Blogger" },
+        { image: "/assets/ImagesInRecommendation/obey_iamge.png", name: "Obey Clean", role: "Dermatologist" },
+        { image: "/assets/ImagesInRecommendation/bro_jirim_image.png", name: "Bro Jirim", role: "Content Creator" },
+        { image: "/assets/ImagesInRecommendation/phol_sophea_image.png", name: "Phol Sophea", role: "Makeup Artist" },
+        { image: "/assets/ImagesInRecommendation/profile_image.png", name: "Profile Pro", role: "Influencer" },
       ];
       const aboutCategories = categories.filter((category) => category?.description?.trim()).slice(0, 4);
       const averagePrice = products.length
@@ -265,7 +266,7 @@ export default function Page() {
                 width={640}
                 height={800}
                 quality={85}
-                className="max-w-full max-h-full object-contain z-[5] rounded-[30px] mt-8 max-[767px]:-mt-8"
+                className="max-w-full max-h-full object-contain z-[5] rounded-[10px] mt-8 max-[767px]:-mt-8"
                 fetchPriority="high"
                 unoptimized
               />
@@ -529,45 +530,60 @@ export default function Page() {
                   className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide cursor-grab select-none"
                   {...dragScrollHandlers}
                 >
-                  {recommendationProducts.map((product, idx) => {
-                    const brand = typeof product?.brand === "string" ? product.brand : product?.brand?.name ?? "SKIN.ME";
-                    const stars = Math.max(3, Math.min(5, Math.ceil(Number(product?.price || 0) / Math.max(averagePrice || 1, 1) * 4)));
-                    const text = product?.description?.trim() || product?.name || "Recommended skincare product";
-                    return (
-                    <div
-                      key={product.id ?? idx}
-                      className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Image
-                          src={getProductImageUrl(product)}
-                          alt={product?.name || "Recommended product"}
-                          width={48}
-                          height={48}
-                          className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                          unoptimized
-                        />
-                        <div>
-                          <p className="font-bold text-[#3C3C3C] text-sm">{product?.name || "Product"}</p>
-                          <p className="text-[#aaa] text-xs">{brand}</p>
-                        </div>
-                      </div>
-                      <div className="bg-[#EDEDED] rounded-xl p-4 mt-2 flex flex-col justify-between flex-grow">
-                        <div>
-                          <div className="flex gap-2 mb-2">
-                            {[1,2,3,4,5].map(i => (
-                              <span key={i} className={`text-4xl ${i <= stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>&#9733;</span>
-                            ))}
+                   {recommendationProducts.map((product, idx) => {
+                     const brand = typeof product?.brand === "string" ? product.brand : product?.brand?.name ?? "SKIN.ME";
+                     const stars = Math.max(3, Math.min(5, Math.ceil(Number(product?.price || 0) / Math.max(averagePrice || 1, 1) * 4)));
+                     const text = product?.description?.trim() || product?.name || "Recommended skincare product";
+                     const recItem = ImagesInRecommendation[idx] || {};
+                     return (
+                     <div
+                       key={product.id ?? idx}
+                       className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
+                     >
+                       <div className="flex items-center gap-3">
+                         <Image
+                           src={recItem.image || getProductImageUrl(product)}
+                           alt={recItem.name || product?.name || "Recommended product"}
+                           width={48}
+                           height={48}
+                           className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                           unoptimized
+                         />
+                         <div>
+                           <p className="font-bold text-[#3C3C3C] text-sm">{recItem.name || product?.name || "Product"}</p>
+                           <p className="text-[#aaa] text-xs">{recItem.role || "Skincare Expert"}</p>
+                         </div>
+                       </div>
+                       <div className="bg-[#EDEDED] rounded-xl p-4 mt-2 flex flex-col justify-between flex-grow">
+                         <div>
+                           <div className="flex gap-2 mb-2">
+                             {[1,2,3,4,5].map(i => (
+                               <span key={i} className={`text-4xl ${i <= stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>&#9733;</span>
+                             ))}
+                           </div>
+                            <p className="text-[#3C3C3C] text-sm font-medium mb-1">
+                              On {product?.name || "Product"}
+                            </p>
+                            <p className={`text-[#555] text-sm leading-relaxed transition-all duration-300 ${expandedRec[idx] ? '' : 'line-clamp-3'}`}>
+                              {text}
+                            </p>
+                            {text.length > 80 && (
+                              <button
+                                onClick={() => setExpandedRec(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                                className="flex items-center gap-1 text-xs font-semibold text-[#eb61a2] mt-1 hover:underline"
+                              >
+                                {expandedRec[idx] ? 'Show less' : 'Read more'}
+                                <FaChevronDown className={`transition-transform duration-300 ${expandedRec[idx] ? 'rotate-180' : ''}`} />
+                              </button>
+                            )}
                           </div>
-                          <p className="text-[#555] text-sm leading-relaxed">{text}</p>
-                        </div>
-                        <div className="flex justify-end pt-4">
-                          <p className="text-xs text-[#999]">{formatPrice(product?.price)}</p>
-                        </div>
-                      </div>
-                    </div>
-);
-                   })}
+                          <div className="flex justify-end pt-4">
+                            <p className="text-xs text-[#999]">{formatPrice(product?.price)}</p>
+                          </div>
+                       </div>
+                     </div>
+ );
+                    })}
                  </div>
                </div>
 

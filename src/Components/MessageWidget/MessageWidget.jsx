@@ -13,7 +13,7 @@ export default function MessageWidget() {
 
   if (pathname === "/chatbot") return null;
 
-  const mobileMarginClass = AUTH_PAGES.has(pathname) ? "" : "max-[510px]:mb-[4.7rem]";
+  const mobileMarginClass = AUTH_PAGES.has(pathname) ? "" : "max-[770px]:mb-[4.7rem]";
 
   const handleChatClick = () => {
     if (!authLoading && !user) {

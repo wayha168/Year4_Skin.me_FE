@@ -30,7 +30,7 @@
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "src/Components/Chatbot/ChatAssistantPage.jsx"  ],
   "exclude": [
     "node_modules"
   ]

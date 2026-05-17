@@ -119,9 +119,9 @@ export default function Page() {
   const leftGradientRef = useRef(null);
   const rightGradientRef = useRef(null);
   const dragScrollHandlers = useDragScroll(testimonialsRef);
-  const [canScrollLeft, setCanScrollLeft] = useState(true);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [expandedRec, setExpandedRec] = useState({});
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [allExpanded, setAllExpanded] = useState(false);
 
   const timeAgo = (dateString) => {
     if (!dateString) return "Recently";
@@ -157,10 +157,14 @@ export default function Page() {
     };
 
     container.addEventListener("scroll", updateGradients);
-    updateGradients();
+    // Run after render + data load
+    const raf = requestAnimationFrame(updateGradients);
 
-    return () => container.removeEventListener("scroll", updateGradients);
-  }, []);
+    return () => {
+      container.removeEventListener("scroll", updateGradients);
+      cancelAnimationFrame(raf);
+    };
+  }, [products.length]);
 
   useEffect(() => {
     if (searchParams.get("scroll") === "product") {
@@ -550,48 +554,51 @@ export default function Page() {
                     return (
                       <div
                         key={product.id ?? idx}
-                        className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[280px] flex-shrink-0"
+                        className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[240px] max-[600px]:p-4 flex-shrink-0"
                       >
-                        <div className="flex items-center gap-3">
-                          <Image
-                            src={recItem.image || getProductImageUrl(product)}
-                            alt={recItem.name || product?.name || "Recommended product"}
-                            width={48}
-                            height={48}
-                            className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                            unoptimized
-                          />
-                          <div>
-                            <p className="font-bold text-[#3C3C3C] text-sm">{recItem.name || product?.name || "Product"}</p>
-                            <p className="text-[#aaa] text-xs">{recItem.role || "Skincare Expert"}</p>
-                          </div>
-                        </div>
-                        <div className="bg-[#EDEDED] rounded-xl p-4 mt-2 flex flex-col justify-between flex-grow">
-                          <div>
-                            <div className="flex gap-2 mb-2">
-                              {[1, 2, 3, 4, 5].map(i => (
-                                <span key={i} className={`text-4xl ${i <= stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>&#9733;</span>
-                              ))}
-                            </div>
-                            <p className="text-[#3C3C3C] text-sm font-medium mb-1">
-                              On {product?.name || "Product"}
-                            </p>
-                            <p className={`text-[#555] text-sm leading-relaxed transition-all duration-300 ${expandedRec[idx] ? '' : 'line-clamp-3'}`}>
+                         <div className="flex items-center gap-3 max-[600px]:gap-2">
+                           <Image
+                             src={recItem.image || getProductImageUrl(product)}
+                             alt={recItem.name || product?.name || "Recommended product"}
+                             width={48}
+                             height={48}
+                             className="w-12 h-12 max-[600px]:w-9 max-[600px]:h-9 rounded-full object-cover flex-shrink-0"
+                             unoptimized
+                           />
+                           <div>
+                             <p className="font-bold text-[#3C3C3C] text-sm max-[600px]:text-xs">{recItem.name || product?.name || "Product"}</p>
+                             <p className="text-[#aaa] text-xs max-[600px]:text-[10px]">{recItem.role || "Skincare Expert"}</p>
+                           </div>
+                         </div>
+                         <div className="bg-[#EDEDED] rounded-xl p-4 mt-2 max-[600px]:p-3 flex flex-col justify-between flex-grow">
+                           <div>
+                             <div className="flex gap-2 mb-2 max-[600px]:mb-1">
+                               {[1, 2, 3, 4, 5].map(i => (
+                                 <span key={i} className={`text-4xl max-[600px]:text-2xl ${i <= stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>&#9733;</span>
+                               ))}
+                             </div>
+                             <p className="text-[#3C3C3C] text-sm max-[600px]:text-xs font-medium mb-1">
+                               On {product?.name || "Product"}
+                             </p>
+                             <p
+                               className={`text-[#555] text-sm max-[600px]:text-xs leading-relaxed overflow-hidden transition-[max-height] duration-500 ease-in-out ${!allExpanded ? 'line-clamp-3' : ''}`}
+                               style={{ maxHeight: allExpanded ? '500px' : '4.5em' }}
+                             >
                               {text}
                             </p>
                             {text.length > 80 && (
                               <button
-                                onClick={() => setExpandedRec(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                                onClick={() => setAllExpanded(!allExpanded)}
                                 className="flex items-center gap-1 text-xs font-semibold text-[#eb61a2] mt-1 hover:underline"
                               >
-                                {expandedRec[idx] ? 'Show less' : 'Read more'}
-                                <FaChevronDown className={`transition-transform duration-300 ${expandedRec[idx] ? 'rotate-180' : ''}`} />
+                                {allExpanded ? 'Show less' : 'Read more'}
+                                <FaChevronDown className={`transition-transform duration-300 ${allExpanded ? 'rotate-180' : ''}`} />
                               </button>
                             )}
                           </div>
-                          <div className="flex justify-end pt-4">
-                            <p className="text-xs text-[#999]">{timeAgo(product?.createdAt)}</p>
-                          </div>
+                           <div className="flex justify-end pt-4 max-[600px]:pt-3">
+                             <p className="text-xs text-[#999]">{timeAgo(product?.createdAt)}</p>
+                           </div>
                         </div>
                       </div>
                     );

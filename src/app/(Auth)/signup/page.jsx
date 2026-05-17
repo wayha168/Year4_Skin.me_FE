@@ -75,6 +75,7 @@ const Signup = () => {
         lastName: lastName.trim(),
         email: email.trim(),
         password,
+        confirmPassword,
       });
 
       if (userData) {

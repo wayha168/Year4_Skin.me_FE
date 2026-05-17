@@ -462,6 +462,7 @@ function BagPage() {
          </div>
         </div>
       </main>
+      {/* for pull */}
 
       <Footer />
       <MessageWidget />
@@ -470,3 +471,4 @@ function BagPage() {
 }
 
 export default BagPage;
+// for pull

@@ -39,12 +39,16 @@ const ProductDetailsContent = () => {
   const handleZoomMove = (clientX, clientY) => {
     if (!galleryRef.current) return;
     const rect = galleryRef.current.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    let x = clientX - rect.left;
+    let y = clientY - rect.top;
     if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
       setZoom((z) => ({ ...z, show: false }));
       return;
     }
+    // Clamp lens inside image bounds (important for large backend PNGs)
+    const lensSize = 250;
+    x = Math.max(lensSize / 2, Math.min(x, rect.width - lensSize / 2));
+    y = Math.max(lensSize / 2, Math.min(y, rect.height - lensSize / 2));
     const percentX = (x / rect.width) * 100;
     const percentY = (y / rect.height) * 100;
     setZoom({ show: true, x: percentX, y: percentY, lensX: x, lensY: y });
@@ -191,17 +195,29 @@ const ProductDetailsContent = () => {
               {/* Zoom lens – follows cursor/hold, shows 2.5x zoom (like SKIN1004) */}
               {zoom.show && (
                 <div
-                  className="absolute pointer-events-none rounded-full border-2 border-white shadow-xl bg-no-repeat z-10"
+                  className="absolute pointer-events-none rounded-full border-2 border-white shadow-xl overflow-hidden z-10"
                   style={{
                     width: 250,
                     height: 250,
-                    left: zoom.lensX - 90,
-                    top: zoom.lensY - 90,
-                    backgroundImage: `url(${mainImageSrc})`,
-                    backgroundSize: "600%",
-                    backgroundPosition: `${zoom.x}% ${zoom.y}%`,
+                    left: zoom.lensX - 125,
+                    top: zoom.lensY - 125,
                   }}
-                />
+                >
+                  <img
+                    src={mainImageSrc}
+                    alt=""
+                    className="absolute pointer-events-none select-none"
+                    style={{
+                      width: "400%",
+                      height: "400%",
+                      objectFit: "cover",
+                      top: "50%",
+                      left: "50%",
+                      transform: `translate(${-zoom.x * 2}%, ${-zoom.y * 2}%) translate(50%, 50%)`,
+                    }}
+                    draggable={false}
+                  />
+                </div>
               )}
             </div>
             {product?.images?.length > 1 && (

@@ -630,10 +630,14 @@ return (
                       <div className="px-5 py-3 text-base text-gray-500">No filters selected</div>
                     ) : (
                       selectedFilters.map((filter, idx) => (
-                        <div key={idx} className="flex items-center justify-between px-5 py-3 hover:bg-gray-100 transition-colors">
+                        <div
+                          key={idx}
+                          onClick={filter.remove}
+                          className="flex items-center justify-between px-5 py-3 hover:bg-gray-100 transition-colors cursor-pointer"
+                        >
                           <span className="text-gray-700">{filter.label}</span>
                           <button
-                            onClick={filter.remove}
+                            onClick={(e) => { e.stopPropagation(); filter.remove(); }}
                             className="text-red-500 hover:text-red-700 ml-2"
                             title="Remove this filter"
                           >

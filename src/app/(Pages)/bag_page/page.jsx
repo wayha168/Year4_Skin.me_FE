@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useRouter, Link } from "next/navigation";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
@@ -77,26 +78,38 @@ function BagPage() {
       setCartId(cid != null ? String(cid) : null);
       setCartItems(items);
 
-      // Fetch recommended products
+      // Fetch recommended products (random fallback if no brand match)
       if (items.length > 0) {
         const firstProduct = items[0].product;
-        const brandId = firstProduct?.brand?.id;
-        const brandName = typeof firstProduct?.brand === "string" ? firstProduct.brand : firstProduct?.brand?.name;
+        const cartProductIds = items.map(i => i.product?.id).filter(Boolean);
 
         try {
           const res = await axiosAuth.get("/products/all");
           const allProducts = res.data?.data || [];
-          const recommended = allProducts
-            .filter((p) => {
-              if (p.id === firstProduct.id) return false;
+
+          let recommended = allProducts.filter(p => !cartProductIds.includes(p.id));
+
+          // Try brand match first
+          const brandId = firstProduct?.brand?.id;
+          const brandName = typeof firstProduct?.brand === "string" 
+            ? firstProduct.brand 
+            : firstProduct?.brand?.name;
+
+          if (brandId || brandName) {
+            const brandMatch = recommended.filter(p => {
               const pBrandId = p.brand?.id;
               const pBrandName = typeof p.brand === "string" ? p.brand : p.brand?.name;
               return (brandId && pBrandId === brandId) || (brandName && pBrandName === brandName);
-            })
-            .slice(0, 5);
+            });
+            if (brandMatch.length > 0) recommended = brandMatch;
+          }
+
+          // Shuffle and take 5
+          recommended = recommended.sort(() => 0.5 - Math.random()).slice(0, 5);
           setRecommendedProducts(recommended);
         } catch (e) {
           console.error("Failed to fetch recommended products");
+          setRecommendedProducts([]);
         }
       } else {
         setRecommendedProducts([]);
@@ -302,14 +315,14 @@ function BagPage() {
                               onClick={() => p?.id && handleProductClick(p.id)}
                               className="shrink-0 w-[100px] h-[100px] rounded-lg overflow-hidden bg-[#f9fafb] border border-[#eee] focus:outline-none focus:ring-2 focus:ring-[#eb61a2]"
                             >
-                              <Image
-                                src={imgSrc}
-                                alt={p?.name ?? "Product"}
-                                width={100}
-                                height={100}
-                                className="w-full h-full object-cover"
-                                unoptimized
-                              />
+                               <Image
+                                 src={imgSrc}
+                                 alt={p?.name ?? "Product"}
+                                 width={100}
+                                 height={100}
+                                 className="w-full h-full object-cover transition-transform duration-300 hover:scale-[1.06] active:scale-[0.96]"
+                                 unoptimized
+                               />
                             </button>
                             <div className="flex-1 min-w-0 flex flex-col justify-center">
                               <h3 className="font-bold text-[#1a1a1a] truncate text-sm sm:text-base">{p?.name}</h3>
@@ -382,68 +395,68 @@ function BagPage() {
                 </div>
               </div>
 
-              {/* Recommended with – same brand */}
-              {recommendedProducts.length > 0 && (
-                <div className="max-w-5xl mx-auto">
-                  <div className="pt-10 mt-16 border-t border-gray-200" />
-                  <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-                    <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Recommended with</h2>
-                    {brandName && (
-                      <Link
-                        href={`/products?search=${encodeURIComponent(brandName)}`}
-                        className="text-sm font-medium text-[#eb61a2] hover:underline"
-                      >
-                        View All Products
-                      </Link>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
-                    {recommendedProducts.map((p) => (
-                      <div
-                        key={p.id}
-                        className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
-                      >
-                        <div className="relative h-[200px] bg-gray-100">
-                          <Image
-                            src={getProductImageUrl(p, DefaultProductImage)}
-                            alt={p?.name || "Product"}
-                            fill
-                            className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
-                            sizes="(max-width: 600px) 50vw, 200px"
-                            unoptimized
-                            onClick={() => router.push(`/product_details?productId=${p.id}`)}
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToFavorite(p.id);
-                            }}
-                            className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
-                          >
-                            <FaHeart className="text-sm" />
-                          </button>
+                {/* Recommended with – same brand */}
+                {recommendedProducts.length > 0 && (
+                  <section className="max-w-7xl mx-auto mt-16 pt-10 border-t border-gray-200">
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-8 px-4">
+                      <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Recommended with</h2>
+                      {recommendedProducts.length > 0 && recommendedProducts[0]?.brand && (
+                        <Link
+                          href={`/products?search=${encodeURIComponent(
+                            typeof recommendedProducts[0].brand === "string" 
+                              ? recommendedProducts[0].brand 
+                              : recommendedProducts[0].brand?.name
+                          )}`}
+                          className="text-sm font-medium text-[#eb61a2] hover:underline"
+                        >
+                          View All Products
+                        </Link>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 px-4">
+                      {recommendedProducts.map((p) => (
+                        <div
+                          key={p.id}
+                          className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+                        >
+                          <div className="relative h-[200px] bg-gray-100">
+                            <Image
+                              src={getProductImageUrl(p)}
+                              alt={p?.name || "Product"}
+                              fill
+                              className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                              sizes="(max-width: 600px) 50vw, 200px"
+                              unoptimized
+                              onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
+                              className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
+                            >
+                              <FaHeart className="text-sm" />
+                            </button>
+                          </div>
+                          <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
+                            <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
+                              {p.name}
+                            </h3>
+                            <p className="text-sm font-bold text-black mt-1">
+                              {formatPrice(p.price)}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => addToCart(p.id, 1)}
+                              className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                            >
+                              <FaCartPlus className="text-base" /> Add to Cart
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
-                          <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
-                            {p.name}
-                          </h3>
-                          <p className="text-sm font-bold text-black mt-1">
-                            {formatPrice(p.price)}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => addToCart(p.id, 1)}
-                            className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
-                          >
-                            <FaCartPlus className="text-base" /> Add to Cart
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      ))}
+                   </div>
+                 </section>
+               )}
             </>
           )}
          </div>

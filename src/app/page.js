@@ -299,7 +299,7 @@ export default function Page() {
   ];
 
   return (
-    <div className="overflow-x-hidden">
+    <div className="overflow-x-hidden bg-[#F7F7F7]">
       {isClient && <Navbar alwaysVisible={true} />}
 
       {/* HERO SECTION */}
@@ -398,7 +398,7 @@ export default function Page() {
       </div>
 
       {/* PRODUCTS SECTION  */}
-      <section ref={productRef} id="product" className={`py-20 px-8 bg-white text-center max-[1180px]:mt-[-3rem] ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-200'} ${productFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+      <section ref={productRef} id="product" className={`py-20 px-8 text-center max-[1180px]:mt-[-3rem] ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-200'} ${productFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-12 uppercase">
                 <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[1000px]:text-[2.5rem] max-[600px]:text-[28px]">OUR PRODUCTS</h2>
@@ -473,7 +473,7 @@ export default function Page() {
             </div>
       </section>
       {/* CUSTOMER STORIES RECOMMENDATION SECTION */}
-      <div ref={recommendRef} className={`bg-white pt-8 pb-20 px-8 ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${recommendFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+      <div ref={recommendRef} className={`pt-8 pb-20 px-8 ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${recommendFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
 
               {/* Header */}

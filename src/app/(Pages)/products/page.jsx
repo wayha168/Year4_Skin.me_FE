@@ -203,10 +203,10 @@ const Products = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="min-h-screen pt-[8rem] px-0 pb-16 bg-white font-[Poppins,sans-serif]">
+      <main className="min-h-screen pt-[8rem] px-0 pb-16 bg-[#F7F7F7] font-[Poppins,sans-serif]">
         {/* ===== Hero Section ===== */}
         <div className="w-full -mt-[4rem]">
-          <h1 className="w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#ffffff] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+          <h1 className="w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#F7F7F7] text-[#EB61A2] pb-[19px] max-[750px]:pr-4 max-[750px]:text-[1.8rem] border-b border-[#f0f0f0]">
             Our Products
           </h1>
         </div>

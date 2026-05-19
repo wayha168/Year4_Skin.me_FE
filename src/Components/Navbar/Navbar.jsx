@@ -33,6 +33,7 @@ const Navbar = ({ alwaysVisible = false }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchProducts, setSearchProducts] = useState([]);
   const [searchProductsLoading, setSearchProductsLoading] = useState(false);
+  const [navProducts, setNavProducts] = useState([]);
   const [brands, setBrands] = useState([]);
   const [hoveredFilter, setHoveredFilter] = useState(null);
 
@@ -49,16 +50,23 @@ const Navbar = ({ alwaysVisible = false }) => {
     setIsTinyMobile(window.innerWidth <= 770);
   }, []);
 
-  // Fetch brands when user is available
+  // Fetch brands for the product filter row.
   useEffect(() => {
-    if (!user) return;
     const fetchBrands = async () => {
       try {
         const res = await axiosAuth.get("/products/all");
-        const fetchedProducts = res?.data?.data || [];
+        const data = res?.data?.data;
+        const fetchedProducts = Array.isArray(data?.content)
+          ? data.content
+          : Array.isArray(data)
+            ? data
+            : [];
+        setNavProducts(fetchedProducts);
         const brandSet = new Set();
         fetchedProducts.forEach(p => {
-          const brandName = typeof p?.brand === "string" ? p.brand : p?.brand?.name;
+          const brandName = typeof p?.brand === "string"
+            ? p.brand
+            : p?.brand?.name ?? p?.brandName ?? p?.brand_name;
           if (brandName) brandSet.add(brandName);
         });
         setBrands([...brandSet]);
@@ -67,7 +75,7 @@ const Navbar = ({ alwaysVisible = false }) => {
       }
     };
     fetchBrands();
-  }, [user]);
+  }, []);
 
   // Read URL params for filters
   const urlFilters = useMemo(() => {
@@ -276,6 +284,13 @@ const Navbar = ({ alwaysVisible = false }) => {
     },
     [safeNavigate]
   );
+
+  const megaProducts = useMemo(() => navProducts.slice(0, 2), [navProducts]);
+  const filterValues = useMemo(() => ({
+    Rating: ["5", "4", "3"],
+    "Age Range": ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"],
+    "Skin Type": ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"],
+  }), []);
 
 return (
     <>
@@ -510,147 +525,201 @@ return (
 
 {/* Filter Row - appears below navbar on products page */}
         {pathname === '/products' && (
-         <div 
-           className="w-full bg-white border-t border-b border-gray-200 shadow-sm"
+         <div
+           className="relative w-full bg-white/95 backdrop-blur border-t border-b border-gray-100 shadow-sm"
            onMouseLeave={() => setHoveredFilter(null)}
          >
-            <div className="max-w-7xl mx-auto flex items-center justify-center gap-16 max-[1000px]:gap-10 max-[770px]:gap-6 max-[700px]:gap-4 h-14 px-4">
+            <div className="max-w-7xl mx-auto flex items-center justify-center gap-10 max-[1000px]:gap-8 max-[770px]:gap-5 max-[700px]:gap-3 h-12 px-4">
              {["Brand", "Rating", "Age Range", "Skin Type"].map((filter) => (
                <div
                  key={filter}
-                 className="relative"
+                 className="h-full flex items-center"
                  onMouseEnter={() => setHoveredFilter(filter)}
                  ref={(el) => (filterRefs.current[filter] = el)}
                >
                   <button
-                    className="flex items-center gap-1 text-gray-700 hover:text-[#eb61a2] font-medium transition-colors max-[510px]:text-sm"
+                    className={`flex h-full items-center gap-1.5 border-b-2 text-[0.82rem] font-medium transition-colors max-[510px]:text-xs ${
+                      hoveredFilter === filter
+                        ? "border-[#a3d331] text-gray-900"
+                        : "border-transparent text-gray-600 hover:text-[#eb61a2]"
+                    }`}
                     type="button"
                   >
                    <span>{filter}</span>
                    <i className="fa-solid fa-chevron-down text-xs"></i>
                  </button>
-                 
-{/* Dropdown */}
-    {hoveredFilter === filter && (
-      <div className={`absolute top-full ${hoveredFilter === 'Skin Type' || hoveredFilter === 'Selected' ? 'left-0 max-[750px]:-left-32' : 'left-0'} w-64 ${hoveredFilter === 'Skin Type' || hoveredFilter === 'Selected' ? 'max-[750px]:w-56' : ''} bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2`}>
-                      {filter === "Brand" && (
-                        brands.length > 0 ? (
-                          brands.map((brand) => (
-                            <button
-                              key={brand}
-                              onClick={() => handleFilterSelect("brand", brand)}
-                              className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 transition-colors flex items-center justify-between ${
-                                urlFilters.brand.includes(brand) ? "text-[#eb61a1] font-medium" : "text-gray-700"
-                              }`}
-                            >
-                              <span>{brand}</span>
-                              {urlFilters.brand.includes(brand) && <i className="fa-solid fa-check text-[#eb61a1]"></i>}
-                            </button>
-                          ))
-                        ) : (
-                         <div className="px-5 py-3 text-base text-gray-500">No brands available</div>
-                       )
-                     )}
-{filter === "Rating" && [5, 4, 3].map((stars) => (
-                        <button
-                          key={stars}
-                          onClick={() => handleFilterSelect("rating", String(stars))}
-                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 transition-colors flex items-center justify-between ${
-                            urlFilters.rating.includes(String(stars)) ? "text-[#eb61a1] font-medium" : "text-gray-700"
-                          }`}
-                        >
-                           <div className="flex items-center gap-2">
-                             <span className="flex">
-                               {[1,2,3,4,5].map(i => {
-                                 const isSelected = urlFilters.rating.includes(String(stars));
-                                 const color = isSelected ? "#eb61a1" : "#000";
-                                 return i <= stars 
-                                   ? <FaStar key={i} className="text-base" style={{color}} /> 
-                                   : <FaRegStar key={i} className="text-base" style={{color}} />;
-                               })}
-                             </span>
-                             <span>{stars} Stars</span>
-                           </div>
-                          {urlFilters.rating.includes(String(stars)) && <i className="fa-solid fa-check text-[#eb61a1]"></i>}
-                        </button>
-                      ))}
-{filter === "Age Range" && ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"].map((ageRange) => (
-                        <button
-                          key={ageRange}
-                          onClick={() => handleFilterSelect("ageRange", ageRange)}
-                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 transition-colors flex items-center justify-between ${
-                            urlFilters.ageRange.includes(ageRange) ? "text-[#eb61a1] font-medium" : "text-gray-700"
-                          }`}
-                        >
-                          <span>{ageRange}</span>
-                          {urlFilters.ageRange.includes(ageRange) && <i className="fa-solid fa-check text-[#eb61a1]"></i>}
-                        </button>
-                      ))}
-{filter === "Skin Type" && ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"].map((skinType) => (
-                        <button
-                          key={skinType}
-                          onClick={() => handleFilterSelect("skinType", skinType)}
-                          className={`w-full text-left px-5 py-3 text-base hover:bg-gray-100 transition-colors flex items-center justify-between ${
-                            urlFilters.skinType.includes(skinType) ? "text-[#eb61a1] font-medium" : "text-gray-700"
-                          }`}
-                        >
-                          <span>{skinType}</span>
-                          {urlFilters.skinType.includes(skinType) && <i className="fa-solid fa-check text-[#eb61a1]"></i>}
-                        </button>
-                      ))}
-                   </div>
-                 )}
                </div>
               ))}
               {/* Selected Filters - only show if there are selected filters */}
               {selectedFilters.length > 0 && (
-                <div className="relative">
+                <div className="h-full flex items-center">
                 <div
                   onMouseEnter={() => setHoveredFilter('Selected')}
                   ref={(el) => (filterRefs.current['Selected'] = el)}
                 >
                   <button
-                    className="flex items-center gap-1 text-gray-700 hover:text-[#eb61a2] font-medium transition-colors max-[510px]:text-sm"
+                    className={`flex h-12 items-center gap-1.5 border-b-2 text-[0.82rem] font-medium transition-colors max-[510px]:text-xs ${
+                      hoveredFilter === "Selected"
+                        ? "border-[#a3d331] text-[#eb61a2]"
+                        : "border-transparent text-[#eb61a2] hover:text-[#c32c70]"
+                    }`}
                     type="button"
                   >
                     <span className="text-[#eb61a2]">Selected</span>
                     <i className="fa-solid fa-chevron-down text-xs"></i>
                   </button>
                 </div>
-
-                {hoveredFilter === 'Selected' && (
-                  <div className="absolute top-full left-0 max-[750px]:-left-32 w-64 max-[750px]:w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-[10000] py-2">
-                    <button
-                      onClick={clearAllFilters}
-                      className="w-full text-left font-bold px-5 py-3 text-base text-red-500 hover:bg-gray-100 transition-colors"
-                    >
-                      Clear All
-                    </button>
-                    {selectedFilters.length === 0 ? (
-                      <div className="px-5 py-3 text-base text-gray-500">No filters selected</div>
-                    ) : (
-                      selectedFilters.map((filter, idx) => (
-                        <div
-                          key={idx}
-                          onClick={filter.remove}
-                          className="flex items-center justify-between px-5 py-3 hover:bg-gray-100 transition-colors cursor-pointer"
-                        >
-                          <span className="text-gray-700">{filter.label}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); filter.remove(); }}
-                            className="text-red-500 hover:text-red-700 ml-2"
-                            title="Remove this filter"
-                          >
-                            <i className="fa-solid fa-xmark text-[1.5rem]"></i>
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
               </div>
               )}
             </div>
+            {hoveredFilter && (
+              <div className="absolute left-0 top-full z-[10000] w-full bg-white shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+                <div className="mx-auto grid max-w-7xl grid-cols-[1fr_1fr_1fr_1.6fr] gap-10 px-8 py-8">
+                  <div>
+                    <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">
+                      {hoveredFilter === "Selected" ? "Selected Filters" : hoveredFilter}
+                    </h3>
+                    <div className="mt-3 flex flex-col gap-2">
+                      {hoveredFilter === "Brand" && (
+                        brands.length > 0 ? (
+                          brands.slice(0, 8).map((brand) => (
+                            <button
+                              key={brand}
+                              onClick={() => handleFilterSelect("brand", brand)}
+                              className={`text-left text-sm font-semibold transition-colors hover:text-[#eb61a1] ${
+                                urlFilters.brand.includes(brand) ? "text-[#eb61a1]" : "text-gray-900"
+                              }`}
+                            >
+                              {brand}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No brands available</p>
+                        )
+                      )}
+                      {hoveredFilter === "Rating" && filterValues.Rating.map((stars) => (
+                        <button
+                          key={stars}
+                          onClick={() => handleFilterSelect("rating", stars)}
+                          className={`flex items-center gap-2 text-left text-sm font-semibold transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.rating.includes(stars) ? "text-[#eb61a1]" : "text-gray-900"
+                          }`}
+                        >
+                          <span className="flex">
+                            {[1, 2, 3, 4, 5].map((i) =>
+                              i <= Number(stars)
+                                ? <FaStar key={i} className="text-xs" />
+                                : <FaRegStar key={i} className="text-xs" />
+                            )}
+                          </span>
+                          {stars} Stars
+                        </button>
+                      ))}
+                      {hoveredFilter === "Age Range" && filterValues["Age Range"].map((ageRange) => (
+                        <button
+                          key={ageRange}
+                          onClick={() => handleFilterSelect("ageRange", ageRange)}
+                          className={`text-left text-sm font-semibold transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.ageRange.includes(ageRange) ? "text-[#eb61a1]" : "text-gray-900"
+                          }`}
+                        >
+                          {ageRange}
+                        </button>
+                      ))}
+                      {hoveredFilter === "Skin Type" && filterValues["Skin Type"].map((skinType) => (
+                        <button
+                          key={skinType}
+                          onClick={() => handleFilterSelect("skinType", skinType)}
+                          className={`text-left text-sm font-semibold transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.skinType.includes(skinType) ? "text-[#eb61a1]" : "text-gray-900"
+                          }`}
+                        >
+                          {skinType}
+                        </button>
+                      ))}
+                      {hoveredFilter === "Selected" && (
+                        <>
+                          <button
+                            onClick={clearAllFilters}
+                            className="text-left text-sm font-bold text-red-500 hover:text-red-600"
+                          >
+                            Clear All
+                          </button>
+                          {selectedFilters.map((filter, idx) => (
+                            <button
+                              key={idx}
+                              onClick={filter.remove}
+                              className="text-left text-sm font-semibold text-gray-900 hover:text-[#eb61a1]"
+                            >
+                              {filter.label}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">Popular Brands</h3>
+                    <div className="mt-3 grid grid-cols-1 gap-2">
+                      {brands.slice(8, 16).map((brand) => (
+                        <button
+                          key={brand}
+                          onClick={() => handleFilterSelect("brand", brand)}
+                          className={`text-left text-sm transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.brand.includes(brand) ? "font-semibold text-[#eb61a1]" : "text-gray-700"
+                          }`}
+                        >
+                          {brand}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">Skin Type</h3>
+                    <div className="mt-3 flex flex-col gap-2">
+                      {filterValues["Skin Type"].map((skinType) => (
+                        <button
+                          key={skinType}
+                          onClick={() => handleFilterSelect("skinType", skinType)}
+                          className={`text-left text-sm transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.skinType.includes(skinType) ? "font-semibold text-[#eb61a1]" : "text-gray-700"
+                          }`}
+                        >
+                          {skinType}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-8">
+                    {megaProducts.map((product) => (
+                      <button
+                        key={product.id}
+                        type="button"
+                        onClick={() => goToProduct(product.id)}
+                        className="text-left"
+                      >
+                        <div className="relative h-52 w-full overflow-hidden bg-gray-100">
+                          <Image
+                            src={getProductImageUrl(product)}
+                            alt={product?.name || "Product"}
+                            fill
+                            className="object-cover transition-transform duration-300 hover:scale-[1.03]"
+                            sizes="260px"
+                            unoptimized
+                          />
+                        </div>
+                        <p className="mt-3 line-clamp-2 text-sm font-medium text-gray-900">
+                          {product?.name || "Product"}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

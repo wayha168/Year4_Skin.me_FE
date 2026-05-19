@@ -95,8 +95,11 @@ export default function Page() {
   const { addToCart, addToFavorite } = useUserActions();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [productsFeedback, setProductsFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
+  const [noSectionAnimation, setNoSectionAnimation] = useState(false);
+  const [hasSectionAnimated, setHasSectionAnimated] = useState(false);
 
   const loginFirst = useMemo(() => new LoginFirst(user, router.push), [user, router.push]);
 
@@ -105,10 +108,8 @@ export default function Page() {
     if (section) {
       const navbarHeight = document.querySelector("nav")?.offsetHeight || 0;
 
-      // 🔥 THIS IS THE KEY LINE - Change this number to control position
-      const extraOffset = -120; // Adjust this value!
+      const extraOffset = -120;
 
-      // Apply the offset to the scroll calculation
       const y = section.getBoundingClientRect().top + window.scrollY - navbarHeight - extraOffset;
 
       window.scrollTo({ top: y, behavior: "smooth" });
@@ -121,12 +122,16 @@ export default function Page() {
   const dragScrollHandlers = useDragScroll(testimonialsRef);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [allExpanded, setAllExpanded] = useState(false);
+  const [expandedFeedbackId, setExpandedFeedbackId] = useState(null);
+  const [overviewRef, overviewVisible] = useScrollAnimation();
+  const [productRef, productVisible] = useScrollAnimation();
+  const [recommendRef, recommendVisible] = useScrollAnimation();
+  const [aboutRef, aboutVisible] = useScrollAnimation();
 
   const timeAgo = (dateString) => {
     if (!dateString) return "Recently";
     const date = new Date(dateString);
-    const now = new Date("2026-05-16");
+    const now = new Date();
     const diffMs = now - date;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
@@ -134,6 +139,18 @@ export default function Page() {
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) !== 1 ? 's' : ''} ago`;
     return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? 's' : ''} ago`;
   };
+
+  useEffect(() => {
+    const handlePageShow = (event) => {
+      if (event.persisted) {
+        setNoSectionAnimation(true);
+        setHasSectionAnimated(true);
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   // Control gradient visibility based on scroll position
   useEffect(() => {
@@ -164,7 +181,7 @@ export default function Page() {
       container.removeEventListener("scroll", updateGradients);
       cancelAnimationFrame(raf);
     };
-  }, [products.length]);
+  }, [productsFeedback.length]);
 
   useEffect(() => {
     if (searchParams.get("scroll") === "product") {
@@ -187,6 +204,26 @@ export default function Page() {
       }
     };
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const fetchProductsFeedback = async () => {
+      try {
+        const res = await axiosAuth.get("/feedback/product/all-feedback");
+        const feedbackData = res?.data?.data;
+        const feedbackItems = Array.isArray(feedbackData?.content)
+          ? feedbackData.content
+          : Array.isArray(feedbackData)
+            ? feedbackData
+            : [];
+        setProductsFeedback(feedbackItems);
+      } catch (err) {
+        console.error("Error fetching products feedback:", err);
+        setProductsFeedback([]);
+      }
+    };
+
+    fetchProductsFeedback();
   }, []);
 
   useEffect(() => {
@@ -224,7 +261,17 @@ export default function Page() {
 
   const featuredProduct = products[0];
   const overviewProducts = products.slice(0, 3);
-  const recommendationProducts = products.slice(0, 7);
+  const productById = useMemo(
+    () => new Map(products.map((product) => [product?.id, product])),
+    [products]
+  );
+  const recommendationFeedback = productsFeedback
+    .filter((feedback) => feedback?.visibleOnFrontend !== false)
+    .slice(0, 7);
+  const overviewFinalVisible = overviewVisible || hasSectionAnimated;
+  const productFinalVisible = productVisible || hasSectionAnimated;
+  const recommendFinalVisible = recommendVisible || hasSectionAnimated;
+  const aboutFinalVisible = aboutVisible || hasSectionAnimated;
 
   const ImagesInRecommendation = [
     { image: "/assets/ImagesInRecommendation/boss_image.png", name: "Boss Glow", role: "Influencer" },
@@ -235,7 +282,6 @@ export default function Page() {
     { image: "/assets/ImagesInRecommendation/phol_sophea_image.png", name: "Phol Sophea", role: "Makeup Artist" },
     { image: "/assets/ImagesInRecommendation/profile_image.png", name: "Profile Pro", role: "Influencer" },
   ];
-  const aboutCategories = categories.filter((category) => category?.description?.trim()).slice(0, 4);
   const averagePrice = products.length
     ? products.reduce((sum, product) => sum + Number(product?.price || 0), 0) / products.length
     : 0;
@@ -291,23 +337,7 @@ export default function Page() {
       </div>
 
       {/* OVERVIEW SECTION */}
-      {(() => {
-        const [noAnimation, setNoAnimation] = useState(false);
-        const [hasAnimated, setHasAnimated] = useState(false);
-        useEffect(() => {
-          const handlePageShow = (event) => {
-            if (event.persisted) {
-              setNoAnimation(true);
-              setHasAnimated(true);
-            }
-          };
-          window.addEventListener('pageshow', handlePageShow);
-          return () => window.removeEventListener('pageshow', handlePageShow);
-        }, []);
-        const [overviewRef, overviewVisible] = useScrollAnimation();
-        const finalVisible = overviewVisible || hasAnimated;
-        return (
-          <div ref={overviewRef} className={`py-[4rem] max-[1350px]:mb-[-0.75rem] max-[1350px]:mt-[0.75rem] max-[1300px]:mb-[-7.35rem] max-[1300px]:mt-[2.35rem] max-[1300px]:mb-[-5.35rem] max-[1100px]:mb-[-12.5rem] max-[990px]:mb-[-22.5rem]  max-[990px]:mt-[-2.5rem]    relative max-[1390px]:[transform:scale(0.95)] max-[1300px]:[transform:scale(0.85)] max-[1250px]:[transform:scale(0.83)] max-[1200px]:[transform:scale(0.80)] max-[1150px]:[transform:scale(0.75)] max-[1100px]:[transform:scale(0.70)] max-[660px]:[transform:scale(0.65)] origin-top ${noAnimation ? '' : 'transition-all duration-1000 ease-out'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+      <div ref={overviewRef} className={`py-[4rem] max-[1350px]:mb-[-0.75rem] max-[1350px]:mt-[0.75rem] max-[1300px]:mb-[-7.35rem] max-[1300px]:mt-[2.35rem] max-[1300px]:mb-[-5.35rem] max-[1100px]:mb-[-12.5rem] max-[990px]:mb-[-22.5rem]  max-[990px]:mt-[-2.5rem]    relative max-[1390px]:[transform:scale(0.95)] max-[1300px]:[transform:scale(0.85)] max-[1250px]:[transform:scale(0.83)] max-[1200px]:[transform:scale(0.80)] max-[1150px]:[transform:scale(0.75)] max-[1100px]:[transform:scale(0.70)] max-[660px]:[transform:scale(0.65)] origin-top ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out'} ${overviewFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="flex flex-row items-center justify-center relative gap-[5rem] max-[990px]:mt-16 max-[990px]:flex-col max-[990px]:items-center max-[990px]:gap-[2rem]">
               <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] flex-shrink-0 max-[990px]:items-center self-center mt-[1rem]">
                 <div className="text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full max-[990px]:text-center">
@@ -345,9 +375,7 @@ export default function Page() {
                 </div>
               )}
             </div>
-          </div>
-        );
-      })()}
+      </div>
 
       {/* LOGO MOVING SECTION */}
       <div className="bg-[#0A3D3F] py-16 max-[1000px]:py-12 max-[600px]:py-10 overflow-hidden relative z-[1]">
@@ -370,23 +398,7 @@ export default function Page() {
       </div>
 
       {/* PRODUCTS SECTION  */}
-      {(() => {
-        const [noAnimation, setNoAnimation] = useState(false);
-        const [hasAnimated, setHasAnimated] = useState(false);
-        useEffect(() => {
-          const handlePageShow = (event) => {
-            if (event.persisted) {
-              setNoAnimation(true);
-              setHasAnimated(true);
-            }
-          };
-          window.addEventListener('pageshow', handlePageShow);
-          return () => window.removeEventListener('pageshow', handlePageShow);
-        }, []);
-        const [productRef, productVisible] = useScrollAnimation();
-        const finalVisible = productVisible || hasAnimated;
-        return (
-          <section ref={productRef} id="product" className={`py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem] ${noAnimation ? '' : 'transition-all duration-1000 ease-out delay-200'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+      <section ref={productRef} id="product" className={`py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem] ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-200'} ${productFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-12 uppercase">
                 <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[1000px]:text-[2.5rem] max-[600px]:text-[28px]">OUR PRODUCTS</h2>
@@ -459,27 +471,9 @@ export default function Page() {
                 </div>
               )}
             </div>
-          </section>
-        );
-      })()}
+      </section>
       {/* CUSTOMER STORIES RECOMMENDATION SECTION */}
-      {(() => {
-        const [noAnimation, setNoAnimation] = useState(false);
-        const [hasAnimated, setHasAnimated] = useState(false);
-        useEffect(() => {
-          const handlePageShow = (event) => {
-            if (event.persisted) {
-              setNoAnimation(true);
-              setHasAnimated(true);
-            }
-          };
-          window.addEventListener('pageshow', handlePageShow);
-          return () => window.removeEventListener('pageshow', handlePageShow);
-        }, []);
-        const [recommendRef, recommendVisible] = useScrollAnimation();
-        const finalVisible = recommendVisible || hasAnimated;
-        return (
-          <div ref={recommendRef} className={`bg-white pt-8 pb-20 px-8 ${noAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+      <div ref={recommendRef} className={`bg-white pt-8 pb-20 px-8 ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${recommendFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
 
               {/* Header */}
@@ -546,28 +540,31 @@ export default function Page() {
                   className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide cursor-grab select-none"
                   {...dragScrollHandlers}
                 >
-                  {recommendationProducts.map((product, idx) => {
-                    const brand = typeof product?.brand === "string" ? product.brand : product?.brand?.name ?? "SKIN.ME";
-                    const stars = Math.max(3, Math.min(5, Math.ceil(Number(product?.price || 0) / Math.max(averagePrice || 1, 1) * 4)));
-                    const text = product?.description?.trim() || product?.name || "Recommended skincare product";
+                  {recommendationFeedback.map((feedback, idx) => {
+                    const stars = Math.max(1, Math.min(5, Number(feedback?.rating) || 5));
+                    const text = feedback?.comment?.trim() || "Recommended skincare product";
                     const recItem = ImagesInRecommendation[idx] || {};
+                    const product = productById.get(feedback?.productId);
+                    const reviewerImage = feedback?.imageUrl || recItem.image || getProductImageUrl(product);
+                    const feedbackKey = feedback.id ?? `feedback-${idx}`;
+                    const isExpanded = expandedFeedbackId === feedbackKey;
                     return (
                       <div
-                        key={product.id ?? idx}
+                        key={feedbackKey}
                         className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[240px] max-[600px]:p-4 flex-shrink-0"
                       >
                          <div className="flex items-center gap-3 max-[600px]:gap-2">
                            <Image
-                             src={recItem.image || getProductImageUrl(product)}
-                             alt={recItem.name || product?.name || "Recommended product"}
+                             src={reviewerImage}
+                             alt={feedback?.userDisplayName || "Customer"}
                              width={48}
                              height={48}
                              className="w-12 h-12 max-[600px]:w-9 max-[600px]:h-9 rounded-full object-cover flex-shrink-0"
                              unoptimized
                            />
                            <div>
-                             <p className="font-bold text-[#3C3C3C] text-sm max-[600px]:text-xs">{recItem.name || product?.name || "Product"}</p>
-                             <p className="text-[#aaa] text-xs max-[600px]:text-[10px]">{recItem.role || "Skincare Expert"}</p>
+                             <p className="font-bold text-[#3C3C3C] text-sm max-[600px]:text-xs">{feedback?.userDisplayName || recItem.name || "Customer"}</p>
+                             <p className="text-[#aaa] text-xs max-[600px]:text-[10px]">{recItem.role || "Verified Customer"}</p>
                            </div>
                          </div>
                          <div className="bg-[#EDEDED] rounded-xl p-4 mt-2 max-[600px]:p-3 flex flex-col justify-between flex-grow">
@@ -578,26 +575,26 @@ export default function Page() {
                                ))}
                              </div>
                              <p className="text-[#3C3C3C] text-sm max-[600px]:text-xs font-medium mb-1">
-                               On {product?.name || "Product"}
+                               On {feedback?.productName || product?.name || "Product"}
                              </p>
                              <p
-                               className={`text-[#555] text-sm max-[600px]:text-xs leading-relaxed overflow-hidden transition-[max-height] duration-500 ease-in-out ${!allExpanded ? 'line-clamp-3' : ''}`}
-                               style={{ maxHeight: allExpanded ? '500px' : '4.5em' }}
+                               className={`text-[#555] text-sm max-[600px]:text-xs leading-relaxed overflow-hidden transition-[max-height] duration-500 ease-in-out ${!isExpanded ? 'line-clamp-3' : ''}`}
+                               style={{ maxHeight: isExpanded ? '500px' : '4.5em' }}
                              >
                               {text}
                             </p>
                             {text.length > 80 && (
                               <button
-                                onClick={() => setAllExpanded(!allExpanded)}
+                                onClick={() => setExpandedFeedbackId(isExpanded ? null : feedbackKey)}
                                 className="flex items-center gap-1 text-xs font-semibold text-[#eb61a2] mt-1 hover:underline"
                               >
-                                {allExpanded ? 'Show less' : 'Read more'}
-                                <FaChevronDown className={`transition-transform duration-300 ${allExpanded ? 'rotate-180' : ''}`} />
+                                {isExpanded ? 'Show less' : 'Read more'}
+                                <FaChevronDown className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                               </button>
                             )}
                           </div>
                            <div className="flex justify-end pt-4 max-[600px]:pt-3">
-                             <p className="text-xs text-[#999]">{timeAgo(product?.createdAt)}</p>
+                             <p className="text-xs text-[#999]">{timeAgo(feedback?.createdAt)}</p>
                            </div>
                         </div>
                       </div>
@@ -617,28 +614,10 @@ export default function Page() {
               </div>
 
             </div>
-          </div>
-        );
-      })()}
+      </div>
 
       {/* ABOUT US SECTION */}
-      {(() => {
-        const [noAnimation, setNoAnimation] = useState(false);
-        const [hasAnimated, setHasAnimated] = useState(false);
-        useEffect(() => {
-          const handlePageShow = (event) => {
-            if (event.persisted) {
-              setNoAnimation(true);
-              setHasAnimated(true);
-            }
-          };
-          window.addEventListener('pageshow', handlePageShow);
-          return () => window.removeEventListener('pageshow', handlePageShow);
-        }, []);
-        const [aboutRef, aboutVisible] = useScrollAnimation();
-        const finalVisible = aboutVisible || hasAnimated;
-        return (
-          <div ref={aboutRef} id="aboutus" className={`pt-8 pb-20 px-8 text-center ${noAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${finalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+      <div ref={aboutRef} id="aboutus" className={`pt-8 pb-20 px-8 text-center ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${aboutFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
               <p className="text-[4rem] font-bold text-[#000] mb-6 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">ABOUT US</p>
               <div className="text-[#000] text-[1.5rem] font-sans text-left leading-relaxed w-full max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
@@ -665,9 +644,7 @@ export default function Page() {
                 />
               ))}
             </div>
-          </div>
-        );
-      })()}
+      </div>
       <Footer />
     </div>
   );

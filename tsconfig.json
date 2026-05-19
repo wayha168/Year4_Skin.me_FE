@@ -21,7 +21,8 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "strictNullChecks": true
   },
   "include": [
     "next-env.d.ts",
@@ -29,8 +30,9 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     "**/*.ts",
-    "**/*.tsx"
-, "src/Components/Chatbot/ChatAssistantPage.jsx"  ],
+    "**/*.tsx",
+    "src/Components/Chatbot/ChatAssistantPage.jsx"
+  ],
   "exclude": [
     "node_modules"
   ]

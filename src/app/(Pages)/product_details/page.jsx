@@ -11,7 +11,7 @@ import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
-import { FaCartPlus, FaHeart } from "react-icons/fa";
+import { FaCartPlus, FaHeart, FaArrowLeft } from "react-icons/fa";
 import { getProductImageUrl, getProductImageUrlFromItem } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
 
@@ -25,7 +25,6 @@ const ProductDetailsContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const productId = searchParams.get("productId");
-
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -143,29 +142,19 @@ const ProductDetailsContent = () => {
   return (
     <>
       <div className="max-w-6xl mx-auto">
-        {/* Breadcrumb / back */}
-          <div className="mb-6">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="group"
-            >
-              <Image 
-                src="/assets/BackProductsDetail/BackButtonForProductDetail.svg" 
-                alt="Back" 
-                width={100} 
-                height={100} 
-                className="transition-all duration-200  group-hover:[filter:brightness(0)_saturate(100%)_invert(42%)_sepia(93%)_saturate(1352%)_hue-rotate(300deg)_brightness(1)_contrast(1)]"
-              />
-            </button>
-          </div>
+{/* Breadcrumb / back */}
+           <div className="mb-6">
+             <Link href="/products" className="group">
+               <FaArrowLeft className="text-2xl text-gray-700 transition-transform duration-200 group-hover:text-[#eb61a2] group-hover:-translate-x-1" />
+             </Link>
+           </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-start">
-          {/* Gallery with hover/touch zoom */}
+{/* Gallery with hover/touch zoom */}
           <div className="space-y-4">
             <div
               ref={galleryRef}
-              className="relative aspect-square w-full max-w-lg mx-auto rounded-2xl cursor-zoom-in"
+              className="relative aspect-square w-full max-w-lg mx-auto rounded-2xl cursor-zoom-in bg-white overflow-hidden"
               onMouseEnter={(e) => handleZoomMove(e.clientX, e.clientY)}
               onMouseMove={(e) => handleZoomMove(e.clientX, e.clientY)}
               onMouseLeave={handleZoomEnd}
@@ -180,12 +169,12 @@ const ProductDetailsContent = () => {
               onTouchEnd={handleZoomEnd}
               onTouchCancel={handleZoomEnd}
             >
-              <div className="absolute inset-0 bg-gray-50 rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 rounded-2xl overflow-hidden">
                 <Image
                   src={mainImageSrc}
                   alt={product.images?.[selectedImageIndex]?.fileName || product.images?.[0]?.fileName || product.name}
                   fill
-                  className="object-cover pointer-events-none select-none"
+                  className="object-cover pointer-events-none select-none transition-transform duration-200"
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   unoptimized
                   priority
@@ -441,13 +430,13 @@ const ProductDetailsPage = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="pt-[5rem] px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
-        {/* ===== Hero Section ===== */}
-        <div className="w-full mb-[1rem] -mt-[4.5rem]">
-          <h1 className="w-full h-[9rem] flex items-end justify-center  text-4xl font-bold  bg-[#ffffff] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
-            Product Detail
-          </h1>
-        </div>
+<main className="pt-[5rem] px-0 pb-16 bg-white font-[Poppins,sans-serif]">
+         {/* ===== Hero Section ===== */}
+         <div className="w-full mb-[1rem] -mt-[4.5rem]">
+           <h1 className="w-full h-[9rem] flex items-end justify-center  text-4xl font-bold  bg-white text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+             Product Detail
+           </h1>
+         </div>
 
         <div className="px-4 sm:px-6">
           <Suspense fallback={<Loading />}>

@@ -109,10 +109,10 @@ const ProfilePage = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="pt-[5rem] px-0 pb-16 bg-[#CCF6F2] font-[Poppins,sans-serif]">
+      <main className="pt-[5rem] px-0 pb-16 bg-[#F7F7F7] font-[Poppins,sans-serif]">
         {/* ===== Hero Section ===== */}
         <div className="w-full mb-[1rem] -mt-[4.5rem]">
-          <h1 className="w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold bg-[#ffffff] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+          <h1 className="mt-[12px] w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold bg-[#F7F7F7] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
             Profile
           </h1>
         </div>
@@ -122,9 +122,9 @@ const ProfilePage = () => {
             <h1 className="text-2xl sm:text-3xl font-bold opacity-70 text-[#000000]">My Account</h1>
 
           {/* 1. User Info Card */}
-          <section className="bg-white rounded-2xl shadow-md overflow-hidden">
-            <div className="bg-gradient-to-r from-[#eb61a2]/10 to-[#ffd0ed]/50 px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <section className="bg-[#ffffff] rounded-2xl shadow-md overflow-hidden">
+            <div className="bg-[#1B1B1B] px-6 py-4 border-b border-[#333]">
+              <h2 className="text-lg font-semibold text-[#EFEFEF] flex items-center gap-2">
                 <FaUser className="text-[#eb61a2]" />
                 User Information
               </h2>
@@ -181,9 +181,9 @@ const ProfilePage = () => {
 
           {/* 2. Favorites Card */}
           <section className="bg-white rounded-2xl shadow-md overflow-hidden">
-            <div className="bg-gradient-to-r from-[#eb61a2]/10 to-[#ffd0ed]/50 px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <FaHeart className="text-[#eb61a2]" />
+            <div className="bg-[#1B1B1B] px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-lg font-semibold text-[#EFEFEF] flex items-center gap-2">
+                <FaHeart className="text-[#EFEFEF]" />
                 My Favorites
               </h2>
               <Link

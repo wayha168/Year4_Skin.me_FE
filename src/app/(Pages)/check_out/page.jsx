@@ -167,8 +167,15 @@ function CheckOutContent() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-[#f5f5f7] pt-[6.5rem] pb-20 px-4 sm:px-6">
+      
+      <div className="min-h-screen bg-[#F7F7F7] pt-[6.5rem] pb-20 px-4 sm:px-6">
+        <div className="w-full  -mt-[6.5rem]">
+          <h1 className="mt-[12px] w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#F7F7F7] text-[#EB61A2] pb-[20px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+            Favorites
+          </h1>
+        </div>
         <div className="max-w-6xl mx-auto">
+          
           <header className="mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] tracking-tight">Checkout</h1>
             <p className="text-[#6b7280] text-sm mt-1">Review your order and complete delivery & payment</p>

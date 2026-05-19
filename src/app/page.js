@@ -398,7 +398,7 @@ export default function Page() {
       </div>
 
       {/* PRODUCTS SECTION  */}
-      <section ref={productRef} id="product" className={`py-20 px-8 bg-[#CCF6F2] text-center max-[1180px]:mt-[-3rem] ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-200'} ${productFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
+      <section ref={productRef} id="product" className={`py-20 px-8 bg-white text-center max-[1180px]:mt-[-3rem] ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-200'} ${productFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
             <div className="max-w-7xl mx-auto">
               <div className="flex justify-between items-center mb-12 uppercase">
                 <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[1000px]:text-[2.5rem] max-[600px]:text-[28px]">OUR PRODUCTS</h2>
@@ -479,7 +479,7 @@ export default function Page() {
               {/* Header */}
               <div className="text-center mb-16">
                 <h2 className="text-[4rem] font-bold text-[#3C3C3C] mb-4 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">
-                  RECOMMENDATIONS
+                  GLOBAL FEEDBACKS
                 </h2>
                 <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
                   Discover customer-loved skincare essentials for healthy, glowing skin — curated for every skin type and daily routine.

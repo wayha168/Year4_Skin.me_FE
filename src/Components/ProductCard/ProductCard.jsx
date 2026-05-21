@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
 import { getProductImageUrl } from "../../app/lib/productImage";
-import { formatPrice } from "../../app/lib/formatPrice";
+import ProductPrice from "../ProductPrice/ProductPrice";
 
 const ThirdImage = "/assets/third_image.png";
 
@@ -14,7 +14,7 @@ function getBrand(product) {
   return product?.brand?.name ?? "";
 }
 
-const ProductCard = ({ product, onAddToCart, onFavorite }) => {
+const ProductCard = ({ product, onAddToCart, onFavorite, discountedPrice }) => {
   const router = useRouter();
   const brand = getBrand(product);
   const description = product?.description?.trim() || "No description";
@@ -52,9 +52,10 @@ const ProductCard = ({ product, onAddToCart, onFavorite }) => {
         <p className="text-xs text-gray-500 truncate opacity-80" title={description}>
           {description}
         </p>
-        <p className="text-sm font-bold text-black mt-1">
-          {formatPrice(product?.price)}
-        </p>
+        <ProductPrice 
+          price={product?.price} 
+          discountedPrice={discountedPrice} 
+        />
         <button
           type="button"
           className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"

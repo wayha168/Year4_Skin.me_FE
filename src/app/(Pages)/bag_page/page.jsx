@@ -13,11 +13,13 @@ import { updateCartItemQuantity, removeCartItem } from "../../../app/lib/cartUpd
 import { FaShoppingBag, FaHeart, FaCartPlus } from "react-icons/fa";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
+import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
 
 const DefaultProductImage = "/assets/third_image.png";
 
-function QuantityStepper({ value, min = 1, onChange, disabled, onRemove }) {
+function QuantityStepper({ value, min = 1, max = 999, onChange, disabled, onRemove }) {
   const isOne = value <= min;
+  const canIncrease = !max || value < max;
 
   return (
     <div className="inline-flex items-center border border-[#e5e7eb] rounded-lg overflow-hidden bg-white">
@@ -41,15 +43,17 @@ function QuantityStepper({ value, min = 1, onChange, disabled, onRemove }) {
         )}
       </button>
       <span className="w-8 text-center text-sm font-semibold text-[#1a1a1a] tabular-nums">{value}</span>
-      <button
-        type="button"
-        onClick={() => onChange(value + 1)}
-        disabled={disabled}
-        className="w-8 h-8 flex items-center justify-center text-[#374151] hover:bg-[#f9fafb] transition-colors text-sm  text-[18px] font-bold"
-        aria-label="Increase quantity"
-      >
-        +
-      </button>
+       <button
+         type="button"
+         onClick={() => {
+           if (canIncrease) onChange(Math.min(max, value + 1));
+         }}
+         disabled={disabled || !canIncrease}
+         className="w-8 h-8 flex items-center justify-center text-[#374151] hover:bg-[#f9fafb] transition-colors text-sm  text-[18px] font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+         aria-label="Increase quantity"
+       >
+         +
+       </button>
     </div>
   );
 }
@@ -62,6 +66,7 @@ function BagPage() {
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
+  const [discountedPrices, setDiscountedPrices] = useState({});
 
   const fetchCart = useCallback(async () => {
     try {
@@ -141,6 +146,44 @@ function BagPage() {
     fetchCart();
   }, [user, authLoading, router, fetchCart]);
 
+  // Fetch discounted prices for cart items from promotion API
+  useEffect(() => {
+    const fetchDiscounts = async () => {
+      if (!cartItems.length) {
+        setDiscountedPrices({});
+        return;
+      }
+
+      const productIds = [...new Set(
+        cartItems.map(i => i.product?.id).filter(Boolean)
+      )];
+
+      const promises = productIds.map(async (pid) => {
+        try {
+          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
+          const data = res.data?.data;
+          let final = null;
+          if (typeof data === "number") final = data;
+          else if (data && typeof data === "object") {
+            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+          }
+          return [pid, final != null ? Number(final) : null];
+        } catch {
+          return [pid, null];
+        }
+      });
+
+      const results = await Promise.all(promises);
+      const map = {};
+      results.forEach(([id, val]) => {
+        if (val != null) map[id] = val;
+      });
+      setDiscountedPrices(map);
+    };
+
+    fetchDiscounts();
+  }, [cartItems]);
+
   const findItemByKey = useCallback((itemKey, index) => {
     const byId = cartItems.find((i) => String(i.id ?? i.cartItemId ?? i.itemId) === String(itemKey));
     if (byId) return byId;
@@ -157,9 +200,10 @@ function BagPage() {
 
   const updateQty = useCallback(
     async (itemKey, newQty) => {
-      const qty = Math.max(1, Number(newQty));
       const item = findItemByKey(itemKey);
       if (!item) return;
+      const productMax = Math.max(1, Number(item.product?.inventory ?? item.product?.stock ?? item.product?.quantity ?? 999));
+      const qty = Math.max(1, Math.min(productMax, Number(newQty)));
       const prevQty = item.quantity ?? 1;
       if (qty === prevQty) return;
 
@@ -232,7 +276,13 @@ function BagPage() {
     setTimeout(() => setNotification(""), 2000);
   }, []);
 
-  const total = cartItems.reduce((sum, item) => sum + (item.product?.price ?? 0) * (item.quantity ?? 1), 0);
+  const total = cartItems.reduce((sum, item) => {
+    const pid = item.product?.id;
+    const original = item.product?.price ?? 0;
+    const disc = discountedPrices[pid];
+    const eff = (disc != null && disc < original) ? disc : original;
+    return sum + eff * (item.quantity ?? 1);
+  }, 0);
   const itemCount = cartItems.reduce((s, i) => s + (i.quantity ?? 1), 0);
   const brandName =
     cartItems.length > 0
@@ -300,8 +350,11 @@ function BagPage() {
                       const p = item.product;
                       const qty = item.quantity ?? 1;
                       const price = p?.price ?? 0;
+                      const pid = p?.id;
+                      const discounted = discountedPrices[pid];
+                      const effectivePrice = (discounted != null && discounted < price) ? discounted : price;
                       const key = item.id ?? item.cartItemId ?? `cart-${p?.id}-${index}`;
-                      const lineTotal = (price * qty).toFixed(2);
+                      const lineTotal = (effectivePrice * qty).toFixed(2);
                       const imgSrc = getProductImageUrl(p, DefaultProductImage);
 
                       return (
@@ -329,16 +382,30 @@ function BagPage() {
                               <p className="text-[#9ca3af] text-xs mt-0.5">
                                 {p?.brand ? (typeof p.brand === "string" ? p.brand : p.brand.name) : "—"}
                               </p>
-                              <p className="text-[#eb61a2] font-semibold text-sm mt-1">Price {formatPrice(price)}</p>
-
-                              <div className="mt-2 flex items-center justify-between gap-2">
-                                <QuantityStepper
-                                  value={qty}
-                                  onChange={(newQty) => updateQty(key, newQty)}
-                                  onRemove={() => handleRemoveItem(key)}
+                                <ProductPrice 
+                                  price={price} 
+                                  discountedPrice={discountedPrices[p?.id]} 
                                 />
-                                <span className="text-sm font-medium opacity-60  text-[#636363]">Subtotal {formatPrice(lineTotal)}</span>
-                              </div>
+ 
+                                <div className="mt-2 flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <QuantityStepper
+                                      value={qty}
+                                      max={Math.max(1, Number(p?.inventory ?? p?.stock ?? p?.quantity ?? 999))}
+                                      onChange={(newQty) => updateQty(key, newQty)}
+                                      onRemove={() => handleRemoveItem(key)}
+                                    />
+                                    {(() => {
+                                      const stock = Math.max(1, Number(p?.inventory ?? p?.stock ?? p?.quantity ?? 999));
+                                      return stock < 999 ? (
+                                        <div className="inline-flex items-center  overflow-hidden bg-white px-2.5 py-1 text-[11px] text-gray-500 font-medium">
+                                          Only {stock} left
+                                        </div>
+                                      ) : null;
+                                    })()}
+                                  </div>
+                                  <span className="text-sm font-medium opacity-60  text-[#636363]">Subtotal {formatPrice(lineTotal)}</span>
+                                </div>
                             </div>
                           </div>
                         </div>

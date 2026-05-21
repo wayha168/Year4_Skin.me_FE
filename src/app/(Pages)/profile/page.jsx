@@ -125,7 +125,7 @@ const ProfilePage = () => {
           <section className="bg-[#ffffff] rounded-2xl shadow-md overflow-hidden">
             <div className="bg-[#1B1B1B] px-6 py-4 border-b border-[#333]">
               <h2 className="text-lg font-semibold text-[#EFEFEF] flex items-center gap-2">
-                <FaUser className="text-[#eb61a2]" />
+                <FaUser className="text-[#ffffff]" />
                 User Information
               </h2>
             </div>
@@ -141,8 +141,8 @@ const ProfilePage = () => {
                     unoptimized
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-pink-100 flex items-center justify-center">
-                    <FaUserCircle size={56} className="text-[#eb61a2]" />
+                  <div className="w-24 h-24 rounded-full bg-[#FF85BB] flex items-center justify-center">
+                    <FaUserCircle size={56} className="text-[#ffffff]" />
                   </div>
                 )}
               </div>
@@ -161,15 +161,15 @@ const ProfilePage = () => {
                     : "—"}
                 </p>
                 <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-2">
-                  <button className="px-4 py-2 bg-[#eb61a2] text-white text-sm font-medium rounded-lg hover:bg-[#d0578f] transition">
+                  <button className="px-4 py-2 border-2 border-[#eb61a2] text-[#eb61a2] text-sm font-medium rounded-lg hover:bg-[#eb61a2] hover:text-white transition">
                     Edit Profile
                   </button>
-                  <button className="px-4 py-2 border-2 border-[#eb61a2] text-[#eb61a2] text-sm font-medium rounded-lg hover:bg-[#eb61a2] hover:text-white transition">
+                  <button className="px-4 py-2 bg-[#eb61a2] text-white text-sm font-medium rounded-lg hover:bg-transparent hover:border-2 hover:border-[#eb61a2] hover:text-[#eb61a2] transition">
                     Change Password
                   </button>
                   <button
                     onClick={logout}
-                    className="px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition flex items-center gap-2"
+                    className="ml-auto px-4 py-2 bg-[#D80004] text-white text-sm font-medium rounded-lg hover:bg-[#b00003] transition flex items-center gap-2"
                   >
                     <FaSignOutAlt />
                     Logout
@@ -244,9 +244,9 @@ const ProfilePage = () => {
 
           {/* 3. Order History & Address Card */}
           <section className="bg-white rounded-2xl shadow-md overflow-hidden">
-            <div className="bg-gradient-to-r from-[#eb61a2]/10 to-[#ffd0ed]/50 px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <FaShoppingBag className="text-[#eb61a2]" />
+            <div className="bg-[#1B1B1B] px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-lg font-semibold text-[#EFEFEF] flex items-center gap-2">
+                <FaShoppingBag className="text-[#EFEFEF]" />
                 Order History & Address
               </h2>
               <Link

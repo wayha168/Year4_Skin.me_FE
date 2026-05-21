@@ -6,6 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 
 import axiosAuth from "../../../app/lib/api/axiosConfig";
+import axios from "axios";
+import { API_BASE } from "../../../app/lib/api/config";
 
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
@@ -34,6 +36,32 @@ const ProductDetailsContent = () => {
   const [zoom, setZoom] = useState({ show: false, x: 50, y: 50, lensX: 0, lensY: 0 });
   const galleryRef = useRef(null);
   const { addToCart, addToFavorite } = useUserActions();
+  const [productFeedbacks, setProductFeedbacks] = useState([]);
+
+  const getInitials = (name) => {
+    if (!name) return "?";
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 1) {
+      return words[0].slice(0, 2).toUpperCase();
+    }
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  };
+
+  const fetchProductFeedbacks = async (prodId) => {
+    try {
+      const res = await axios.get(`${API_BASE}/feedback/product/all-feedback`);
+      const feedbackData = res?.data?.data;
+      const allFeedbacks = Array.isArray(feedbackData?.content)
+        ? feedbackData.content
+        : Array.isArray(feedbackData)
+        ? feedbackData
+        : [];
+      const filtered = allFeedbacks.filter((f) => f?.productId === Number(prodId) || f?.productId === prodId);
+      setProductFeedbacks(filtered);
+    } catch (err) {
+      setProductFeedbacks([]);
+    }
+  };
 
   const handleZoomMove = (clientX, clientY) => {
     if (!galleryRef.current) return;
@@ -57,6 +85,10 @@ const ProductDetailsContent = () => {
 
   const brandName = product ? (typeof product.brand === "string" ? product.brand : product.brand?.name ?? "") : "";
 
+  const maxStock = product
+    ? Math.max(1, Number(product.inventory ?? product.stock ?? product.quantity ?? product.available ?? 999))
+    : 999;
+
   useEffect(() => {
     setSelectedImageIndex(0);
   }, [productId]);
@@ -73,13 +105,14 @@ const ProductDetailsContent = () => {
       setError("");
 
       try {
-        const response = await axiosAuth.get("/products/all");
+        const response = await axios.get(`${API_BASE}/products/all`);
         const allProducts = response.data?.data || response.data || [];
         const productData = allProducts.find((p) => p.id === Number(productId));
 
         if (productData) {
           setProduct(productData);
           fetchRelatedProductsByBrand(productData, productData.id);
+          fetchProductFeedbacks(productData.id);
         } else {
           setError("Product not found. Please check the product ID.");
         }
@@ -92,7 +125,7 @@ const ProductDetailsContent = () => {
 
     const fetchRelatedProductsByBrand = async (currentProduct, currentProductId) => {
       try {
-        const response = await axiosAuth.get("/products/all");
+        const response = await axios.get(`${API_BASE}/products/all`);
         const allProducts = response.data?.data || response.data || [];
         const brandId = currentProduct?.brand?.id ?? null;
         const brandName = typeof currentProduct?.brand === "string" ? currentProduct.brand : currentProduct?.brand?.name ?? "";
@@ -264,28 +297,34 @@ const ProductDetailsContent = () => {
             </div>
 
             {/* Quantity */}
-            <div className="flex items-center gap-4 mb-6">
-              <span className="text-sm font-medium text-gray-700">Quantity</span>
-              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  disabled={quantity === 1}
-                  className={`w-11 h-11 flex items-center font-bold text-[1.3rem] justify-center transition-colors ${quantity === 1 ? "text-[#CACACA] cursor-not-allowed" : "text-gray-600 hover:bg-[#B0D8D4]"}`}
-                  aria-label="Decrease quantity"
-                >
-                  −
-                </button>
-                <span className="w-12 text-center  font-semibold text-gray-900">{quantity}</span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className="w-11 h-11 flex items-center font-bold text-[1.3rem] justify-center text-gray-600 hover:bg-[#B0D8D4] transition-colors"
-                  aria-label="Increase quantity"
-                >
-                  +
-                </button>
+            <div className="mb-6">
+              <div className="flex items-center gap-4 mb-1">
+                <span className="text-sm font-medium text-gray-700">Quantity</span>
+                <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={quantity === 1}
+                    className={`w-11 h-11 flex items-center font-bold text-[1.3rem] justify-center transition-colors ${quantity === 1 ? "text-[#CACACA] cursor-not-allowed" : "text-gray-600 hover:bg-[#B0D8D4]"}`}
+                    aria-label="Decrease quantity"
+                  >
+                    −
+                  </button>
+                  <span className="w-12 text-center  font-semibold text-gray-900">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.min(maxStock, q + 1))}
+                    disabled={quantity >= maxStock}
+                    className={`w-11 h-11 flex items-center font-bold text-[1.3rem] justify-center transition-colors ${quantity >= maxStock ? "text-[#CACACA] cursor-not-allowed" : "text-gray-600 hover:bg-[#B0D8D4]"}`}
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
+              {maxStock < 999 && (
+                <p className="text-xs text-gray-500">Only {maxStock} left in stock</p>
+              )}
             </div>
 
             {/* Actions */}
@@ -350,6 +389,48 @@ const ProductDetailsContent = () => {
               </section>
             ) : null;
           })()}
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Customer Feedback</h2>
+            {productFeedbacks.length > 0 ? (
+              <div className="space-y-4 max-w-2xl">
+                {productFeedbacks.map((fb, idx) => {
+                  const stars = Math.max(1, Math.min(5, Number(fb?.rating) || 5));
+                  const comment = fb?.comment?.trim() || "";
+                  return (
+                    <div key={fb.id ?? idx} className="bg-white border border-gray-100 rounded-2xl p-5">
+                       <div className="flex items-center gap-3 mb-3">
+                         {fb.imageUrl ? (
+                           <Image
+                             src={fb.imageUrl}
+                             alt="Reviewer"
+                             width={40}
+                             height={40}
+                             className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                             unoptimized
+                           />
+                         ) : (
+                           <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                             {getInitials(fb.userDisplayName)}
+                           </div>
+                         )}
+                         <div>
+                           <p className="font-semibold text-gray-900">{fb.userDisplayName || "Customer"}</p>
+                           <p className="text-xs text-gray-500">{fb.createdAt ? new Date(fb.createdAt).toLocaleDateString() : ""}</p>
+                         </div>
+                        <div className="ml-auto flex gap-0.5">
+                          {[1,2,3,4,5].map(i => <span key={i} className={`text-xl ${i <= stars ? "text-yellow-400" : "text-gray-200"}`}>★</span>)}
+                        </div>
+                      </div>
+                      {comment && <p className="text-gray-600 leading-relaxed">{comment}</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500 italic max-w-2xl">No feedback yet for this product. Be the first to share your experience!</p>
+            )}
+          </section>
 
           {!product.description?.trim() &&
             !(product.howToUse ?? product.how_to_use)?.toString().trim() &&

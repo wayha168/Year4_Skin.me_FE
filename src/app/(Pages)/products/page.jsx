@@ -13,6 +13,7 @@ import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
+import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
 
 const ThirdImage = "/assets/third_image.png";
 
@@ -49,6 +50,7 @@ const Products = () => {
   const [sortBy, setSortBy] = useState("all");
   const [searchTerm, setSearchTerm] = useState(searchFromUrl);
   const [sidebarCompact, setSidebarCompact] = useState(false);
+  const [discountedPrices, setDiscountedPrices] = useState({});
 
   const urlFilters = useMemo(() => {
     const readList = (key) =>
@@ -96,6 +98,42 @@ const Products = () => {
     };
     fetchProducts();
   }, []);
+
+  // Fetch discounted prices for all products (same pattern as bag page)
+  useEffect(() => {
+    const fetchDiscounts = async () => {
+      if (!products.length) {
+        setDiscountedPrices({});
+        return;
+      }
+
+      const productIds = [...new Set(products.map(p => p.id).filter(Boolean))];
+
+      const promises = productIds.map(async (pid) => {
+        try {
+          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
+          const data = res.data?.data;
+          let final = null;
+          if (typeof data === "number") final = data;
+          else if (data && typeof data === "object") {
+            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? null;
+          }
+          return [pid, final != null ? Number(final) : null];
+        } catch {
+          return [pid, null];
+        }
+      });
+
+      const results = await Promise.all(promises);
+      const map = {};
+      results.forEach(([id, val]) => {
+        if (val != null) map[id] = val;
+      });
+      setDiscountedPrices(map);
+    };
+
+    fetchDiscounts();
+  }, [products]);
 
   const handleAddToCart = async (productId) => {
     await addToCart(productId, 1);
@@ -335,9 +373,11 @@ const Products = () => {
                               >
                                 {desc}
                               </p>
-                              <p className="mt-auto pt-1 text-base font-bold text-[#f56565]">
-                                {formatPrice(p?.price)}
-                              </p>
+                               <ProductPrice 
+                                 price={p?.price} 
+                                 discountedPrice={discountedPrices[p?.id]} 
+                                 className="mt-auto pt-1 text-base font-bold text-[#f56565]" 
+                               />
                             </div>
                           </div>
                         );

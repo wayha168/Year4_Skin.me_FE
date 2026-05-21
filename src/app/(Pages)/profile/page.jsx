@@ -15,22 +15,28 @@ import {
   FaHeart,
   FaShoppingBag,
   FaMapMarkerAlt,
+  FaCartPlus,
 } from "react-icons/fa";
 import Loading from "../../../Components/Loading/Loading";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
+import useUserActions from "../../../Components/Hooks/userUserActions";
+import { useRouter } from "next/navigation";
 
 const DefaultProductImage = "/assets/third_image.png";
 
 const ProfilePage = () => {
   const { user: authUser, logout } = useAuthContext();
+  const router = useRouter();
+  const { addToCart, addToFavorite } = useUserActions();
   const [user, setUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notification, setNotification] = useState("");
 
   const userId = authUser?.id;
 
@@ -48,7 +54,7 @@ const ProfilePage = () => {
   const fetchFavorites = useCallback(async () => {
     if (!userId) return;
     try {
-      const { data } = await axiosAuth.get(`/favorites/users/${userId}`, {
+      const { data } = await axiosAuth.get(`/favorites/user/${userId}`, {
         withCredentials: true,
       });
       setFavorites(data?.data || []);
@@ -73,6 +79,30 @@ const ProfilePage = () => {
       setOrders([]);
     }
   }, [userId]);
+
+  const handleRemoveFavorite = useCallback(
+    async (productId) => {
+      if (!userId) return;
+      try {
+        await axiosAuth.delete("/favorites/remove", {
+          params: { userId, productId },
+          withCredentials: true,
+        });
+        setFavorites((prev) => prev.filter((f) => f.product?.id !== productId));
+        setNotification("Removed from favorites");
+        setTimeout(() => setNotification(""), 2000);
+      } catch (err) {
+        console.error("Error removing favorite:", err);
+        setNotification("Failed to remove favorite");
+        setTimeout(() => setNotification(""), 3000);
+      }
+    },
+    [userId]
+  );
+
+  const handleAddToCartFromFavorite = useCallback(async (productId) => {
+    await addToCart(productId, 1);
+  }, [addToCart]);
 
   useEffect(() => {
     if (!userId) {
@@ -194,6 +224,11 @@ const ProfilePage = () => {
               </Link>
             </div>
             <div className="p-6">
+              {notification && (
+                <div className="mb-3 text-center text-sm text-white bg-[#eb61a2] rounded px-3 py-1">
+                  {notification}
+                </div>
+              )}
               {loading ? (
                 <p className="text-gray-500 text-center py-6">
                   <i className="fa fa-spinner fa-spin mr-2" />
@@ -206,6 +241,7 @@ const ProfilePage = () => {
                   {favorites.slice(0, 8).map((fav) => {
                     const product = fav?.product;
                     if (!product) return null;
+
                     const imgSrc = fav?.productThumbnailUrl
                       ? (fav.productThumbnailUrl.startsWith("http")
                         ? fav.productThumbnailUrl
@@ -213,28 +249,49 @@ const ProfilePage = () => {
                         ? fav.productThumbnailUrl
                         : `/${fav.productThumbnailUrl}`)
                       : getProductImageUrl(product, DefaultProductImage);
+
                     return (
-                      <Link
+                      <div
                         key={product.id}
-                        href={`/product_details?productId=${product.id}`}
-                        className="group block bg-gray-50 rounded-xl p-3 hover:shadow-md transition"
+                        className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                       >
-                        <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 mb-2">
+                        <div className="relative h-[160px] bg-gray-100">
                           <Image
                             src={imgSrc}
                             alt={product.name || "Product"}
-                            width={120}
-                            height={120}
-                            className="w-full h-full object-cover group-hover:scale-105 transition"
+                            fill
+                            className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
                             unoptimized
-                            onError={(e) => (e.target.src = DefaultProductImage)}
+                            onClick={() => router.push(`/product_details?productId=${product.id}`)}
+                            onError={(e) => (e.currentTarget.src = DefaultProductImage)}
                           />
                         </div>
-                        <p className="text-sm font-medium text-gray-800 truncate">{product.name}</p>
-                        <p className="text-xs text-[#eb61a2] font-semibold">
-                          ${Number(product.price ?? 0).toFixed(2)}
-                        </p>
-                      </Link>
+
+                        <div className="flex flex-col flex-1 p-3 gap-1 min-w-0 text-center">
+                          {product.brand && (
+                            <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                              {typeof product.brand === "object" ? product.brand?.name : product.brand}
+                            </span>
+                          )}
+                          <h3
+                            className="text-[1.05rem] font-bold text-gray-800 truncate cursor-pointer"
+                            onClick={() => router.push(`/product_details?productId=${product.id}`)}
+                          >
+                            {product.name}
+                          </h3>
+                          <p className="text-sm font-bold text-black mt-1">
+                            {formatPrice(product.price)}
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={() => handleAddToCartFromFavorite(product.id)}
+                            className="mt-2 w-full bg-[#d13e82] text-white text-sm font-semibold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 hover:bg-[#c32c70] transition-colors"
+                          >
+                            <FaCartPlus className="text-sm" /> Add to Cart
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
@@ -282,15 +339,15 @@ const ProfilePage = () => {
                 ) : orders.length === 0 ? (
                   <p className="text-gray-500 text-sm py-2">No orders yet.</p>
                 ) : (
-                  <ul className="space-y-2">
-                    {orders.slice(0, 10).map((o) => (
-                      <li
-                        key={o.orderId ?? o.id ?? Math.random()}
-                        className="flex flex-wrap items-center justify-between gap-2 py-3 px-4 bg-gray-50 rounded-lg text-sm"
-                      >
-                        <span className="font-mono text-gray-700">
-                          #{o.orderId ?? o.id ?? "—"}
-                        </span>
+                   <ul className="space-y-2">
+                     {orders.slice(0, 10).map((o, index) => (
+                       <li
+                         key={o.orderId ?? o.id ?? Math.random()}
+                         className="flex flex-wrap items-center justify-between gap-2 py-3 px-4 bg-gray-50 rounded-lg text-sm"
+                       >
+                         <span className="font-mono text-gray-700">
+                           #{index + 1} — {displayUser?.email || "—"}
+                         </span>
                         <span
                           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
                             (o.orderStatus || "").toLowerCase() === "delivered"

@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import axiosAuth from "../../app/lib/api/axiosConfig";
 import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import {
   FaArrowUp,
+  FaEdit,
   FaImage,
   FaPaperclip,
   FaPlus,
@@ -146,6 +148,59 @@ export default function ChatAssistantPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuthContext();
 
+  // Load chat history from backend (like ChatGPT)
+  const loadChatHistory = useCallback(async () => {
+    if (!user?.id) return [];
+
+    try {
+      const res = await axiosAuth.get(`/chat-activity?userId=${user.id}`);
+      const activities = res.data?.data || res.data || [];
+
+      // Group by sessionId (treating each session as one chat)
+      const grouped = {};
+      activities.forEach((act) => {
+        const sid = act.sessionId || act.chatId || act.conversationId || act.id;
+        if (!sid) return;
+
+        if (!grouped[sid]) {
+          grouped[sid] = {
+            id: sid,
+            title: act.title || "Untitled Chat",
+            messages: [],
+          };
+        }
+
+        // If the activity stores full messages array
+        if (Array.isArray(act.messages) && act.messages.length > 0) {
+          grouped[sid].messages = act.messages;
+          if (act.title) grouped[sid].title = act.title;
+        } 
+        // If it stores individual messages
+        else if (act.prompt || act.message) {
+          grouped[sid].messages.push({
+            id: act.id || `msg-${Date.now()}`,
+            role: "user",
+            text: act.prompt || act.message,
+            time: act.createdAt ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "",
+          });
+          if (act.response) {
+            grouped[sid].messages.push({
+              id: `assistant-${act.id || Date.now()}`,
+              role: "assistant",
+              text: act.response,
+              time: act.createdAt ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "",
+            });
+          }
+        }
+      });
+
+      return Object.values(grouped).sort((a, b) => b.id.localeCompare(a.id)); // newest first
+    } catch (err) {
+      console.error("Failed to load chat history:", err);
+      return [];
+    }
+  }, [user?.id]);
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
@@ -157,26 +212,12 @@ export default function ChatAssistantPage() {
   const fileInputRef = useRef(null);
   const endRef = useRef(null);
 
-  // Multi-chat history (in-memory only)
-  const [chats, setChats] = useState(() => {
-    const initialChat = {
-      id: Date.now().toString(),
-      title: "New Chat",
-      messages: [
-        {
-          id: "welcome",
-          role: "assistant",
-          text: WELCOME_MESSAGE,
-          html: formatAssistantHtml(WELCOME_MESSAGE),
-          images: [],
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ],
-    };
-    return [initialChat];
-  });
-
-  const [currentChatId, setCurrentChatId] = useState(() => chats[0].id);
+  // Multi-chat history loaded from backend (ChatGPT style)
+  const [chats, setChats] = useState([]);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -184,8 +225,50 @@ export default function ChatAssistantPage() {
   const currentChat = chats.find((c) => c.id === currentChatId);
   const messages = currentChat?.messages || [];
 
-  // Create new chat
-  const createNewChat = () => {
+  // Load chat history from backend on mount (ChatGPT behavior)
+  useEffect(() => {
+    const initChats = async () => {
+      if (!user?.id || historyLoaded) return;
+
+      const savedChats = await loadChatHistory();
+
+      if (savedChats.length > 0) {
+        setChats(savedChats);
+        setCurrentChatId(savedChats[0].id);
+      } else {
+        // No history → create default welcome chat
+        const welcomeChat = {
+          id: Date.now().toString(),
+          title: "New Chat",
+          messages: [
+            {
+              id: "welcome",
+              role: "assistant",
+              text: WELCOME_MESSAGE,
+              html: formatAssistantHtml(WELCOME_MESSAGE),
+              images: [],
+              time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ],
+        };
+        setChats([welcomeChat]);
+        setCurrentChatId(welcomeChat.id);
+      }
+
+      setHistoryLoaded(true);
+    };
+
+    if (user && !authLoading) {
+      initChats();
+    }
+  }, [user, authLoading, historyLoaded, loadChatHistory]);
+
+  // Create new chat (ChatGPT style - save previous first)
+  const createNewChat = async () => {
+    if (currentChat) {
+      await saveChatToBackend(currentChat);
+    }
+
     const newChat = {
       id: Date.now().toString(),
       title: "New Chat",
@@ -200,6 +283,7 @@ export default function ChatAssistantPage() {
         },
       ],
     };
+
     setChats((prev) => [newChat, ...prev]);
     setCurrentChatId(newChat.id);
     setInput("");
@@ -207,7 +291,10 @@ export default function ChatAssistantPage() {
   };
 
   // Switch to existing chat
-  const switchChat = (chatId) => {
+  const switchChat = async (chatId) => {
+    if (currentChatId !== chatId && currentChat) {
+      await saveChatToBackend(currentChat);
+    }
     setCurrentChatId(chatId);
     setInput("");
     setSelectedImage(null);
@@ -225,6 +312,65 @@ export default function ChatAssistantPage() {
     }
   };
 
+  // === Rename Chat (ChatGPT style) ===
+  const startRenaming = (chat) => {
+    setEditingChatId(chat.id);
+    setEditingTitle(chat.title);
+  };
+
+  const saveRename = async () => {
+    if (!editingChatId) return;
+
+    const newTitle = editingTitle.trim() || "Untitled Chat";
+
+    setChats((prev) =>
+      prev.map((chat) =>
+        chat.id === editingChatId
+          ? { ...chat, title: newTitle }
+          : chat
+      )
+    );
+
+    // Save the whole conversation with the updated title
+    const chatToUpdate = chats.find((c) => c.id === editingChatId);
+    if (chatToUpdate) {
+      await saveChatToBackend({
+        ...chatToUpdate,
+        title: newTitle,
+      });
+    }
+
+    setEditingChatId(null);
+    setEditingTitle("");
+  };
+
+  const cancelRename = () => {
+    setEditingChatId(null);
+    setEditingTitle("");
+  };
+
+  // Save entire conversation to main backend (chat-activity)
+  const saveChatToBackend = async (chatToSave) => {
+    if (!user?.id || !chatToSave) return;
+
+    // Only save chats that have real user interaction
+    const hasUserMessage = chatToSave.messages.some((m) => m.role === "user");
+    if (!hasUserMessage) return;
+
+    try {
+      await axiosAuth.post("/chat-activity", {
+        userId: user.id,
+        sessionId: chatToSave.id,
+        title: chatToSave.title || "Untitled Chat",
+        messages: chatToSave.messages,
+        savedAt: new Date().toISOString(),
+      });
+      console.log("Chat saved to backend:", chatToSave.id);
+    } catch (err) {
+      console.error("Failed to save chat to backend:", err);
+    }
+  };
+
   const selectedImagePreview = useMemo(
     () => (selectedImage ? URL.createObjectURL(selectedImage) : null),
     [selectedImage]
@@ -233,6 +379,15 @@ export default function ChatAssistantPage() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, selectedImagePreview]);
+
+  // Save current chat when leaving the page (whole conversation at once)
+  useEffect(() => {
+    return () => {
+      if (currentChat && user?.id) {
+        saveChatToBackend(currentChat);
+      }
+    };
+  }, [currentChat, user]);
 
   const clearSelectedImage = () => {
     setSelectedImage(null);
@@ -344,11 +499,19 @@ export default function ChatAssistantPage() {
     } catch (error) {
       console.error("Chat assistant error:", error);
 
+      const rawError = error?.response?.data?.message || error?.message || "";
+      let displayError = ERROR_MESSAGE;
+
+      if (rawError.toLowerCase().includes("does not support image") || 
+          rawError.toLowerCase().includes("image input")) {
+        displayError = "Sorry, the current AI model doesn't support image analysis right now. Please try asking a text question instead.";
+      }
+
       const errorMessage = {
         id: `assistant-error-${Date.now()}`,
         role: "assistant",
-        text: ERROR_MESSAGE,
-        html: formatAssistantHtml(ERROR_MESSAGE),
+        text: displayError,
+        html: formatAssistantHtml(displayError),
         images: [],
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
@@ -420,37 +583,72 @@ export default function ChatAssistantPage() {
           </div>
 
           <div className="space-y-1">
-            {chats.map((chat) => (
-              <div
-                key={chat.id}
-                onClick={() => switchChat(chat.id)}
-                className={`group flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition ${
-                  currentChatId === chat.id
-                    ? "bg-[#fff2f8] border border-[#eb61a2]"
-                    : "hover:bg-[#fff8fb]"
-                }`}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1f2937] truncate">
-                    {chat.title}
-                  </p>
-                  <p className="text-[11px] text-[#6b7280]">
-                    {chat.messages.length} messages
-                  </p>
-                </div>
-                {chats.length > 1 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteChat(chat.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 p-1"
-                  >
-                    <FaTrashAlt className="text-xs" />
-                  </button>
-                )}
-              </div>
-            ))}
+             {chats.map((chat) => (
+               <div
+                 key={chat.id}
+                 onClick={() => {
+                   if (editingChatId !== chat.id) switchChat(chat.id);
+                 }}
+                 onDoubleClick={() => startRenaming(chat)}
+                 className={`group flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition ${
+                   currentChatId === chat.id
+                     ? "bg-[#fff2f8] border border-[#eb61a2]"
+                     : "hover:bg-[#fff8fb]"
+                 }`}
+               >
+                 <div className="flex-1 min-w-0">
+                   {editingChatId === chat.id ? (
+                     <input
+                       type="text"
+                       value={editingTitle}
+                       onChange={(e) => setEditingTitle(e.target.value)}
+                       onBlur={saveRename}
+                       onKeyDown={(e) => {
+                         if (e.key === "Enter") saveRename();
+                         if (e.key === "Escape") cancelRename();
+                       }}
+                       autoFocus
+                       className="w-full text-sm font-medium bg-white border border-[#eb61a2] rounded px-2 py-1 focus:outline-none"
+                       onClick={(e) => e.stopPropagation()}
+                     />
+                   ) : (
+                     <p className="text-sm font-medium text-[#1f2937] truncate">
+                       {chat.title}
+                     </p>
+                   )}
+                   <p className="text-[11px] text-[#6b7280]">
+                     {chat.messages.length} messages
+                   </p>
+                 </div>
+
+                 <div className="flex items-center gap-1">
+                   {/* Pencil icon for rename on hover */}
+                   <button
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       startRenaming(chat);
+                     }}
+                     className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-[#eb61a2] p-1 transition"
+                     title="Rename chat"
+                   >
+                     <FaEdit className="text-xs" />
+                   </button>
+
+                   {chats.length > 1 && (
+                     <button
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         deleteChat(chat.id);
+                       }}
+                       className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 p-1"
+                       title="Delete chat"
+                     >
+                       <FaTrashAlt className="text-xs" />
+                     </button>
+                   )}
+                 </div>
+               </div>
+             ))}
           </div>
         </div>
       </aside>

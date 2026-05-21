@@ -16,6 +16,7 @@ import useUserActions from "../../../Components/Hooks/userUserActions";
 import { FaCartPlus, FaHeart, FaArrowLeft } from "react-icons/fa";
 import { getProductImageUrl, getProductImageUrlFromItem } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
+import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
 
 const DefaultImage = "/assets/third_image.png";
 
@@ -37,6 +38,8 @@ const ProductDetailsContent = () => {
   const galleryRef = useRef(null);
   const { addToCart, addToFavorite } = useUserActions();
   const [productFeedbacks, setProductFeedbacks] = useState([]);
+  const [mainDiscountedPrice, setMainDiscountedPrice] = useState(null);
+  const [relatedDiscountedPrices, setRelatedDiscountedPrices] = useState({});
 
   const getInitials = (name) => {
     if (!name) return "?";
@@ -145,6 +148,48 @@ const ProductDetailsContent = () => {
 
     fetchProductDetails();
   }, [productId]);
+
+  // Fetch discounts for main product + recommended products
+  useEffect(() => {
+    const fetchDiscounts = async () => {
+      const idsToFetch = new Set();
+
+      if (product?.id) idsToFetch.add(product.id);
+      relatedProducts.forEach(p => p?.id && idsToFetch.add(p.id));
+
+      if (idsToFetch.size === 0) return;
+
+      const promises = Array.from(idsToFetch).map(async (pid) => {
+        try {
+          const res = await axios.get(`${API_BASE}/promotions/product/${pid}/discounted-price`);
+          const data = res.data?.data;
+          let final = null;
+          if (typeof data === "number") final = data;
+          else if (data && typeof data === "object") {
+            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? null;
+          }
+          return [pid, final != null ? Number(final) : null];
+        } catch {
+          return [pid, null];
+        }
+      });
+
+      const results = await Promise.all(promises);
+      const newMap = { ...relatedDiscountedPrices };
+
+      results.forEach(([pid, val]) => {
+        if (pid === product?.id) {
+          setMainDiscountedPrice(val);
+        } else {
+          newMap[pid] = val;
+        }
+      });
+
+      setRelatedDiscountedPrices(newMap);
+    };
+
+    fetchDiscounts();
+  }, [product, relatedProducts]);
 
   if (loading) {
     return <Loading />;
@@ -282,7 +327,18 @@ const ProductDetailsContent = () => {
             {/* Price */}
             <div className="mb-6">
               <p className="text-sm text-gray-500 mb-0.5">Regular price</p>
-              <p className="text-2xl font-bold text-gray-900">{formatPrice(product.price)}</p>
+              {mainDiscountedPrice != null && mainDiscountedPrice < product.price ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl line-through text-gray-400">
+                    {formatPrice(product.price)}
+                  </span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {formatPrice(mainDiscountedPrice)}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-2xl font-bold text-gray-900">{formatPrice(product.price)}</p>
+              )}
               {(product.skinType ?? product.skin_type) != null &&
                 (Array.isArray(product.skinType ?? product.skin_type)
                   ? (product.skinType ?? product.skin_type).length > 0
@@ -486,9 +542,20 @@ const ProductDetailsContent = () => {
                     <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
                       {p.name}
                     </h3>
-                    <p className="text-sm font-bold text-black mt-1">
-                      {formatPrice(p.price)}
-                    </p>
+                     {relatedDiscountedPrices[p.id] != null && relatedDiscountedPrices[p.id] < p.price ? (
+                       <div className="flex items-center justify-center gap-2 mt-1">
+                         <span className="text-sm line-through text-gray-400">
+                           {formatPrice(p.price)}
+                         </span>
+                         <span className="text-sm font-bold text-black">
+                           {formatPrice(relatedDiscountedPrices[p.id])}
+                         </span>
+                       </div>
+                     ) : (
+                       <p className="text-sm font-bold text-black mt-1">
+                         {formatPrice(p.price)}
+                       </p>
+                     )}
                     <button
                       type="button"
                       onClick={() => addToCart(p.id, 1)}

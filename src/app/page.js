@@ -311,7 +311,7 @@ export default function Page() {
           <div>
             <button
               onClick={scrollToProducts}
-              className="opacity-[0.8] text-white text-[30px] font-semibold px-[50px] py-3.5 bg-[#000000] rounded-[7px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-lg max-[600px]:px-[30px] max-[600px]:py-2.5"
+              className="opacity-[0.8] text-[#EE90B9] text-[30px] font-semibold px-[50px] py-3.5 bg-[#000000] rounded-[7px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-lg max-[600px]:px-[30px] max-[600px]:py-2.5"
             >
               Shop Now
             </button>

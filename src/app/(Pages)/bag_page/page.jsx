@@ -451,7 +451,7 @@ function BagPage() {
                       Checkout / Make payment
                     </button>
                       <p className="text-[#000000] pt-4 font-medium text-[1.25rem]">We accept</p>
-                     <div className="mt-4 flex items-center justify-start gap-3 w-[330px] bg-[#000000] py-3 pl-3 rounded-lg">
+                     <div className="opacity-[0.9] mt-4 flex items-center justify-start gap-3 w-[330px] bg-[#646464] py-3 pl-3 rounded-lg">
                        <Image src="/assets/CardBagPage/firstCard.svg" alt="Visa" width={45} height={26} />
                        <Image src="/assets/CardBagPage/secondCard.svg" alt="Mastercard" width={42} height={26} />
                        <Image src="/assets/CardBagPage/thirdCard.svg" alt="Amex" width={80} height={26} />

@@ -59,7 +59,16 @@ const ProfilePage = () => {
       const { data } = await axiosAuth.get(`/favorites/user/${userId}`, {
         withCredentials: true,
       });
-      setFavorites(data?.data || []);
+      const favs = data?.data || [];
+      setFavorites(favs);
+
+      // Temporary helper: shows your real product IDs in the browser console
+      console.log("%c=== Your Favorite Product IDs (copy one of these) ===", "color:#eb61a2; font-weight:bold");
+      console.table(favs.map(f => ({
+        productId: f.product?.id,
+        name: f.product?.name,
+        price: f.product?.price
+      })));
     } catch (err) {
       const status = err?.response?.status;
       if (status === 404) {
@@ -120,7 +129,7 @@ const ProfilePage = () => {
     return () => { cancelled = true; };
   }, [userId, fetchUser, fetchFavorites, fetchOrders]);
 
-  // Fetch discounted prices for favorites
+  // Fetch discounted prices for favorites using active promotions (most reliable)
   useEffect(() => {
     const fetchDiscounts = async () => {
       const prods = favorites.map((f) => f.product).filter(Boolean);
@@ -128,28 +137,68 @@ const ProfilePage = () => {
         setDiscountedPrices({});
         return;
       }
-      const productIds = [...new Set(prods.map((p) => p.id).filter(Boolean))];
-      const promises = productIds.map(async (pid) => {
-        try {
-          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
-          const data = res.data?.data;
-          let final = null;
-          if (typeof data === "number") final = data;
-          else if (data && typeof data === "object") {
-            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+
+      const discountMap = {};
+
+      // Best way: fetch all currently active PRODUCT_DISCOUNT promotions (1 call)
+      try {
+        const res = await axiosAuth.get("/promotions/active/type/PRODUCT_DISCOUNT");
+        const activePromos = res.data?.data || [];
+        console.log("[Profile Discounts] Active PRODUCT_DISCOUNT promotions from backend:", activePromos);
+
+        activePromos.forEach((promo) => {
+          const pid = promo.productId ?? promo.product?.id;
+          if (!pid) return;
+
+          const product = prods.find((p) => p.id === pid);
+          if (!product) return;
+
+          const pct = promo.discountPercentage ?? promo.discount_percent ?? 0;
+          if (pct > 0) {
+            const discounted = product.price * (1 - pct / 100);
+            discountMap[pid] = Number(discounted);
           }
-          return [pid, final != null ? Number(final) : null];
-        } catch {
-          return [pid, null];
+        });
+      } catch (err) {
+        console.warn("[Profile] Could not load active PRODUCT_DISCOUNT promotions", err);
+      }
+
+      // Extra safety: still try per-product endpoints for any products not covered above
+      const coveredIds = Object.keys(discountMap).map(Number);
+      const missing = prods.filter((p) => !coveredIds.includes(p.id));
+
+      for (const prod of missing) {
+        const pid = prod.id;
+        let final = null;
+
+        try {
+          const r = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
+          const d = r.data?.data;
+          if (typeof d === "number") final = d;
+          else if (d && typeof d === "object") {
+            final = d.discountedPrice ?? d.finalPrice ?? d.value ?? null;
+          }
+        } catch {}
+
+        if (final == null || final >= prod.price) {
+          try {
+            const pr = await axiosAuth.get(`/promotions/product/${pid}`);
+            const promo = pr.data?.data;
+            const pct = promo?.discountPercentage ?? promo?.discount_percent ?? 0;
+            if (promo?.promotionType === "PRODUCT_DISCOUNT" && pct > 0) {
+              final = prod.price * (1 - pct / 100);
+            }
+          } catch {}
         }
-      });
-      const results = await Promise.all(promises);
-      const map = {};
-      results.forEach(([id, val]) => {
-        if (val != null) map[id] = val;
-      });
-      setDiscountedPrices(map);
+
+        if (final != null && final < prod.price) {
+          discountMap[pid] = Number(final);
+        }
+      }
+
+      setDiscountedPrices(discountMap);
     };
+
     fetchDiscounts();
   }, [favorites]);
 
@@ -314,11 +363,20 @@ const ProfilePage = () => {
                           >
                             {product.name}
                           </h3>
-                           <ProductPrice
-                             price={product.price}
-                             discountedPrice={discountedPrices[product.id]}
-                             className="mt-1"
-                           />
+                           {discountedPrices[product.id] != null && discountedPrices[product.id] < product.price ? (
+                             <div className="flex items-center justify-center gap-2 mt-1">
+                               <span className="line-through text-gray-400 text-sm">
+                                 {formatPrice(product.price)}
+                               </span>
+                               <span className="text-sm font-bold text-black">
+                                 {formatPrice(discountedPrices[product.id])}
+                               </span>
+                             </div>
+                           ) : (
+                             <p className="text-sm font-bold text-black mt-1">
+                               {formatPrice(product.price)}
+                             </p>
+                           )}
 
                            <button
                              type="button"
@@ -333,7 +391,7 @@ const ProfilePage = () => {
                             onClick={() => handleRemoveFavorite(product.id)}
                             className="mt-1 flex items-center justify-center gap-1 text-[#d13e82] font-medium text-xs transition-all duration-200 hover:scale-[1.02]"
                           >
-                            <Image
+                            <img
                               src="/assets/DeleteFavorite/DeleteIcon.svg"
                               alt="Delete"
                               width={10}

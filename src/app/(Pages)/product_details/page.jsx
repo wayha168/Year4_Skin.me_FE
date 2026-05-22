@@ -327,18 +327,13 @@ const ProductDetailsContent = () => {
             {/* Price */}
             <div className="mb-6">
               <p className="text-sm text-gray-500 mb-0.5">Regular price</p>
-              {mainDiscountedPrice != null && mainDiscountedPrice < product.price ? (
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl line-through text-gray-400">
-                    {formatPrice(product.price)}
-                  </span>
-                  <span className="text-2xl font-bold text-gray-900">
-                    {formatPrice(mainDiscountedPrice)}
-                  </span>
-                </div>
-              ) : (
-                <p className="text-2xl font-bold text-gray-900">{formatPrice(product.price)}</p>
-              )}
+              <ProductPrice 
+                price={product.price} 
+                discountedPrice={mainDiscountedPrice}
+                originalClassName="line-through text-gray-400 text-2xl"
+                discountedClassName="text-2xl font-bold text-gray-900"
+                priceClassName="text-2xl font-bold text-gray-900"
+              />
               {(product.skinType ?? product.skin_type) != null &&
                 (Array.isArray(product.skinType ?? product.skin_type)
                   ? (product.skinType ?? product.skin_type).length > 0
@@ -542,20 +537,15 @@ const ProductDetailsContent = () => {
                     <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
                       {p.name}
                     </h3>
-                     {relatedDiscountedPrices[p.id] != null && relatedDiscountedPrices[p.id] < p.price ? (
-                       <div className="flex items-center justify-center gap-2 mt-1">
-                         <span className="text-sm line-through text-gray-400">
-                           {formatPrice(p.price)}
-                         </span>
-                         <span className="text-sm font-bold text-black">
-                           {formatPrice(relatedDiscountedPrices[p.id])}
-                         </span>
-                       </div>
-                     ) : (
-                       <p className="text-sm font-bold text-black mt-1">
-                         {formatPrice(p.price)}
-                       </p>
-                     )}
+                      <ProductPrice 
+                        price={p.price} 
+                        discountedPrice={relatedDiscountedPrices[p.id]}
+                        originalClassName="text-sm line-through text-gray-400"
+                        discountedClassName="text-sm font-bold text-black"
+                        priceClassName="text-sm font-bold text-black mt-1"
+                        className="justify-center"
+                      />
+
                     <button
                       type="button"
                       onClick={() => addToCart(p.id, 1)}

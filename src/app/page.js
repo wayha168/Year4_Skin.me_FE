@@ -13,6 +13,7 @@ import LoginFirst from "../Components/LoginFirst/LoginFirst.js";
 import { FaCartPlus, FaHeart, FaChevronLeft, FaChevronRight, FaChevronDown } from "react-icons/fa";
 import { getProductImageUrl } from "./lib/productImage.js";
 import { formatPrice } from "./lib/formatPrice.js";
+import ProductPrice from "../Components/ProductPrice/ProductPrice";
 
 function useScrollAnimation() {
   const ref = useRef(null);
@@ -100,6 +101,7 @@ export default function Page() {
   const [isClient, setIsClient] = useState(false);
   const [noSectionAnimation, setNoSectionAnimation] = useState(false);
   const [hasSectionAnimated, setHasSectionAnimated] = useState(false);
+  const [discountedPrices, setDiscountedPrices] = useState({});
 
   const loginFirst = useMemo(() => new LoginFirst(user, router.push), [user, router.push]);
 
@@ -240,6 +242,38 @@ export default function Page() {
     };
     fetchProducts();
   }, []);
+
+  // Fetch discounted prices for home products
+  useEffect(() => {
+    const fetchDiscounts = async () => {
+      if (!products.length) {
+        setDiscountedPrices({});
+        return;
+      }
+      const productIds = [...new Set(products.map((p) => p.id).filter(Boolean))];
+      const promises = productIds.map(async (pid) => {
+        try {
+          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
+          const data = res.data?.data;
+          let final = null;
+          if (typeof data === "number") final = data;
+          else if (data && typeof data === "object") {
+            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+          }
+          return [pid, final != null ? Number(final) : null];
+        } catch {
+          return [pid, null];
+        }
+      });
+      const results = await Promise.all(promises);
+      const map = {};
+      results.forEach(([id, val]) => {
+        if (val != null) map[id] = val;
+      });
+      setDiscountedPrices(map);
+    };
+    fetchDiscounts();
+  }, [products]);
 
   const handleFavoriteClick = useCallback(async (productId) => {
     if (!user) {
@@ -454,16 +488,19 @@ export default function Page() {
                           <p className="text-xs text-gray-500 truncate opacity-80" title={desc}>
                             {desc}
                           </p>
-                          <p className="text-sm font-bold text-black mt-1">
-                            {formatPrice(p?.price)}
-                          </p>
-                          <button
-                            type="button"
-                            className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
-                            onClick={() => handleAddToCartClick(p.id)}
-                          >
-                            <FaCartPlus className="text-base" /> Add to Cart
-                          </button>
+                           <ProductPrice
+                             price={p?.price}
+                             discountedPrice={discountedPrices[p?.id]}
+                             className="mt-1"
+                           />
+                           <button
+                             type="button"
+                             className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                             onClick={() => handleAddToCartClick(p.id)}
+                           >
+                             <FaCartPlus className="text-base" /> Add to Cart
+                           </button>
+
                         </div>
                       </div>
                     );

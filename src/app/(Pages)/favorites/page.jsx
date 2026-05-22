@@ -15,6 +15,7 @@ import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
+import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
 
 const ThirdImage = "/assets/third_image.png";
 
@@ -23,6 +24,7 @@ const FavoritePage = () => {
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
+  const [discountedPrices, setDiscountedPrices] = useState({});
 
   const { user, loading: authLoading } = useAuthContext();
   const { addToCart, addToFavorite } = useUserActions();
@@ -95,6 +97,43 @@ const FavoritePage = () => {
 
     fetchFavorites();
   }, [userId, authLoading, router]);
+
+  // Fetch discounted prices for favorites + recommended
+  useEffect(() => {
+    const allProds = [
+      ...favorites.map((f) => f.product).filter(Boolean),
+      ...recommendedProducts,
+    ];
+    const productIds = [...new Set(allProds.map((p) => p.id).filter(Boolean))];
+    if (!productIds.length) {
+      setDiscountedPrices({});
+      return;
+    }
+
+    const fetchDiscounts = async () => {
+      const promises = productIds.map(async (pid) => {
+        try {
+          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
+          const data = res.data?.data;
+          let final = null;
+          if (typeof data === "number") final = data;
+          else if (data && typeof data === "object") {
+            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+          }
+          return [pid, final != null ? Number(final) : null];
+        } catch {
+          return [pid, null];
+        }
+      });
+      const results = await Promise.all(promises);
+      const map = {};
+      results.forEach(([id, val]) => {
+        if (val != null) map[id] = val;
+      });
+      setDiscountedPrices(map);
+    };
+    fetchDiscounts();
+  }, [favorites, recommendedProducts]);
 
   const handleRemoveFavorite = useCallback(
     async (productId) => {
@@ -224,17 +263,20 @@ const FavoritePage = () => {
                       <p className="text-xs text-gray-500 truncate opacity-80" title={product.description}>
                         {product.description?.trim() || "No description"}
                       </p>
-                      <p className="text-sm font-bold text-black mt-1">
-                        {formatPrice(product.price)}
-                      </p>
+                         <ProductPrice
+                           price={product.price}
+                           discountedPrice={discountedPrices[product.id]}
+                           className="mt-1"
+                         />
 
-                      <button
-                        type="button"
-                        onClick={() => handleAddToCartFromFavorite(product.id)}
-                        className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
-                      >
-                        <FaCartPlus className="text-base" /> Add to Cart
-                      </button>
+                         <button
+                           type="button"
+                           onClick={() => handleAddToCartFromFavorite(product.id)}
+                           className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                         >
+                           <FaCartPlus className="text-base" /> Add to Cart
+                         </button>
+
                       <button
                         onClick={() => handleRemoveFavorite(product.id)}
                         className="relative flex items-center justify-center gap-1.5 text-[#d13e82] font-medium text-sm mt-1 transition-all duration-200 hover:scale-[1.02] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-[#d13e82] after:transition-all after:duration-300 hover:after:w-full"
@@ -302,16 +344,19 @@ const FavoritePage = () => {
                     <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
                       {p.name}
                     </h3>
-                    <p className="text-sm font-bold text-black mt-1">
-                      {formatPrice(p.price)}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => addToCart(p.id, 1)}
-                      className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
-                    >
-                      <FaCartPlus className="text-base" /> Add to Cart
-                    </button>
+                         <ProductPrice
+                           price={p.price}
+                           discountedPrice={discountedPrices[p.id]}
+                           className="mt-1"
+                         />
+                         <button
+                           type="button"
+                           onClick={() => addToCart(p.id, 1)}
+                           className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                         >
+                           <FaCartPlus className="text-base" /> Add to Cart
+                         </button>
+
                   </div>
                 </div>
               ))}

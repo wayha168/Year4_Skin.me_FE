@@ -508,9 +508,12 @@ function BagPage() {
                             <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
                               {p.name}
                             </h3>
-                            <p className="text-sm font-bold text-black mt-1">
-                              {formatPrice(p.price)}
-                            </p>
+                             <ProductPrice
+                               price={p.price}
+                               discountedPrice={discountedPrices[p.id]}
+                               className="mt-1"
+                             />
+
                             <button
                               type="button"
                               onClick={() => addToCart(p.id, 1)}

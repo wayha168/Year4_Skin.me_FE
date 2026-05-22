@@ -196,7 +196,12 @@ export default function ChatAssistantPage() {
 
       return Object.values(grouped).sort((a, b) => b.id.localeCompare(a.id)); // newest first
     } catch (err) {
-      console.error("Failed to load chat history:", err);
+      if (err.response?.status === 404) {
+        // Expected for now — the GET endpoint for chat history doesn't exist yet
+        console.log("No chat history found yet (404 from backend)");
+      } else {
+        console.error("Failed to load chat history:", err);
+      }
       return [];
     }
   }, [user?.id]);
@@ -365,9 +370,14 @@ export default function ChatAssistantPage() {
         messages: chatToSave.messages,
         savedAt: new Date().toISOString(),
       });
-      console.log("Chat saved to backend:", chatToSave.id);
+      console.log("✅ Chat saved to backend:", chatToSave.id);
     } catch (err) {
-      console.error("Failed to save chat to backend:", err);
+      if (err.response?.status === 404) {
+        // Expected for now — backend POST /chat-activity route not implemented yet
+        console.log("⚠️ Chat save skipped (404 - /chat-activity endpoint not ready)");
+      } else {
+        console.error("Failed to save chat to backend:", err.response?.data || err.message);
+      }
     }
   };
 

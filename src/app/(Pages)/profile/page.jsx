@@ -22,6 +22,7 @@ import axiosAuth from "../../../app/lib/api/axiosConfig";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
+import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
 import useUserActions from "../../../Components/Hooks/userUserActions";
 import { useRouter } from "next/navigation";
 
@@ -37,6 +38,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notification, setNotification] = useState("");
+  const [discountedPrices, setDiscountedPrices] = useState({});
 
   const userId = authUser?.id;
 
@@ -117,6 +119,39 @@ const ProfilePage = () => {
     });
     return () => { cancelled = true; };
   }, [userId, fetchUser, fetchFavorites, fetchOrders]);
+
+  // Fetch discounted prices for favorites
+  useEffect(() => {
+    const fetchDiscounts = async () => {
+      const prods = favorites.map((f) => f.product).filter(Boolean);
+      if (!prods.length) {
+        setDiscountedPrices({});
+        return;
+      }
+      const productIds = [...new Set(prods.map((p) => p.id).filter(Boolean))];
+      const promises = productIds.map(async (pid) => {
+        try {
+          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
+          const data = res.data?.data;
+          let final = null;
+          if (typeof data === "number") final = data;
+          else if (data && typeof data === "object") {
+            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+          }
+          return [pid, final != null ? Number(final) : null];
+        } catch {
+          return [pid, null];
+        }
+      });
+      const results = await Promise.all(promises);
+      const map = {};
+      results.forEach(([id, val]) => {
+        if (val != null) map[id] = val;
+      });
+      setDiscountedPrices(map);
+    };
+    fetchDiscounts();
+  }, [favorites]);
 
   const displayUser = user || authUser;
 
@@ -279,16 +314,33 @@ const ProfilePage = () => {
                           >
                             {product.name}
                           </h3>
-                          <p className="text-sm font-bold text-black mt-1">
-                            {formatPrice(product.price)}
-                          </p>
+                           <ProductPrice
+                             price={product.price}
+                             discountedPrice={discountedPrices[product.id]}
+                             className="mt-1"
+                           />
+
+                           <button
+                             type="button"
+                             onClick={() => handleAddToCartFromFavorite(product.id)}
+                             className="mt-2 w-full bg-[#d13e82] text-white text-sm font-semibold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 hover:bg-[#c32c70] transition-colors"
+                           >
+                             <FaCartPlus className="text-sm" /> Add to Cart
+                           </button>
 
                           <button
                             type="button"
-                            onClick={() => handleAddToCartFromFavorite(product.id)}
-                            className="mt-2 w-full bg-[#d13e82] text-white text-sm font-semibold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 hover:bg-[#c32c70] transition-colors"
+                            onClick={() => handleRemoveFavorite(product.id)}
+                            className="mt-1 flex items-center justify-center gap-1 text-[#d13e82] font-medium text-xs transition-all duration-200 hover:scale-[1.02]"
                           >
-                            <FaCartPlus className="text-sm" /> Add to Cart
+                            <Image
+                              src="/assets/DeleteFavorite/DeleteIcon.svg"
+                              alt="Delete"
+                              width={10}
+                              height={10}
+                              className="[filter:brightness(0)_saturate(100%)_invert(42%)_sepia(93%)_saturate(1352%)_hue-rotate(300deg)_brightness(1)_contrast(1)]"
+                            />
+                            Remove
                           </button>
                         </div>
                       </div>

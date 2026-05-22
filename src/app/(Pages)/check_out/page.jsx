@@ -11,6 +11,7 @@ import DiliveryAndPayment from "../../../Components/DiliveryAndPayment/DiliveryA
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
+import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
 const DefaultProductImage = "/assets/third_image.png";
 
 /** Read-only quantity display on checkout (quantity is edited on my-bag page). */
@@ -34,6 +35,7 @@ function CheckOutContent() {
   const [singleQty, setSingleQty] = useState(Math.max(1, parseInt(quantityParam, 10) || 1));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [discountedPrices, setDiscountedPrices] = useState({});
 
   // Single product: fetch one product by ID
   useEffect(() => {
@@ -85,6 +87,45 @@ function CheckOutContent() {
   useEffect(() => {
     if (productId) setSingleQty(Math.max(1, parseInt(quantityParam, 10) || 1));
   }, [quantityParam, productId]);
+
+  // Fetch discounted prices for checkout items
+  useEffect(() => {
+    const ids = [];
+    if (product?.id) ids.push(product.id);
+    cartItems.forEach((item) => {
+      const pid = item?.product?.id ?? item?.productId;
+      if (pid) ids.push(pid);
+    });
+    const uniqueIds = [...new Set(ids.filter(Boolean))];
+    if (!uniqueIds.length) {
+      setDiscountedPrices({});
+      return;
+    }
+
+    const fetchDiscounts = async () => {
+      const promises = uniqueIds.map(async (pid) => {
+        try {
+          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
+          const data = res.data?.data;
+          let final = null;
+          if (typeof data === "number") final = data;
+          else if (data && typeof data === "object") {
+            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+          }
+          return [pid, final != null ? Number(final) : null];
+        } catch {
+          return [pid, null];
+        }
+      });
+      const results = await Promise.all(promises);
+      const map = {};
+      results.forEach(([id, val]) => {
+        if (val != null) map[id] = val;
+      });
+      setDiscountedPrices(map);
+    };
+    fetchDiscounts();
+  }, [product, cartItems]);
 
   // Show success toast when redirected from Stripe
   useEffect(() => {
@@ -203,7 +244,13 @@ function CheckOutContent() {
                         <div>
                           <h3 className="font-medium text-[#1a1a1a] truncate">{product.name}</h3>
                           <p className="text-[#9ca3af] text-xs sm:text-sm mt-0.5">{product.brand?.name || "—"}</p>
-                          <p className="text-[#eb61a2] font-semibold text-sm sm:text-base mt-1">{formatPrice(product.price)}</p>
+                           <ProductPrice
+                             price={product.price}
+                             discountedPrice={discountedPrices[product.id]}
+                             className="mt-1 text-[#eb61a2] font-semibold text-sm sm:text-base"
+                             priceClassName="font-semibold text-sm sm:text-base text-[#eb61a2]"
+                           />
+
                         </div>
                         <div className="flex items-center justify-between gap-3 mt-2">
                           <QuantityReadOnly value={singleQty} />
@@ -234,7 +281,13 @@ function CheckOutContent() {
                             <div>
                               <h3 className="font-medium text-[#1a1a1a] truncate">{p?.name}</h3>
                               <p className="text-[#9ca3af] text-xs sm:text-sm mt-0.5">{p?.brand?.name || "—"}</p>
-                              <p className="text-[#eb61a2] font-semibold text-sm sm:text-base mt-1">{formatPrice(price)}</p>
+                               <ProductPrice
+                                 price={price}
+                                 discountedPrice={discountedPrices[item?.product?.id ?? item?.productId]}
+                                 className="mt-1 text-[#eb61a2] font-semibold text-sm sm:text-base"
+                                 priceClassName="font-semibold text-sm sm:text-base text-[#eb61a2]"
+                               />
+
                             </div>
                             <div className="flex items-center justify-between gap-3 mt-2">
                               <QuantityReadOnly value={qty} />

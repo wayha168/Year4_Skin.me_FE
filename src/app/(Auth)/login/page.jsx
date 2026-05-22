@@ -87,16 +87,18 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
               className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition placeholder:text-gray-400 placeholder:opacity-100"
             />
             <div className="text-right mt-1">
-              <Link href="/forgot-password" className="text-[#3C83C1] underline text-sm">Forgot Password?</Link>
+              <Link href="/forgot-password" className="text-[#3C83C1] underline text-sm">
+                Forgot Password?
+              </Link>
             </div>
           </div>
-
-
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full p-2 mt-2 font-bold text-xl rounded-lg text-white transition ${loading ? "bg-pink-300 cursor-not-allowed" : "bg-[#F071B4] hover:bg-[#E06AA5] active:scale-[0.98]"
+            className={`w-full p-2 mt-2 font-bold text-xl rounded-lg text-white transition ${loading
+                ? "bg-pink-300 cursor-not-allowed"
+                : "bg-[#F071B4] hover:bg-[#E06AA5] active:scale-[0.98]"
               }`}
           >
             {isLoading ? "Logging in..." : "Login"}
@@ -116,7 +118,8 @@ function LoginForm({ onGoogleClick, isGoogleLoading }) {
           </button>
         ) : (
           <p className="text-center text-gray-500 text-sm">
-            Add <code className="bg-gray-100 px-1 rounded">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> to .env to enable Google login.
+            Add <code className="bg-gray-100 px-1 rounded">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> to .env to
+            enable Google login.
           </p>
         )}
 
@@ -137,6 +140,7 @@ function LoginFormWithGoogle() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { googleLogin } = useAuthContext();
+  const redirectUri = typeof window !== "undefined" ? window.location.origin + "/login" : "";
   const redirectTo = searchParams.get("redirect") || "";
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -146,7 +150,7 @@ function LoginFormWithGoogle() {
       if (!res?.code) return;
       setIsGoogleLoading(true);
       try {
-        const userData = await googleLogin(res.code);
+        const userData = await googleLogin(res.code, redirectUri);
         if (userData) doRedirect(router, redirectTo, userData);
       } catch (err) {
         console.error("Google login error:", err);
@@ -159,12 +163,7 @@ function LoginFormWithGoogle() {
     },
   });
 
-  return (
-    <LoginForm
-      onGoogleClick={() => loginWithGoogle()}
-      isGoogleLoading={isGoogleLoading}
-    />
-  );
+  return <LoginForm onGoogleClick={() => loginWithGoogle()} isGoogleLoading={isGoogleLoading} />;
 }
 
 const Login = () => {
@@ -196,20 +195,24 @@ const Login = () => {
         setVerifyDone(true);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, loading, clearSession, router, searchParams, verifyDone]);
 
   if (user && !verifyDone) {
     return (
       <section className="min-h-screen bg-[#CCF6F2] flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" aria-label="Verifying" />
+        <div
+          className="w-10 h-10 border-2 border-pink-400 border-t-transparent rounded-full animate-spin"
+          aria-label="Verifying"
+        />
       </section>
     );
   }
 
   return (
     <section className="min-h-screen bg-[#CCF6F2] flex items-center justify-center relative overflow-hidden">
-
       {googleClientId ? (
         <GoogleOAuthProvider clientId={googleClientId}>
           <LoginFormWithGoogle />

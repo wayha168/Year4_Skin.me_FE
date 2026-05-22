@@ -75,6 +75,7 @@ const Signup = () => {
         lastName: lastName.trim(),
         email: email.trim(),
         password,
+        confirmPassword,
       });
 
       if (userData) {
@@ -91,115 +92,127 @@ const Signup = () => {
     }
   };
 
+  const MainImage = "/assets/product_homepage.png";
+
   return (
-    <section className="min-h-screen bg-[#CCF6F2] flex items-center justify-center relative overflow-hidden">
+    <section className="min-h-screen bg-pink-100 flex items-center justify-center p-6 relative overflow-hidden">
       {popupMessage && (
-        <div className="absolute top-20 max-w-md w-full mx-4 bg-red-600 text-white font-semibold p-3 rounded-xl shadow-lg z-50 text-center">
+        <div className="absolute top-6 z-50 bg-pink-100 border border-pink-300 text-pink-600 font-semibold px-4 py-2 rounded-lg shadow">
           {popupMessage}
         </div>
       )}
 
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg z-40 mx-4">
-        <h1 className="text-3xl font-bold text-pink-400 text-center mb-4 uppercase">Sign Up</h1>
+      {/* Background Image */}
+      <img
+        src={MainImage}
+        alt="background"
+        className="absolute right-20 top-20 scale-110 opacity-30 max-w-3xl hidden sm:block pointer-events-none"
+      />
+
+      {/* Card */}
+      <div className="w-full max-w-lg bg-white/90 backdrop-blur-lg shadow-lg rounded-lg p-8 z-20 border border-black/5">
+        <h1 className="text-3xl font-bold text-center text-pink-500 mb-6">Sign Up</h1>
 
         {(formError || error) && (
-          <p className="bg-red-100 text-red-600 p-3 rounded-md text-center mb-4 font-semibold">{formError || error}</p>
+          <p className="bg-red-100 text-red-600 p-3 rounded-md font-semibold text-center mb-3">
+            {formError || error}
+          </p>
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Name Row */}
           <div className="flex gap-4 flex-col sm:flex-row">
-            <div>
-              <label className="text-sm font-medium text-gray-800 block mb-1">First Name</label>
+            <div className="flex flex-col w-full">
+              <label className="text-sm font-semibold text-gray-700">First Name</label>
               <input
                 type="text"
                 name="firstName"
                 value={firstName}
                 onChange={handleInputChange}
-                placeholder="John"
-                required
+                placeholder="First Name"
                 disabled={isLoading}
-                className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
+                className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
               />
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-800 block mb-1">Last Name</label>
+            <div className="flex flex-col w-full">
+              <label className="text-sm font-semibold text-gray-700">Last Name</label>
               <input
                 type="text"
                 name="lastName"
                 value={lastName}
                 onChange={handleInputChange}
-                placeholder="Son"
-                required
+                placeholder="Last Name"
                 disabled={isLoading}
-                className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
+                className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
               />
             </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-800 block mb-1">Email</label>
+          {/* Email */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700">Email</label>
             <input
               type="email"
               name="email"
               value={email}
               onChange={handleInputChange}
-              placeholder="example@gmail.com"
-              required
+              placeholder="Enter your email"
               disabled={isLoading}
-              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
+              className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
             />
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Password</label>
+          {/* Password */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700">Password</label>
             <input
               type="password"
               name="password"
               value={password}
               onChange={handleInputChange}
-              placeholder="Example1234"
-              required
+              placeholder="Enter your password"
               disabled={isLoading}
-              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
+              className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
             />
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Confirm Password</label>
+          {/* Confirm Password */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700">Confirm Password</label>
             <input
               type="password"
               name="confirmPassword"
               value={confirmPassword}
               onChange={handleInputChange}
-              placeholder="Example1234"
-              required
+              placeholder="Confirm your password"
               disabled={isLoading}
-              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
+              className="border p-2 rounded-md focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none"
             />
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full p-2 mt-2 font-bold text-xl rounded-lg text-white transition ${isLoading ? "bg-pink-300 cursor-not-allowed" : "bg-[#F071B4] hover:bg-[#E06AA5] active:scale-[0.98]"
+            className={`w-full py-3 rounded-md font-bold text-white transition ${isLoading
+              ? "bg-pink-300 cursor-not-allowed"
+              : "bg-pink-500 hover:bg-pink-600 active:scale-[0.98]"
               }`}
           >
             {isLoading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-gray-500 text-sm">
+        <p className="text-center text-gray-700 font-semibold mt-4">
           Already have an account?{" "}
-          <Link href="/login" className="text-[#3C83C1] underline">
+          <Link href="/login" className="text-pink-500 font-bold underline">
             Login
           </Link>
         </p>
       </div>
 
       {isLoading && <Loading />}
-
       <MessageWidget />
     </section>
   );

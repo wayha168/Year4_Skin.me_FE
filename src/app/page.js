@@ -102,6 +102,8 @@ export default function Page() {
   const [noSectionAnimation, setNoSectionAnimation] = useState(false);
   const [hasSectionAnimated, setHasSectionAnimated] = useState(false);
   const [discountedPrices, setDiscountedPrices] = useState({});
+  const [promoModal, setPromoModal] = useState(null);
+  const [promoLoading, setPromoLoading] = useState(false);
 
   const loginFirst = useMemo(() => new LoginFirst(user, router.push), [user, router.push]);
 
@@ -293,6 +295,20 @@ export default function Page() {
     await addToCart(productId, 1);
   }, [user, loginFirst, router, addToCart]);
 
+  // Open promotion details modal for a product (lazy fetch full promo data)
+  const openPromotionModal = useCallback(async (product) => {
+    setPromoLoading(true);
+    try {
+      const res = await axiosAuth.get(`/promotions/product/${product.id}`);
+      const promotion = res?.data?.data || null;
+      setPromoModal({ product, promotion });
+    } catch {
+      setPromoModal({ product, promotion: null });
+    } finally {
+      setPromoLoading(false);
+    }
+  }, []);
+
   const featuredProduct = products[0];
   const overviewProducts = products.slice(0, 3);
   const productById = useMemo(
@@ -459,23 +475,39 @@ export default function Page() {
                         className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                       >
                         <div className="relative h-[200px] bg-gray-100">
-                          <Image
-                            src={getProductImageUrl(p)}
-                            alt={p?.name || "Product"}
-                            fill
-                            className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
-                            sizes="(max-width: 600px) 50vw, 200px"
-                            unoptimized
-                            onClick={() => router.push(`/product_details?productId=${p.id}`)}
-                          />
-                          <button
-                            type="button"
-                            className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
-                            onClick={() => handleFavoriteClick(p.id)}
-                          >
-                            <FaHeart className="text-sm" />
-                          </button>
-                        </div>
+                           <Image
+                             src={getProductImageUrl(p)}
+                             alt={p?.name || "Product"}
+                             fill
+                             className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                             sizes="(max-width: 600px) 50vw, 200px"
+                             unoptimized
+                             onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                           />
+
+                           {/* Promotion badge - clickable to open modal */}
+                           {discountedPrices[p?.id] != null && (
+                             <button
+                               type="button"
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 openPromotionModal(p);
+                               }}
+                               className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
+                               title="View promotion details"
+                             >
+                               PROMO
+                             </button>
+                           )}
+
+                           <button
+                             type="button"
+                             className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
+                             onClick={() => handleFavoriteClick(p.id)}
+                           >
+                             <FaHeart className="text-sm" />
+                           </button>
+                         </div>
                         <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
                           {brand && (
                             <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
@@ -682,6 +714,105 @@ export default function Page() {
               ))}
             </div>
       </div>
+
+      {/* PROMOTION MODAL (pop-up on home page products) */}
+      {promoModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPromoModal(null)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-[#eb61a2] text-white px-6 py-4 flex items-center justify-between">
+              <div className="font-bold text-lg">Special Promotion</div>
+              <button
+                onClick={() => setPromoModal(null)}
+                className="text-white/90 hover:text-white text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {promoLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-8 h-8 border-4 border-[#eb61a2] border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : promoModal.promotion ? (
+                <>
+                  <div className="flex gap-4 items-start">
+                    <div className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100">
+                      <Image
+                        src={getProductImageUrl(promoModal.product)}
+                        alt={promoModal.product?.name}
+                        width={80}
+                        height={80}
+                        className="object-cover w-full h-full"
+                        unoptimized
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-xl text-gray-900 leading-tight">
+                        {promoModal.product?.name}
+                      </div>
+                       <div className="text-[#eb61a2] font-extrabold text-4xl mt-1">
+                         {typeof promoModal.promotion?.discountPercentage === 'number'
+                           ? promoModal.promotion.discountPercentage
+                           : '?'}% OFF
+                       </div>
+                    </div>
+                  </div>
+
+                  {promoModal.promotion.description && (
+                    <p className="mt-4 text-sm text-gray-600 leading-relaxed">
+                      {promoModal.promotion.description}
+                    </p>
+                  )}
+
+                  <div className="mt-4 text-xs text-gray-500">
+                    {promoModal.promotion.startDate || promoModal.promotion.start_date ? (
+                      <>Valid from <span className="font-medium text-gray-700">{new Date(promoModal.promotion.startDate || promoModal.promotion.start_date).toLocaleDateString()}</span></>
+                    ) : null}
+                    {(promoModal.promotion.endDate || promoModal.promotion.end_date) && (
+                      <> until <span className="font-medium text-gray-700">{new Date(promoModal.promotion.endDate || promoModal.promotion.end_date).toLocaleDateString()}</span></>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-lg font-semibold text-[#eb61a2]">Limited-time offer</p>
+                  <p className="text-sm text-gray-500 mt-1">Special discount is currently active on this product.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="border-t p-4 flex gap-3">
+              <button
+                onClick={() => setPromoModal(null)}
+                className="flex-1 py-3 rounded-2xl border text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  const pid = promoModal.product?.id;
+                  setPromoModal(null);
+                  router.push(`/product_details?productId=${pid}`);
+                }}
+                className="flex-1 py-3 rounded-2xl bg-[#eb61a2] text-white font-semibold hover:bg-[#c8538a] active:scale-[0.985] transition"
+              >
+                View Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

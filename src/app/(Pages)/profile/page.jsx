@@ -153,7 +153,7 @@ const ProfilePage = () => {
           const product = prods.find((p) => p.id === pid);
           if (!product) return;
 
-          const pct = promo.discountPercentage ?? promo.discount_percent ?? 0;
+          const pct = typeof promo?.discountPercentage === 'number' ? promo.discountPercentage : 0;
           if (pct > 0) {
             const discounted = product.price * (1 - pct / 100);
             discountMap[pid] = Number(discounted);
@@ -184,7 +184,7 @@ const ProfilePage = () => {
           try {
             const pr = await axiosAuth.get(`/promotions/product/${pid}`);
             const promo = pr.data?.data;
-            const pct = promo?.discountPercentage ?? promo?.discount_percent ?? 0;
+            const pct = typeof promo?.discountPercentage === 'number' ? promo.discountPercentage : 0;
             if (promo?.promotionType === "PRODUCT_DISCOUNT" && pct > 0) {
               final = prod.price * (1 - pct / 100);
             }

@@ -140,7 +140,7 @@ function LoginFormWithGoogle() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { googleLogin } = useAuthContext();
-  const redirectUri = typeof window !== "undefined" ? window.location.origin + "/login" : "";
+  const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_REDIRECT_URI || "postmessage";
   const redirectTo = searchParams.get("redirect") || "";
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 

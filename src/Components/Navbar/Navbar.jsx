@@ -10,8 +10,6 @@ import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import LoginFirst from "../LoginFirst/LoginFirst";
 import MessageWidget from "../MessageWidget/MessageWidget";
 import axiosAuth from "../../app/lib/api/axiosConfig";
-import axios from "axios";
-import { API_BASE } from "../../app/lib/api/config";
 import { getProductImageUrl } from "../../app/lib/productImage";
 
 const Loading = dynamic(() => import("../Loading/Loading"), {
@@ -56,7 +54,7 @@ const Navbar = ({ alwaysVisible = false }) => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/products/all`);
+        const res = await axiosAuth.get("/products/all");
         const data = res?.data?.data;
         const fetchedProducts = Array.isArray(data?.content)
           ? data.content

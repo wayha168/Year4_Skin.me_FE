@@ -48,22 +48,20 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <section className="min-h-screen bg-[#CCF6F2] flex items-center justify-center relative overflow-hidden">
+    <section className="min-h-screen bg-[#DEDEDE] flex items-center justify-center relative overflow-hidden">
+      {message && (
+        <div className={`absolute top-20 max-w-md w-full mx-4 p-3 rounded-xl shadow-lg z-50 text-center font-semibold ${
+          isError ? "bg-red-600 text-white" : "bg-green-600 text-white"
+        }`}>
+          {message}
+        </div>
+      )}
+
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg z-40 mx-4">
         <h1 className="text-3xl font-bold text-pink-400 text-center mb-4 uppercase">Forgot Password</h1>
         <p className="text-gray-600 text-sm text-center mb-4">
           Enter your email and we&apos;ll send you a link to reset your password.
         </p>
-
-        {message && (
-          <p
-            className={`p-3 rounded-md text-center mb-4 font-semibold ${
-              isError ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"
-            }`}
-          >
-            {message}
-          </p>
-        )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
@@ -76,14 +74,16 @@ export default function ForgotPasswordPage() {
               placeholder="example@gmail.com"
               required
               disabled={isLoading}
-              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition placeholder:text-gray-400 placeholder:opacity-100"
+              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition placeholder:text-gray-400 placeholder:opacity-100"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full p-2 mt-2 font-bold text-xl rounded-lg text-white transition ${isLoading ? "bg-pink-300 cursor-not-allowed" : "bg-[#F071B4] hover:bg-[#E06AA5] active:scale-[0.98]"
+            className={`w-full p-2 mt-2 font-bold text-xl rounded-lg text-white transition ${isLoading 
+                ? "bg-pink-300 cursor-not-allowed" 
+                : "bg-[#F071B4] hover:bg-[#E06AA5] active:scale-[0.98]"
               }`}
           >
             {isLoading ? "Sending..." : "Send reset link"}

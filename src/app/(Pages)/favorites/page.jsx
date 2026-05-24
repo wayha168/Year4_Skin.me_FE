@@ -25,12 +25,13 @@ const FavoritePage = () => {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
   const [discountedPrices, setDiscountedPrices] = useState({});
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
   const [discountPercentages, setDiscountPercentages] = useState({});
   const [promoModal, setPromoModal] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
   const { user, loading: authLoading } = useAuthContext();
-  const { addToCart, addToFavorite } = useUserActions();
+  const { addToCart, addToFavorite, removeFavorite } = useUserActions();
   const router = useRouter();
   const userId = user?.id;
 
@@ -151,6 +152,49 @@ const FavoritePage = () => {
     };
     fetchDiscounts();
   }, [favorites, recommendedProducts]);
+
+  // Favorites tracking for recommended hearts (same as home/products/details)
+  useEffect(() => {
+    const fetchUserFavorites = async () => {
+      if (!userId) {
+        setFavoriteIds(new Set());
+        return;
+      }
+      try {
+        const res = await axiosAuth.get(`/favorites/user/${userId}`, { withCredentials: true });
+        const favs = res.data?.data || [];
+        const ids = new Set(favs.map(f => f.product?.id ?? f.productId).filter(Boolean).map(Number));
+        setFavoriteIds(ids);
+      } catch {
+        setFavoriteIds(new Set());
+      }
+    };
+    fetchUserFavorites();
+  }, [userId]);
+
+  const handleToggleFavorite = useCallback(async (productId) => {
+    if (!userId) {
+      router.push(`/login?redirect=${encodeURIComponent("/favorites")}`);
+      return;
+    }
+
+    const pid = Number(productId);
+    const isFavorited = favoriteIds.has(pid);
+
+    try {
+      if (isFavorited) {
+        await removeFavorite(pid);
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          next.delete(pid);
+          return next;
+        });
+      } else {
+        await addToFavorite(pid);
+        setFavoriteIds((prev) => new Set(prev).add(pid));
+      }
+    } catch {}
+  }, [userId, router, addToFavorite, removeFavorite, favoriteIds]);
 
   const handleRemoveFavorite = useCallback(
     async (productId) => {
@@ -392,15 +436,15 @@ const FavoritePage = () => {
                          {discountPercentages[p.id]}%
                        </button>
                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
-                        className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
-                     >
-                       <FaHeart 
-                         className={`text-sm ${favorites.some(f => f.product?.id === p.id) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} 
-                       />
-                     </button>
+                       <button
+                         type="button"
+                         onClick={(e) => { e.stopPropagation(); handleToggleFavorite(p.id); }}
+                         className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                      >
+                        <FaHeart 
+                          className={`text-sm ${favoriteIds.has(p.id) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} 
+                        />
+                      </button>
                   </div>
                   <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
                     <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>

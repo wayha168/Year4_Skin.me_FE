@@ -9,6 +9,7 @@ import Footer from "../../../Components/Footer/Footer";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
+import useUserActions from "../../../Components/Hooks/userUserActions";
 import { updateCartItemQuantity, removeCartItem } from "../../../app/lib/cartUpdateQuantity";
 import { FaShoppingBag, FaHeart, FaCartPlus } from "react-icons/fa";
 import { getProductImageUrl } from "../../../app/lib/productImage";
@@ -61,6 +62,7 @@ function QuantityStepper({ value, min = 1, max = 999, onChange, disabled, onRemo
 function BagPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuthContext();
+  const { addToFavorite, removeFavorite } = useUserActions();
   const [cartId, setCartId] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
@@ -70,6 +72,7 @@ function BagPage() {
   const [discountPercentages, setDiscountPercentages] = useState({});
   const [promoModal, setPromoModal] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
 
   const fetchCart = useCallback(async () => {
     try {
@@ -282,11 +285,6 @@ function BagPage() {
     router.push(`/product_details?productId=${productId}`);
   }, [router]);
 
-  const addToFavorite = useCallback((productId) => {
-    setNotification("Added to favorites");
-    setTimeout(() => setNotification(""), 2000);
-  }, []);
-
   const addToCart = useCallback(async (productId, qty = 1) => {
     setNotification("Added to cart");
     setTimeout(() => setNotification(""), 2000);
@@ -305,6 +303,57 @@ function BagPage() {
       setPromoLoading(false);
     }
   }, []);
+
+  // Fetch favorites for recommended hearts (same as home/products/details)
+  useEffect(() => {
+    const fetchUserFavorites = async () => {
+      if (!user?.id) {
+        setFavoriteIds(new Set());
+        return;
+      }
+      try {
+        const res = await axiosAuth.get(`/favorites/user/${user.id}`, { withCredentials: true });
+        const favs = res.data?.data || [];
+        const ids = new Set(
+          favs
+            .map((f) => f.product?.id ?? f.productId ?? f.id)
+            .filter(Boolean)
+            .map(Number)
+        );
+        setFavoriteIds(ids);
+      } catch {
+        setFavoriteIds(new Set());
+      }
+    };
+    fetchUserFavorites();
+  }, [user]);
+
+  const handleToggleFavorite = useCallback(async (productId) => {
+    if (!user) {
+      // Simple redirect for bag (can enhance later)
+      router.push(`/login?redirect=${encodeURIComponent("/bag_page")}`);
+      return;
+    }
+
+    const pid = Number(productId);
+    const isFavorited = favoriteIds.has(pid);
+
+    try {
+      if (isFavorited) {
+        await removeFavorite(pid);
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          next.delete(pid);
+          return next;
+        });
+      } else {
+        await addToFavorite(pid);
+        setFavoriteIds((prev) => new Set(prev).add(pid));
+      }
+    } catch {
+      // handled in hook
+    }
+  }, [user, router, addToFavorite, removeFavorite, favoriteIds]);
 
   const total = cartItems.reduce((sum, item) => {
     const pid = item.product?.id;
@@ -542,13 +591,15 @@ function BagPage() {
                                  {discountPercentages[p.id]}%
                                </button>
                              )}
-                             <button
-                               type="button"
-                               onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
-                               className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
-                             >
-                               <FaHeart className="text-sm" />
-                             </button>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleToggleFavorite(p.id); }}
+                                className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                              >
+                                <FaHeart 
+                                  className={`text-sm ${favoriteIds.has(p.id) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} 
+                                />
+                              </button>
                           </div>
                           <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
                             <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback, Suspense } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,6 +14,7 @@ import Footer from "../../../Components/Footer/Footer";
 import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
 import useAuthContext from "../../../app/lib/Authentication/AuthContext";
+import LoginFirst from "../../../Components/LoginFirst/LoginFirst";
 import { FaCartPlus, FaHeart, FaArrowLeft } from "react-icons/fa";
 import { getProductImageUrl, getProductImageUrlFromItem } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
@@ -44,6 +45,8 @@ const ProductDetailsContent = () => {
   const [relatedDiscountedPrices, setRelatedDiscountedPrices] = useState({});
   const [mainDiscountPercentage, setMainDiscountPercentage] = useState(null);
   const [favoriteIds, setFavoriteIds] = useState(new Set());
+
+  const loginFirst = useMemo(() => new LoginFirst(user, router.push), [user, router.push]);
 
   const getInitials = (name) => {
     if (!name) return "?";
@@ -239,6 +242,8 @@ const ProductDetailsContent = () => {
 
   const handleToggleFavorite = useCallback(async (productId) => {
     if (!user) {
+      const message = loginFirst.messages.loginRequiredFavorite;
+      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}&message=${encodeURIComponent(message)}`);
       return;
     }
 
@@ -260,7 +265,7 @@ const ProductDetailsContent = () => {
     } catch {
       // error toast is handled inside the hook
     }
-  }, [user, addToFavorite, removeFavorite, favoriteIds]);
+  }, [user, loginFirst, router, addToFavorite, removeFavorite, favoriteIds]);
 
   if (loading) {
     return <Loading />;

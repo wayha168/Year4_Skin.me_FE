@@ -212,7 +212,7 @@ const Login = () => {
   }
 
   return (
-    <section className="min-h-screen bg-[#CCF6F2] flex items-center justify-center relative overflow-hidden">
+    <section className="min-h-screen bg-[#DEDEDE] flex items-center justify-center relative overflow-hidden">
       {googleClientId ? (
         <GoogleOAuthProvider clientId={googleClientId}>
           <LoginFormWithGoogle />

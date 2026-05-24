@@ -93,7 +93,7 @@ export default function Page() {
   const searchParams = useSearchParams();
 
   const { user } = useAuthContext();
-  const { addToCart, addToFavorite } = useUserActions();
+  const { addToCart, addToFavorite, removeFavorite } = useUserActions();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [productsFeedback, setProductsFeedback] = useState([]);
@@ -105,6 +105,7 @@ export default function Page() {
   const [discountPercentages, setDiscountPercentages] = useState({});
   const [promoModal, setPromoModal] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
 
   const loginFirst = useMemo(() => new LoginFirst(user, router.push), [user, router.push]);
 
@@ -295,14 +296,56 @@ export default function Page() {
     fetchDiscounts();
   }, [products]);
 
+  // Fetch user's favorites to show correct heart color
+  useEffect(() => {
+    const fetchUserFavorites = async () => {
+      if (!user?.id) {
+        setFavoriteIds(new Set());
+        return;
+      }
+      try {
+        const res = await axiosAuth.get(`/favorites/user/${user.id}`, { withCredentials: true });
+        const favs = res.data?.data || [];
+        const ids = new Set(
+          favs
+            .map((f) => f.product?.id ?? f.productId ?? f.id)
+            .filter(Boolean)
+            .map(Number)
+        );
+        setFavoriteIds(ids);
+      } catch {
+        setFavoriteIds(new Set());
+      }
+    };
+    fetchUserFavorites();
+  }, [user]);
+
   const handleFavoriteClick = useCallback(async (productId) => {
     if (!user) {
       const message = loginFirst.messages.loginRequiredFavorite;
       router.push(`/login?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`);
       return;
     }
-    await addToFavorite(productId);
-  }, [user, loginFirst, router, addToFavorite]);
+
+    const pid = Number(productId);
+    const isFavorited = favoriteIds.has(pid);
+
+    try {
+      if (isFavorited) {
+        await removeFavorite(pid);
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          next.delete(pid);
+          return next;
+        });
+      } else {
+        await addToFavorite(pid);
+        setFavoriteIds((prev) => new Set(prev).add(pid));
+      }
+    } catch {
+      // error already handled in hook
+    }
+  }, [user, loginFirst, router, addToFavorite, removeFavorite, favoriteIds]);
 
   const handleAddToCartClick = useCallback(async (productId) => {
     if (!user) {
@@ -373,13 +416,13 @@ export default function Page() {
       {/* HERO SECTION */}
       <div className="flex flex-col md:flex-row justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative px-4 sm:px-8 md:px-16 py-0 max-[767px]:gap-0 md:gap-8">
         <div className="flex flex-col justify-center w-full md:w-1/2 text-center md:text-left text-[#1f2937] z-[2] max-[767px]:mt-[10vh]">
-          <p className="text-[57px] font-bold text-[#3C3C3C] max-[992px]:text-[40px] max-[600px]:text-[33px]">WELCOME TO SKIN.ME</p>
+          <p className="text-[57px] font-bold text-[#2F2F2F] max-[992px]:text-[40px] max-[600px]:text-[33px]">WELCOME TO SKIN.ME</p>
           <p className="tracking-[-0.05em] text-[44px] font-semibold text-white mb-2 max-[992px]:text-[28px] max-[600px]:text-[22px]">Most Essential Skin Care Product</p>
           <p className="opacity-[0.8] text-[20px] text-[#4c4c4c] mb-4 max-[992px]:text-[16px] max-[600px]:text-sm">Give you the best skincare | product is our mission.</p>
           <div>
             <button
               onClick={scrollToProducts}
-              className="opacity-[0.8] text-[#EE90B9] text-[30px] font-semibold px-[50px] py-3.5 bg-[#000000] rounded-[7px] border-none cursor-pointer transition-all duration-200 hover:bg-[#c8538a] active:bg-[#e33486] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-lg max-[600px]:px-[30px] max-[600px]:py-2.5"
+              className="opacity-[1] text-[#F2F2F2] text-[30px] font-semibold px-[50px] py-3.5 bg-[#2F2F2F] rounded-[7px] border-none cursor-pointer transition-all duration-200 hover:bg-[#000000] active:bg-[#515151] max-[992px]:text-lg  max-[992px]:px-10 max-[992px]:py-3 max-[600px]:text-lg max-[600px]:px-[30px] max-[600px]:py-2.5"
             >
               Shop Now
             </button>
@@ -518,13 +561,15 @@ export default function Page() {
                               </button>
                             )}
 
-                           <button
-                             type="button"
-                             className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
-                             onClick={() => handleFavoriteClick(p.id)}
-                           >
-                             <FaHeart className="text-sm" />
-                           </button>
+                            <button
+                              type="button"
+                              className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                              onClick={() => handleFavoriteClick(p.id)}
+                            >
+                              <FaHeart 
+                                className={`text-sm ${favoriteIds.has(p.id) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} 
+                              />
+                            </button>
                          </div>
                         <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
                           {brand && (

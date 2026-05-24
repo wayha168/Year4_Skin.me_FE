@@ -40,6 +40,7 @@ const ProductDetailsContent = () => {
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [mainDiscountedPrice, setMainDiscountedPrice] = useState(null);
   const [relatedDiscountedPrices, setRelatedDiscountedPrices] = useState({});
+  const [mainDiscountPercentage, setMainDiscountPercentage] = useState(null);
 
   const getInitials = (name) => {
     if (!name) return "?";
@@ -189,6 +190,29 @@ const ProductDetailsContent = () => {
     };
 
     fetchDiscounts();
+
+    // Also fetch discount percentage for main product (for the % OFF label)
+    const fetchMainDiscountPercentage = async () => {
+      if (!product?.id) {
+        setMainDiscountPercentage(null);
+        return;
+      }
+      try {
+        const res = await axios.get(`${API_BASE}/promotions/product/${product.id}`);
+        const promo = res.data?.data;
+        if (promo && typeof promo === "object") {
+          const raw = promo.discountPercentage ?? promo.discount_percentage ?? promo.discountPercent ?? promo.discount_percent ?? null;
+          if (typeof raw === "number" && raw > 0) {
+            setMainDiscountPercentage(Math.round(raw));
+            return;
+          }
+        }
+        setMainDiscountPercentage(null);
+      } catch {
+        setMainDiscountPercentage(null);
+      }
+    };
+    fetchMainDiscountPercentage();
   }, [product, relatedProducts]);
 
   if (loading) {
@@ -325,8 +349,13 @@ const ProductDetailsContent = () => {
             </p>
 
             {/* Price */}
-            <div className="mb-6">
-              <p className="text-sm text-gray-500 mb-0.5">Regular price</p>
+            <div className="mb-7">
+              {mainDiscountPercentage != null && (
+                <p className="text-[#eb61a2] text-[2rem]  font-semibold  mb-0.5">
+                  {mainDiscountPercentage}% OFF
+                </p>
+              )}
+              <p className="text-sm text-gray-500 mb-0.5"> Price</p>
               <ProductPrice 
                 price={product.price} 
                 discountedPrice={mainDiscountedPrice}

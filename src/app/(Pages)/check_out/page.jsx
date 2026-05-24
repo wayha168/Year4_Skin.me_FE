@@ -212,7 +212,7 @@ function CheckOutContent() {
       <div className="min-h-screen bg-[#F7F7F7] pt-[6.5rem] pb-20 px-4 sm:px-6">
         <div className="w-full  -mt-[6.5rem]">
           <h1 className="mt-[12px] w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#F7F7F7] text-[#EB61A2] pb-[20px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
-            Favorites
+            Checkout
           </h1>
         </div>
         <div className="max-w-6xl mx-auto">

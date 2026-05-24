@@ -84,6 +84,7 @@ const Navbar = ({ alwaysVisible = false }) => {
     params.rating = searchParams.get("rating")?.split(",") || [];
     params.ageRange = searchParams.get("ageRange")?.split(",") || [];
     params.skinType = searchParams.get("skinType")?.split(",") || [];
+    params.popular = searchParams.get("popular")?.split(",") || [];
     return params;
   }, [searchParams]);
 
@@ -134,6 +135,12 @@ const Navbar = ({ alwaysVisible = false }) => {
         });
       });
     }
+    if (urlFilters.popular.length > 0) {
+      filters.push({
+        label: "Most Popular",
+        remove: () => handleFilterSelect('popular', 'true')
+      });
+    }
     return filters;
   }, [urlFilters, handleFilterSelect]);
 
@@ -144,6 +151,7 @@ const Navbar = ({ alwaysVisible = false }) => {
     params.delete('rating');
     params.delete('ageRange');
     params.delete('skinType');
+    params.delete('popular');
     const query = params.toString();
     router.push(query ? `/products?${query}` : '/products');
   }, [router, searchParams]);
@@ -673,11 +681,21 @@ return (
                           {brand}
                         </button>
                       ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">Skin Type</h3>
+                     </div>
+                     <div className="mt-3 pt-2 border-t border-gray-100">
+                       <button
+                         onClick={() => handleFilterSelect("popular", "true")}
+                         className={`text-left text-sm transition-colors hover:text-[#eb61a1] ${
+                           urlFilters.popular.includes("true") ? "font-semibold text-[#eb61a1]" : "text-gray-700"
+                         }`}
+                       >
+                         Most Popular
+                       </button>
+                     </div>
+                   </div>
+ 
+                   <div>
+                     <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">Skin Type</h3>
                     <div className="mt-3 flex flex-col gap-2">
                       {filterValues["Skin Type"].map((skinType) => (
                         <button

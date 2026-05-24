@@ -56,6 +56,7 @@ const Products = () => {
   const [promoModal, setPromoModal] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState(new Set());
+  const [popularProducts, setPopularProducts] = useState([]);
 
   const urlFilters = useMemo(() => {
     const readList = (key) =>
@@ -69,8 +70,9 @@ const Products = () => {
     const rating = readList("rating");
     const ageRange = readList("ageRange");
     const skinType = readList("skinType");
-    return { brands, rating, ageRange, skinType };
-  }, []);
+    const popular = readList("popular");
+    return { brands, rating, ageRange, skinType, popular };
+  }, [searchParams]);
 
   useEffect(() => {
     setSearchTerm(searchFromUrl);
@@ -105,6 +107,19 @@ const Products = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    const fetchPopularProducts = async () => {
+      try {
+        const res = await axiosAuth.get("/products/popular");
+        setPopularProducts(getResponseItems(res?.data?.data));
+      } catch (err) {
+        console.error("Error fetching popular products:", err);
+        setPopularProducts([]);
+      }
+    };
+    fetchPopularProducts();
+  }, []);
+
   // Fetch discounted prices + discount percentages for badges
   useEffect(() => {
     const fetchDiscounts = async () => {
@@ -114,7 +129,10 @@ const Products = () => {
         return;
       }
 
-      const productIds = [...new Set(products.map(p => p.id).filter(Boolean))];
+      const productIds = [...new Set([
+        ...products.map(p => p.id),
+        ...popularProducts.map(p => p.id)
+      ].filter(Boolean))];
 
       const promises = productIds.map(async (pid) => {
         let discounted = null;
@@ -156,7 +174,7 @@ const Products = () => {
     };
 
     fetchDiscounts();
-  }, [products]);
+  }, [products, popularProducts]);
 
   // Fetch user's favorites for dynamic heart color (exact same as homepage)
   useEffect(() => {
@@ -228,7 +246,10 @@ const Products = () => {
   }, []);
 
   const getGroupedAndFilteredProducts = () => {
-    let filtered = [...products];
+    const { popular: popularFilter = [] } = urlFilters;
+    const isPopularFilterActive = popularFilter.length > 0;
+    const sourceProducts = isPopularFilterActive ? popularProducts : products;
+    let filtered = [...sourceProducts];
 
     if (searchTerm.trim()) {
       const term = searchTerm.trim().toLowerCase();
@@ -267,9 +288,10 @@ const Products = () => {
     const { brands, rating, ageRange, skinType } = urlFilters;
 
     if (brands.length > 0 || rating.length > 0 || ageRange.length > 0 || skinType.length > 0) {
-      filtered = filtered.filter((p, idx) => {
-        const productAgeRange = ageRangeCycle[idx % ageRangeCycle.length];
-        const productSkinType = skinTypeCycle[idx % skinTypeCycle.length];
+      filtered = filtered.filter((p) => {
+        const stableIdx = (p?.id || 0) % ageRangeCycle.length;
+        const productAgeRange = ageRangeCycle[stableIdx];
+        const productSkinType = skinTypeCycle[stableIdx];
         const productRating = getPriceRating(Number(p?.price) || 0);
         const brandName = (getBrand(p) || "").trim().toLowerCase();
 
@@ -296,6 +318,10 @@ const Products = () => {
       filtered.sort((a, b) => (b?.id || 0) - (a?.id || 0));
     } else if (sortBy === "recommended") {
       filtered.sort((a, b) => (b?.name?.length || 0) - (a?.name?.length || 0));
+    }
+
+    if (isPopularFilterActive) {
+      return { "Most Popular": filtered };
     }
 
     if (sortBy === "price-high" || sortBy === "price-low" || sortBy === "recommended" || sortBy === "new") {

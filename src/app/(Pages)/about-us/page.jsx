@@ -42,7 +42,7 @@ const AboutUsPage = () => {
       <main className="pt-[5rem] px-0 pb-16 bg-[#F7F7F7] font-[Poppins,sans-serif]">
         {/* ===== Hero Section ===== */}
         <div className="w-full -mt-[4.5rem]">
-          <h1 className="mt-[12px] w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#F7F7F7] text-[#EB61A2] pb-[13px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+          <h1 className="mt-[12px] w-full h-[9rem] flex items-end justify-center text-4xl font-bold bg-[#F7F7F7] text-[#EB61A2] pb-[13px] max-[750px]:text-[1.8rem]">
             About Us
           </h1>
         </div>

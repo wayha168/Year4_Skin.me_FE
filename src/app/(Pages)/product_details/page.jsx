@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, Suspense } from "react";
+import React, { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,6 +13,7 @@ import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
+import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import { FaCartPlus, FaHeart, FaArrowLeft } from "react-icons/fa";
 import { getProductImageUrl, getProductImageUrlFromItem } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
@@ -36,11 +37,13 @@ const ProductDetailsContent = () => {
   const [quantity, setQuantity] = useState(1);
   const [zoom, setZoom] = useState({ show: false, x: 50, y: 50, lensX: 0, lensY: 0 });
   const galleryRef = useRef(null);
-  const { addToCart, addToFavorite } = useUserActions();
+  const { user } = useAuthContext();
+  const { addToCart, addToFavorite, removeFavorite } = useUserActions();
   const [productFeedbacks, setProductFeedbacks] = useState([]);
   const [mainDiscountedPrice, setMainDiscountedPrice] = useState(null);
   const [relatedDiscountedPrices, setRelatedDiscountedPrices] = useState({});
   const [mainDiscountPercentage, setMainDiscountPercentage] = useState(null);
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
 
   const getInitials = (name) => {
     if (!name) return "?";
@@ -214,6 +217,50 @@ const ProductDetailsContent = () => {
     };
     fetchMainDiscountPercentage();
   }, [product, relatedProducts]);
+
+  // Fetch favorites for heart color (focus only on icon color)
+  useEffect(() => {
+    const fetchFavoritesForColor = async () => {
+      if (!user?.id) {
+        setFavoriteIds(new Set());
+        return;
+      }
+      try {
+        const res = await axiosAuth.get(`/favorites/user/${user.id}`, { withCredentials: true });
+        const favs = res.data?.data || [];
+        const ids = new Set(favs.map(f => f.product?.id ?? f.productId).filter(Boolean).map(Number));
+        setFavoriteIds(ids);
+      } catch {
+        setFavoriteIds(new Set());
+      }
+    };
+    fetchFavoritesForColor();
+  }, [user]);
+
+  const handleToggleFavorite = useCallback(async (productId) => {
+    if (!user) {
+      return;
+    }
+
+    const pid = Number(productId);
+    const isFavorited = favoriteIds.has(pid);
+
+    try {
+      if (isFavorited) {
+        await removeFavorite(pid);
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          next.delete(pid);
+          return next;
+        });
+      } else {
+        await addToFavorite(pid);
+        setFavoriteIds((prev) => new Set(prev).add(pid));
+      }
+    } catch {
+      // error toast is handled inside the hook
+    }
+  }, [user, addToFavorite, removeFavorite, favoriteIds]);
 
   if (loading) {
     return <Loading />;
@@ -416,11 +463,11 @@ const ProductDetailsContent = () => {
                 <FaCartPlus className="text-lg" /> Add to Bag
               </button>
               <button
-                onClick={() => addToFavorite(product.id)}
-                className="w-12 h-12 flex items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:border-[#eb61a2] hover:text-[#eb61a2] transition-colors"
+                onClick={() => handleToggleFavorite(product.id)}
+                className="w-12 h-12 flex items-center justify-center rounded-full border border-gray-200 hover:border-[#F83E94] hover:text-[#F83E94] transition-colors"
                 aria-label="Add to favorites"
               >
-                <FaHeart className="text-lg" />
+                <FaHeart className={`text-lg ${favoriteIds.has(Number(product?.id)) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} />
               </button>
             </div>
 
@@ -554,13 +601,13 @@ const ProductDetailsContent = () => {
                      unoptimized
                      onClick={() => router.push(`/product_details?productId=${p.id}`)}
                    />
-                   <button
-                     type="button"
-                     onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
-                     className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
-                   >
-                     <FaHeart className="text-sm" />
-                   </button>
+                     <button
+                       type="button"
+                       onClick={(e) => { e.stopPropagation(); handleToggleFavorite(p.id); }}
+                       className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                     >
+                        <FaHeart className={`text-sm ${favoriteIds.has(Number(p.id)) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} />
+                     </button>
                  </div>
                   <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
                     <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>

@@ -287,13 +287,13 @@ const FavoritePage = () => {
                            {discountPercentages[product.id]}%
                          </button>
                        )}
-                       <button
-                         type="button"
-                         onClick={() => handleRemoveFavorite(product.id)}
-                         className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
-                      >
-                        <FaHeart className="text-sm" />
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFavorite(product.id)}
+                          className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                       >
+                         <FaHeart className="text-sm text-[#F83E94]" />
+                       </button>
                     </div>
 
                      <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
@@ -392,13 +392,15 @@ const FavoritePage = () => {
                          {discountPercentages[p.id]}%
                        </button>
                      )}
-                     <button
-                       type="button"
-                       onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
-                       className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
-                    >
-                      <FaHeart className="text-sm" />
-                    </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
+                        className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                     >
+                       <FaHeart 
+                         className={`text-sm ${favorites.some(f => f.product?.id === p.id) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} 
+                       />
+                     </button>
                   </div>
                   <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
                     <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>

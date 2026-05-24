@@ -11,6 +11,7 @@ import Footer from "../../../Components/Footer/Footer";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
 import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
+import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
 import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
@@ -54,6 +55,7 @@ const Products = () => {
   const [discountPercentages, setDiscountPercentages] = useState({});
   const [promoModal, setPromoModal] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
 
   const urlFilters = useMemo(() => {
     const readList = (key) =>
@@ -84,7 +86,8 @@ const Products = () => {
     return () => window.removeEventListener("scroll", updateSidebarPosition);
   }, []);
 
-  const { addToCart, addToFavorite } = useUserActions();
+  const { user } = useAuthContext();
+  const { addToCart, addToFavorite, removeFavorite } = useUserActions();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -155,13 +158,60 @@ const Products = () => {
     fetchDiscounts();
   }, [products]);
 
+  // Fetch user's favorites for dynamic heart color (exact same as homepage)
+  useEffect(() => {
+    const fetchUserFavorites = async () => {
+      if (!user?.id) {
+        setFavoriteIds(new Set());
+        return;
+      }
+      try {
+        const res = await axiosAuth.get(`/favorites/user/${user.id}`, { withCredentials: true });
+        const favs = res.data?.data || [];
+        const ids = new Set(
+          favs
+            .map((f) => f.product?.id ?? f.productId ?? f.id)
+            .filter(Boolean)
+            .map(Number)
+        );
+        setFavoriteIds(ids);
+      } catch {
+        setFavoriteIds(new Set());
+      }
+    };
+    fetchUserFavorites();
+  }, [user]);
+
   const handleAddToCart = async (productId) => {
     await addToCart(productId, 1);
   };
 
-  const handleFavorite = async (productId) => {
-    await addToFavorite(productId);
-  };
+  const handleFavorite = useCallback(async (productId) => {
+    if (!user) {
+      // You can add login redirect here if needed, but keeping minimal for now
+      await addToFavorite(productId);
+      return;
+    }
+
+    const pid = Number(productId);
+    const isFavorited = favoriteIds.has(pid);
+
+    try {
+      if (isFavorited) {
+        await removeFavorite(pid);
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          next.delete(pid);
+          return next;
+        });
+      } else {
+        await addToFavorite(pid);
+        setFavoriteIds((prev) => new Set(prev).add(pid));
+      }
+    } catch {
+      // errors handled inside the hook
+    }
+  }, [user, addToFavorite, removeFavorite, favoriteIds]);
 
   // Open promotion modal (same as homepage)
   const openPromotionModal = useCallback(async (product) => {
@@ -387,13 +437,15 @@ const Products = () => {
                                 </button>
                               )}
 
-                              <button
-                                type="button"
-                                className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
-                                onClick={() => handleFavorite(p.id)}
-                              >
-                                <FaHeart className="text-sm" />
-                              </button>
+                               <button
+                                 type="button"
+                                 className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                                 onClick={() => handleFavorite(p.id)}
+                               >
+                                 <FaHeart 
+                                   className={`text-sm ${favoriteIds.has(p.id) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} 
+                                 />
+                               </button>
                             </div>
                             <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
                               {brand && (

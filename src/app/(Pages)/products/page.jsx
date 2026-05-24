@@ -51,6 +51,7 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState(searchFromUrl);
   const [sidebarCompact, setSidebarCompact] = useState(false);
   const [discountedPrices, setDiscountedPrices] = useState({});
+  const [discountPercentages, setDiscountPercentages] = useState({});
   const [promoModal, setPromoModal] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
@@ -101,37 +102,54 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  // Fetch discounted prices for all products (same pattern as bag page)
+  // Fetch discounted prices + discount percentages for badges
   useEffect(() => {
     const fetchDiscounts = async () => {
       if (!products.length) {
         setDiscountedPrices({});
+        setDiscountPercentages({});
         return;
       }
 
       const productIds = [...new Set(products.map(p => p.id).filter(Boolean))];
 
       const promises = productIds.map(async (pid) => {
+        let discounted = null;
+        let pct = null;
         try {
-          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
-          const data = res.data?.data;
-          let final = null;
-          if (typeof data === "number") final = data;
+          const [priceRes, promoRes] = await Promise.all([
+            axiosAuth.get(`/promotions/product/${pid}/discounted-price`).catch(() => ({ data: null })),
+            axiosAuth.get(`/promotions/product/${pid}`).catch(() => ({ data: null }))
+          ]);
+
+          // discounted price
+          const data = priceRes?.data?.data;
+          if (typeof data === "number") discounted = data;
           else if (data && typeof data === "object") {
-            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? null;
+            discounted = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? null;
           }
-          return [pid, final != null ? Number(final) : null];
+
+          // promotion percentage for badge
+          const promo = promoRes?.data?.data;
+          if (promo && typeof promo === "object") {
+            const raw = promo.discountPercentage ?? promo.discount_percentage ?? promo.discountPercent ?? promo.discount_percent ?? null;
+            if (typeof raw === "number" && raw > 0) pct = Math.round(raw);
+          }
         } catch {
-          return [pid, null];
+          // ignore individual product errors
         }
+        return [pid, { discountedPrice: discounted != null ? Number(discounted) : null, discountPercentage: pct }];
       });
 
       const results = await Promise.all(promises);
-      const map = {};
-      results.forEach(([id, val]) => {
-        if (val != null) map[id] = val;
+      const priceMap = {};
+      const pctMap = {};
+      results.forEach(([id, info]) => {
+        if (info.discountedPrice != null) priceMap[id] = info.discountedPrice;
+        if (info.discountPercentage != null) pctMap[id] = info.discountPercentage;
       });
-      setDiscountedPrices(map);
+      setDiscountedPrices(priceMap);
+      setDiscountPercentages(pctMap);
     };
 
     fetchDiscounts();
@@ -334,15 +352,15 @@ const Products = () => {
                         <span className="font-bold">{productsInCategory.length}</span> items
                       </p>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                       {productsInCategory.map((p) => {
                         const brand = getBrand(p);
                         const desc = p?.description?.trim() || "No description";
                         return (
-                          <div
-                            key={p.id}
-                            className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
-                          >
+                           <div
+                             key={p.id}
+                             className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+                           >
                             <div className="relative h-[200px] bg-gray-100">
                               <Image
                                 src={getProductImageUrl(p)}
@@ -354,18 +372,18 @@ const Products = () => {
                                 onClick={() => router.push(`/product_details?productId=${p.id}`)}
                               />
 
-                              {/* PROMO badge - same as homepage */}
-                              {discountedPrices[p?.id] != null && (
+                              {/* Discount % badge (only if active promotion with percentage) */}
+                              {discountPercentages[p?.id] != null && (
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     openPromotionModal(p);
                                   }}
-                                  className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
+                                  className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[12px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
                                   title="View promotion details"
                                 >
-                                  PROMO
+                                  {discountPercentages[p.id]}%
                                 </button>
                               )}
 
@@ -377,7 +395,7 @@ const Products = () => {
                                 <FaHeart className="text-sm" />
                               </button>
                             </div>
-                            <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-left">
+                            <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
                               {brand && (
                                 <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
                                   {brand}
@@ -389,11 +407,12 @@ const Products = () => {
                               <p className="text-xs text-gray-500 truncate opacity-80" title={desc}>
                                 {desc}
                               </p>
-                              <ProductPrice
-                                price={p?.price}
-                                discountedPrice={discountedPrices[p?.id]}
-                                className="mt-1"
-                              />
+                               <ProductPrice
+                                 price={p?.price}
+                                 discountedPrice={discountedPrices[p?.id]}
+                                 className="mt-1"
+                                 centered
+                               />
                               <button
                                 type="button"
                                 className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"

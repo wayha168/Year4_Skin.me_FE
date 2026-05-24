@@ -102,6 +102,7 @@ export default function Page() {
   const [noSectionAnimation, setNoSectionAnimation] = useState(false);
   const [hasSectionAnimated, setHasSectionAnimated] = useState(false);
   const [discountedPrices, setDiscountedPrices] = useState({});
+  const [discountPercentages, setDiscountPercentages] = useState({});
   const [promoModal, setPromoModal] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
@@ -245,34 +246,51 @@ export default function Page() {
     fetchProducts();
   }, []);
 
-  // Fetch discounted prices for home products
+  // Fetch discounted prices + discount percentages for badges
   useEffect(() => {
     const fetchDiscounts = async () => {
       if (!products.length) {
         setDiscountedPrices({});
+        setDiscountPercentages({});
         return;
       }
       const productIds = [...new Set(products.map((p) => p.id).filter(Boolean))];
       const promises = productIds.map(async (pid) => {
+        let discounted = null;
+        let pct = null;
         try {
-          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
-          const data = res.data?.data;
-          let final = null;
-          if (typeof data === "number") final = data;
+          const [priceRes, promoRes] = await Promise.all([
+            axiosAuth.get(`/promotions/product/${pid}/discounted-price`).catch(() => ({ data: null })),
+            axiosAuth.get(`/promotions/product/${pid}`).catch(() => ({ data: null }))
+          ]);
+
+          // discounted price
+          const data = priceRes?.data?.data;
+          if (typeof data === "number") discounted = data;
           else if (data && typeof data === "object") {
-            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+            discounted = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
           }
-          return [pid, final != null ? Number(final) : null];
+
+          // promotion percentage for badge
+          const promo = promoRes?.data?.data;
+          if (promo && typeof promo === "object") {
+            const raw = promo.discountPercentage ?? promo.discount_percentage ?? promo.discountPercent ?? promo.discount_percent ?? null;
+            if (typeof raw === "number" && raw > 0) pct = Math.round(raw);
+          }
         } catch {
-          return [pid, null];
+          // ignore individual errors
         }
+        return [pid, { discountedPrice: discounted != null ? Number(discounted) : null, discountPercentage: pct }];
       });
       const results = await Promise.all(promises);
-      const map = {};
-      results.forEach(([id, val]) => {
-        if (val != null) map[id] = val;
+      const priceMap = {};
+      const pctMap = {};
+      results.forEach(([id, info]) => {
+        if (info.discountedPrice != null) priceMap[id] = info.discountedPrice;
+        if (info.discountPercentage != null) pctMap[id] = info.discountPercentage;
       });
-      setDiscountedPrices(map);
+      setDiscountedPrices(priceMap);
+      setDiscountPercentages(pctMap);
     };
     fetchDiscounts();
   }, [products]);
@@ -485,20 +503,20 @@ export default function Page() {
                              onClick={() => router.push(`/product_details?productId=${p.id}`)}
                            />
 
-                           {/* Promotion badge - clickable to open modal */}
-                           {discountedPrices[p?.id] != null && (
-                             <button
-                               type="button"
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 openPromotionModal(p);
-                               }}
-                               className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
-                               title="View promotion details"
-                             >
-                               PROMO
-                             </button>
-                           )}
+                            {/* Discount % badge (only if active promotion with percentage) */}
+                            {discountPercentages[p?.id] != null && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openPromotionModal(p);
+                                }}
+                                className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[12px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
+                                title="View promotion details"
+                              >
+                                {discountPercentages[p.id]}%
+                              </button>
+                            )}
 
                            <button
                              type="button"
@@ -520,11 +538,12 @@ export default function Page() {
                           <p className="text-xs text-gray-500 truncate opacity-80" title={desc}>
                             {desc}
                           </p>
-                           <ProductPrice
-                             price={p?.price}
-                             discountedPrice={discountedPrices[p?.id]}
-                             className="mt-1"
-                           />
+                            <ProductPrice
+                              price={p?.price}
+                              discountedPrice={discountedPrices[p?.id]}
+                              className="mt-1"
+                              centered
+                            />
                            <button
                              type="button"
                              className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"

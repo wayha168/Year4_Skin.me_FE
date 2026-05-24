@@ -9,13 +9,17 @@ const ProductPrice = ({
   className = "", 
   originalClassName = "line-through text-gray-400 text-sm",
   discountedClassName = "font-bold text-black text-sm",
-  priceClassName = "text-sm font-bold text-black"
+  priceClassName = "text-sm font-bold text-black",
+  centered = false
 }) => {
   const hasDiscount = discountedPrice != null && discountedPrice < (price ?? 0);
 
   if (hasDiscount) {
+    const wrapperClass = centered
+      ? `flex items-center justify-center gap-2 ${className}`
+      : `inline-flex items-center gap-2 ${className}`;
     return (
-      <div className={`flex items-center gap-2 ${className}`}>
+      <div className={wrapperClass}>
         <span className={originalClassName}>
           {formatPrice(price)}
         </span>

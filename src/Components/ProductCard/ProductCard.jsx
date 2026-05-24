@@ -55,6 +55,7 @@ const ProductCard = ({ product, onAddToCart, onFavorite, discountedPrice }) => {
         <ProductPrice 
           price={product?.price} 
           discountedPrice={discountedPrice} 
+          centered
         />
         <button
           type="button"

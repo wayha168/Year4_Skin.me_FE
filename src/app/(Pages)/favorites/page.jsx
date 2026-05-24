@@ -263,11 +263,12 @@ const FavoritePage = () => {
                       <p className="text-xs text-gray-500 truncate opacity-80" title={product.description}>
                         {product.description?.trim() || "No description"}
                       </p>
-                         <ProductPrice
-                           price={product.price}
-                           discountedPrice={discountedPrices[product.id]}
-                           className="mt-1"
-                         />
+                          <ProductPrice
+                            price={product.price}
+                            discountedPrice={discountedPrices[product.id]}
+                            className="mt-1"
+                            centered
+                          />
 
                          <button
                            type="button"
@@ -344,11 +345,12 @@ const FavoritePage = () => {
                     <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p.name}>
                       {p.name}
                     </h3>
-                         <ProductPrice
-                           price={p.price}
-                           discountedPrice={discountedPrices[p.id]}
-                           className="mt-1"
-                         />
+                          <ProductPrice
+                            price={p.price}
+                            discountedPrice={discountedPrices[p.id]}
+                            className="mt-1"
+                            centered
+                          />
                          <button
                            type="button"
                            onClick={() => addToCart(p.id, 1)}

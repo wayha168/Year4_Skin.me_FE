@@ -296,19 +296,15 @@ const FavoritePage = () => {
                       </button>
                     </div>
 
-                    <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
-                       {discountPercentages[product?.id] != null ? (
-                         <p className="text-[#eb61a2] text-xs mt-0.5 font-semibold">
-                           {discountPercentages[product.id]}% OFF
-                         </p>
-                       ) : (product.brand != null) ? (
+                     <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
+                       {(product.brand != null) && (
                          <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
                            {typeof product.brand === "object" ? product.brand?.name : product.brand}
                          </span>
-                       ) : null}
-                      <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={product.name}>
-                        {product.name}
-                      </h3>
+                       )}
+                       <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={product.name}>
+                         {product.name}
+                       </h3>
                       <p className="text-xs text-gray-500 truncate opacity-80" title={product.description}>
                         {product.description?.trim() || "No description"}
                       </p>

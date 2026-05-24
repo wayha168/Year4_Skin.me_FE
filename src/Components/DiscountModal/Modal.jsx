@@ -49,27 +49,27 @@ export default function DiscountModal() {
       onClick={closeModal}
     >
       {/* Modal */}
-      <div
-        className="relative flex w-[900px] overflow-hidden rounded-[28px] bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+        <div
+          className="relative flex w-[94%] max-w-[340px] sm:max-w-[420px] md:max-w-[680px] max-h-[82vh] overflow-hidden rounded-[20px] bg-white shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Left Side */}
-        <div className="w-[42%] bg-black p-5 text-white">
+        <div className="w-[42%] bg-black p-3 sm:p-4 text-white">
           <div className="overflow-hidden rounded-2xl">
             <img
               src="/assets/ModalDiscountImage/torriden.jpg"
               alt="Skincare"
-              className="h-[360px] w-full object-cover"
+              className="h-[30vh] max-h-[220px] sm:max-h-[260px] w-full object-cover"
             />
           </div>
 
-          <h1 className="mt-6 text-[2.5rem] font-bold leading-tight">
+          <h1 className="mt-4 text-[1.75rem] sm:text-[2rem] font-bold leading-tight">
             Happy shopping
           </h1>
         </div>
 
         {/* Right Side */}
-        <div className="relative flex-1 p-8">
+        <div className="relative flex-1 p-4 sm:p-5 md:p-7">
           {/* Close Button */}
           <button
             onClick={closeModal}
@@ -83,11 +83,11 @@ export default function DiscountModal() {
             Special Offer
           </p>
 
-          <h2 className="mt-6 text-6xl font-black leading-none">
+          <h2 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-black leading-none">
             UP TO 70% OFF
           </h2>
 
-          <p className="mt-6 text-[20px] leading-relaxed text-gray-500">
+          <p className="mt-3 text-[13.5px] sm:text-[15px] md:text-[16px] leading-relaxed text-gray-500">
             Discover skincare made for healthy, glowing skin. 
             Enjoy exclusive discounts on best-selling serums, 
             cleansers, and moisturizers for a limited time only. 
@@ -97,7 +97,7 @@ export default function DiscountModal() {
           {/* Button */}
           <button 
             onClick={closeModal}
-            className="mt-8 rounded-2xl bg-pink-500 px-8 py-4 text-xl font-semibold text-white transition hover:scale-105"
+            className="mt-4 sm:mt-5 rounded-2xl bg-pink-500 px-5 py-2.5 sm:py-3 text-base sm:text-lg md:text-xl font-semibold text-white transition hover:scale-105"
           >
             Shop Now
           </button>

@@ -3,9 +3,14 @@
 @tailwind utilities;
 
 html, body {
-  overflow-x: hidden;
-  max-width: 100vw;
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
   background-color: white;
+}
+
+/* Extra safety against horizontal scroll caused by wide elements */
+* {
+  box-sizing: border-box;
 }
 
 @keyframes marquee {

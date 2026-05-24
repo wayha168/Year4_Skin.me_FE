@@ -325,7 +325,7 @@ const Products = () => {
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="min-h-screen pt-[8rem] px-0 pb-16 bg-[#F7F7F7] font-[Poppins,sans-serif]">
+      <main className="min-h-screen pt-[8rem] px-0 pb-16 bg-[#F7F7F7] font-[Poppins,sans-serif] overflow-x-hidden">
         {/* ===== Hero Section ===== */}
         <div className="w-full -mt-[4rem]">
           <h1 className="w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#F7F7F7] text-[#EB61A2] pb-[19px] max-[750px]:pr-4 max-[750px]:text-[1.8rem] border-b border-[#f0f0f0]">
@@ -336,11 +336,11 @@ const Products = () => {
         {/* ===== Main Content with Fixed Left Sidebar ===== */}
         <div className="flex">
           {/* Fixed Left Sidebar */}
-          <aside
-            className={`fixed left-0 w-[260px] bg-white/95 backdrop-blur border-r border-gray-200 transition-[top,height] duration-200 ease-out ${
-              sidebarCompact ? "top-12 h-[calc(100vh-3rem)]" : "top-[8rem] h-[calc(100vh-8rem)]"
-            }`}
-          >
+           <aside
+             className={`fixed left-0 w-[220px] lg:w-[260px] bg-white/95 backdrop-blur border-r border-gray-200 transition-[top,height] duration-200 ease-out ${
+               sidebarCompact ? "top-12 h-[calc(100vh-3rem)]" : "top-[8rem] h-[calc(100vh-8rem)]"
+             }`}
+           >
             <div className="flex h-full flex-col px-7">
               <div className="flex items-center justify-between py-6 border-b border-gray-200">
                 <h3 className="text-[1.15rem] font-bold text-gray-900">Refine</h3>
@@ -386,7 +386,7 @@ const Products = () => {
           </aside>
 
           {/* Products Area */}
-          <div className="flex-1 ml-[260px] px-8">
+           <div className="flex-1 ml-[220px] lg:ml-[260px] px-4 lg:px-8">
             {loading ? (
               <Loading />
             ) : !hasProducts ? (

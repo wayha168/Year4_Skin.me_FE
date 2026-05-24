@@ -29,24 +29,39 @@ export default function DiscountModal() {
     }
   };
 
-  // Close with ESC key
+  // Lock body scroll when modal is open + ESC key
   useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape" && open) {
-        closeModal();
-      }
-    };
+    if (open) {
+      // Prevent background scrolling (more reliable)
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
 
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
+      const handleEsc = (e) => {
+        if (e.key === "Escape") {
+          closeModal();
+        }
+      };
+
+      window.addEventListener("keydown", handleEsc);
+
+      return () => {
+        window.removeEventListener("keydown", handleEsc);
+        document.body.style.overflow = "unset";
+        document.documentElement.style.overflow = "unset";
+      };
+    } else {
+      document.body.style.overflow = "unset";
+      document.documentElement.style.overflow = "unset";
+    }
   }, [open]);
 
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-md"
       onClick={closeModal}
+      style={{ touchAction: 'none' }}
     >
       {/* Modal */}
         <div

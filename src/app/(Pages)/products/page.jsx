@@ -248,15 +248,9 @@ const Products = () => {
   const getGroupedAndFilteredProducts = () => {
     const { popular: popularFilter = [] } = urlFilters;
     const isPopularFilterActive = popularFilter.length > 0;
-    const sourceProducts = isPopularFilterActive ? popularProducts : products;
-    let filtered = [...sourceProducts];
 
-    if (searchTerm.trim()) {
-      const term = searchTerm.trim().toLowerCase();
-      filtered = filtered.filter(
-        (p) => p?.name?.toLowerCase().includes(term) || getBrand(p)?.toLowerCase().includes(term),
-      );
-    }
+    const { brands, rating, ageRange, skinType } = urlFilters;
+    const hasOtherFilters = brands.length > 0 || rating.length > 0 || ageRange.length > 0 || skinType.length > 0;
 
     const getPriceRating = (() => {
       const prices = products.map((p) => Number(p?.price) || 0).sort((a, b) => a - b);
@@ -285,29 +279,73 @@ const Products = () => {
 
     const skinTypeCycle = ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"];
 
-    const { brands, rating, ageRange, skinType } = urlFilters;
+    const matchesUrlFilters = (p) => {
+      if (!hasOtherFilters) return true;
+      const stableIdx = (p?.id || 0) % ageRangeCycle.length;
+      const productAgeRange = ageRangeCycle[stableIdx];
+      const productSkinType = skinTypeCycle[stableIdx];
+      const productRating = getPriceRating(Number(p?.price) || 0);
+      const brandName = (getBrand(p) || "").trim().toLowerCase();
 
-    if (brands.length > 0 || rating.length > 0 || ageRange.length > 0 || skinType.length > 0) {
-      filtered = filtered.filter((p) => {
-        const stableIdx = (p?.id || 0) % ageRangeCycle.length;
-        const productAgeRange = ageRangeCycle[stableIdx];
-        const productSkinType = skinTypeCycle[stableIdx];
-        const productRating = getPriceRating(Number(p?.price) || 0);
-        const brandName = (getBrand(p) || "").trim().toLowerCase();
+      const matchesBrand = brands.some((b) => b.trim().toLowerCase() === brandName);
+      const matchesRating = rating.includes(String(productRating));
+      const matchesAge = ageRange.includes(productAgeRange);
+      const matchesSkin = skinType.includes(productSkinType);
 
-        const matchesBrand = brands.some((b) => b.trim().toLowerCase() === brandName);
-        const matchesRating = rating.includes(String(productRating));
-        const matchesAge = ageRange.includes(productAgeRange);
-        const matchesSkin = skinType.includes(productSkinType);
+      const activeMatches = [];
+      if (brands.length > 0) activeMatches.push(matchesBrand);
+      if (rating.length > 0) activeMatches.push(matchesRating);
+      if (ageRange.length > 0) activeMatches.push(matchesAge);
+      if (skinType.length > 0) activeMatches.push(matchesSkin);
 
-        const activeMatches = [];
-        if (brands.length > 0) activeMatches.push(matchesBrand);
-        if (rating.length > 0) activeMatches.push(matchesRating);
-        if (ageRange.length > 0) activeMatches.push(matchesAge);
-        if (skinType.length > 0) activeMatches.push(matchesSkin);
+      return activeMatches.some((m) => m);
+    };
 
-        return activeMatches.some((m) => m);
-      });
+    let filtered;
+
+    if (isPopularFilterActive) {
+      // Always include popular products (union mode when other filters are used)
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        filtered = popularProducts.filter(
+          (p) => p?.name?.toLowerCase().includes(term) || getBrand(p)?.toLowerCase().includes(term),
+        );
+      } else {
+        filtered = [...popularProducts];
+      }
+
+      const popularIds = new Set(filtered.map((p) => p?.id));
+
+      if (hasOtherFilters) {
+        let extras = products.filter(matchesUrlFilters);
+
+        if (searchTerm.trim()) {
+          const term = searchTerm.trim().toLowerCase();
+          extras = extras.filter(
+            (p) => p?.name?.toLowerCase().includes(term) || getBrand(p)?.toLowerCase().includes(term),
+          );
+        }
+
+        for (let p of extras) {
+          if (p?.id && !popularIds.has(p.id)) {
+            filtered.push(p);
+          }
+        }
+      }
+    } else {
+      // Normal behavior on full catalog
+      filtered = [...products];
+
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        filtered = filtered.filter(
+          (p) => p?.name?.toLowerCase().includes(term) || getBrand(p)?.toLowerCase().includes(term),
+        );
+      }
+
+      if (hasOtherFilters) {
+        filtered = filtered.filter(matchesUrlFilters);
+      }
     }
 
     if (sortBy === "price-high") {

@@ -25,6 +25,9 @@ const FavoritePage = () => {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState("");
   const [discountedPrices, setDiscountedPrices] = useState({});
+  const [discountPercentages, setDiscountPercentages] = useState({});
+  const [promoModal, setPromoModal] = useState(null);
+  const [promoLoading, setPromoLoading] = useState(false);
 
   const { user, loading: authLoading } = useAuthContext();
   const { addToCart, addToFavorite } = useUserActions();
@@ -98,7 +101,7 @@ const FavoritePage = () => {
     fetchFavorites();
   }, [userId, authLoading, router]);
 
-  // Fetch discounted prices for favorites + recommended
+  // Fetch discounted prices + percentages for badges (exact same as bag page)
   useEffect(() => {
     const allProds = [
       ...favorites.map((f) => f.product).filter(Boolean),
@@ -107,30 +110,44 @@ const FavoritePage = () => {
     const productIds = [...new Set(allProds.map((p) => p.id).filter(Boolean))];
     if (!productIds.length) {
       setDiscountedPrices({});
+      setDiscountPercentages({});
       return;
     }
 
     const fetchDiscounts = async () => {
       const promises = productIds.map(async (pid) => {
+        let discounted = null;
+        let pct = null;
         try {
-          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
-          const data = res.data?.data;
-          let final = null;
-          if (typeof data === "number") final = data;
+          const [priceRes, promoRes] = await Promise.all([
+            axiosAuth.get(`/promotions/product/${pid}/discounted-price`).catch(() => ({ data: null })),
+            axiosAuth.get(`/promotions/product/${pid}`).catch(() => ({ data: null }))
+          ]);
+
+          const data = priceRes?.data?.data;
+          if (typeof data === "number") discounted = data;
           else if (data && typeof data === "object") {
-            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+            discounted = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
           }
-          return [pid, final != null ? Number(final) : null];
-        } catch {
-          return [pid, null];
-        }
+
+          const promo = promoRes?.data?.data;
+          if (promo && typeof promo === "object") {
+            const raw = promo.discountPercentage ?? promo.discount_percentage ?? promo.discountPercent ?? promo.discount_percent ?? null;
+            if (typeof raw === "number" && raw > 0) pct = Math.round(raw);
+          }
+        } catch {}
+        return [pid, { discountedPrice: discounted != null ? Number(discounted) : null, discountPercentage: pct }];
       });
+
       const results = await Promise.all(promises);
-      const map = {};
-      results.forEach(([id, val]) => {
-        if (val != null) map[id] = val;
+      const priceMap = {};
+      const pctMap = {};
+      results.forEach(([id, info]) => {
+        if (info.discountedPrice != null) priceMap[id] = info.discountedPrice;
+        if (info.discountPercentage != null) pctMap[id] = info.discountPercentage;
       });
-      setDiscountedPrices(map);
+      setDiscountedPrices(priceMap);
+      setDiscountPercentages(pctMap);
     };
     fetchDiscounts();
   }, [favorites, recommendedProducts]);
@@ -171,6 +188,20 @@ const FavoritePage = () => {
   const handleAddToCartFromFavorite = useCallback(async (productId) => {
     await addToCart(productId, 1);
   }, [addToCart]);
+
+  // Open promotion modal (exact same as bag/products)
+  const openPromotionModal = useCallback(async (product) => {
+    setPromoLoading(true);
+    try {
+      const res = await axiosAuth.get(`/promotions/product/${product.id}`);
+      const promotion = res?.data?.data || null;
+      setPromoModal({ product, promotion });
+    } catch {
+      setPromoModal({ product, promotion: null });
+    } finally {
+      setPromoLoading(false);
+    }
+  }, []);
 
   if (authLoading) {
     return (
@@ -232,31 +263,49 @@ const FavoritePage = () => {
                     className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                   >
                     <div className="relative h-[200px] bg-gray-100">
-                      <Image
-                        src={imgSrc}
-                        alt={product.name}
-                        fill
-                        className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
-                        sizes="(max-width: 600px) 50vw, 200px"
-                        unoptimized
-                        onClick={() => handleProductClick(product.id)}
-                        onError={(e) => (e.currentTarget.src = ThirdImage)}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFavorite(product.id)}
-                        className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
+                       <Image
+                         src={imgSrc}
+                         alt={product.name}
+                         fill
+                         className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                         sizes="(max-width: 600px) 50vw, 200px"
+                         unoptimized
+                         onClick={() => handleProductClick(product.id)}
+                         onError={(e) => (e.currentTarget.src = ThirdImage)}
+                       />
+                       {/* Discount % badge - exact same as bag/products */}
+                       {discountPercentages[product?.id] != null && (
+                         <button
+                           type="button"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             openPromotionModal(product);
+                           }}
+                           className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
+                           title="View promotion details"
+                         >
+                           {discountPercentages[product.id]}%
+                         </button>
+                       )}
+                       <button
+                         type="button"
+                         onClick={() => handleRemoveFavorite(product.id)}
+                         className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
                       >
                         <FaHeart className="text-sm" />
                       </button>
                     </div>
 
                     <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
-                      {(product.brand != null) && (
-                        <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
-                          {typeof product.brand === "object" ? product.brand?.name : product.brand}
-                        </span>
-                      )}
+                       {discountPercentages[product?.id] != null ? (
+                         <p className="text-[#eb61a2] text-xs mt-0.5 font-semibold">
+                           {discountPercentages[product.id]}% OFF
+                         </p>
+                       ) : (product.brand != null) ? (
+                         <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                           {typeof product.brand === "object" ? product.brand?.name : product.brand}
+                         </span>
+                       ) : null}
                       <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={product.name}>
                         {product.name}
                       </h3>
@@ -324,19 +373,33 @@ const FavoritePage = () => {
                   className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
                 >
                   <div className="relative h-[200px] bg-gray-100">
-                    <Image
-                      src={getProductImageUrl(p)}
-                      alt={p?.name || "Product"}
-                      fill
-                      className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
-                      sizes="(max-width: 600px) 50vw, 200px"
-                      unoptimized
-                      onClick={() => router.push(`/product_details?productId=${p.id}`)}
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
-                      className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
+                     <Image
+                       src={getProductImageUrl(p)}
+                       alt={p?.name || "Product"}
+                       fill
+                       className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                       sizes="(max-width: 600px) 50vw, 200px"
+                       unoptimized
+                       onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                     />
+                     {/* Discount % badge - exact same as bag/products */}
+                     {discountPercentages[p?.id] != null && (
+                       <button
+                         type="button"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           openPromotionModal(p);
+                         }}
+                         className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
+                         title="View promotion details"
+                       >
+                         {discountPercentages[p.id]}%
+                       </button>
+                     )}
+                     <button
+                       type="button"
+                       onClick={(e) => { e.stopPropagation(); addToFavorite(p.id); }}
+                       className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
                     >
                       <FaHeart className="text-sm" />
                     </button>
@@ -366,9 +429,104 @@ const FavoritePage = () => {
            </section>
          )}
         </div>
-      </main>
+       </main>
 
-      <Footer />
+       {/* PROMOTION MODAL - exact same as bag/products */}
+       {promoModal && (
+         <div
+           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
+           onClick={() => setPromoModal(null)}
+         >
+           <div
+             className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+             onClick={(e) => e.stopPropagation()}
+           >
+             <div className="bg-[#eb61a2] text-white px-6 py-4 flex items-center justify-between">
+               <div className="font-bold text-lg">Special Promotion</div>
+               <button
+                 onClick={() => setPromoModal(null)}
+                 className="text-white/90 hover:text-white text-2xl leading-none"
+               >
+                 ×
+               </button>
+             </div>
+
+             <div className="p-6">
+               {promoLoading ? (
+                 <div className="flex justify-center py-8">
+                   <div className="w-8 h-8 border-4 border-[#eb61a2] border-t-transparent rounded-full animate-spin" />
+                 </div>
+               ) : promoModal.promotion ? (
+                 <>
+                   <div className="flex gap-4 items-start">
+                     <div className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100">
+                       <Image
+                         src={getProductImageUrl(promoModal.product)}
+                         alt={promoModal.product?.name}
+                         width={80}
+                         height={80}
+                         className="object-cover w-full h-full"
+                         unoptimized
+                       />
+                     </div>
+                     <div className="min-w-0">
+                       <div className="font-bold text-xl text-gray-900 leading-tight">
+                         {promoModal.product?.name}
+                       </div>
+                       <div className="text-[#eb61a2] font-extrabold text-4xl mt-1">
+                         {typeof promoModal.promotion?.discountPercentage === 'number'
+                           ? promoModal.promotion.discountPercentage
+                           : '?'}% OFF
+                       </div>
+                     </div>
+                   </div>
+
+                   {promoModal.promotion.description && (
+                     <p className="mt-4 text-sm text-gray-600 leading-relaxed">
+                       {promoModal.promotion.description}
+                     </p>
+                   )}
+
+                   <div className="mt-4 text-xs text-gray-500">
+                     {promoModal.promotion.startDate || promoModal.promotion.start_date ? (
+                       <>Valid from <span className="font-medium text-gray-700">{new Date(promoModal.promotion.startDate || promoModal.promotion.start_date).toLocaleDateString()}</span></>
+                     ) : null}
+                     {(promoModal.promotion.endDate || promoModal.promotion.end_date) && (
+                       <> until <span className="font-medium text-gray-700">{new Date(promoModal.promotion.endDate || promoModal.promotion.end_date).toLocaleDateString()}</span></>
+                     )}
+                   </div>
+                 </>
+               ) : (
+                 <div className="text-center py-6">
+                   <p className="text-lg font-semibold text-[#eb61a2]">Limited-time offer</p>
+                   <p className="text-sm text-gray-500 mt-1">Special discount is currently active on this product.</p>
+                 </div>
+               )}
+             </div>
+
+             <div className="border-t p-4 flex gap-3">
+               <button
+                 onClick={() => setPromoModal(null)}
+                 className="flex-1 py-3 rounded-2xl border text-gray-700 hover:bg-gray-50 font-medium"
+               >
+                 Close
+               </button>
+               <button
+                 onClick={() => {
+                   const pid = promoModal.product?.id;
+                   setPromoModal(null);
+                   router.push(`/product_details?productId=${pid}`);
+                 }}
+                 className="flex-1 py-3 rounded-2xl bg-[#eb61a2] text-white font-semibold hover:bg-[#c8538a] active:scale-[0.985] transition"
+               >
+                 View Product
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+
+       <Footer />
       <MessageWidget />
 
       <style jsx>{`

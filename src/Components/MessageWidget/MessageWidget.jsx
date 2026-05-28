@@ -26,15 +26,10 @@ export default function MessageWidget() {
   return (
     <button
       onClick={handleChatClick}
-      className={`fixed bottom-5 right-5 z-[999] flex rounded-[5px] items-center justify-center  border border-white/60 bg-[#F0F0F0] p-5 text-white shadow-[-2px_5px_8px_rgba(0,0,0,0.15)] transition-transform duration-200 hover:scale-[1.02] ${mobileMarginClass}`}
+      className={`rounded-[15px] fixed bottom-5 right-5 z-[999] flex items-center justify-center  border border-white/60 bg-[#F0F0F0] p-5 text-white shadow-[-2px_5px_8px_rgba(0,0,0,0.15)] transition-transform duration-200 hover:scale-[1.02] ${mobileMarginClass}`}
       aria-label="Open Skin.me assistant"
     >
-
-      <img 
-        src="/assets/ChatAI/AiChatIcon.svg" 
-        alt="AI Assistant" 
-        className="w-9 h-9" 
-      />
+      <img src="/assets/ChatAI/AiChatIcon.svg" alt="AI Assistant" className="w-9 h-9" />
     </button>
   );
 }

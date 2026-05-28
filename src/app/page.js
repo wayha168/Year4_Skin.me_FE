@@ -30,7 +30,7 @@ function useScrollAnimation() {
           observer.unobserve(element);
         }
       },
-      { threshold: 0.02, rootMargin: "0px 0px -100px 0px" }
+      { threshold: 0.02, rootMargin: "0px 0px -100px 0px" },
     );
 
     observer.observe(element);
@@ -45,13 +45,16 @@ function useDragScroll(ref) {
   const startX = useRef(0);
   const scrollLeft = useRef(0);
 
-  const handleMouseDown = useCallback((e) => {
-    if (!ref.current) return;
-    isDragging.current = true;
-    startX.current = e.pageX - ref.current.offsetLeft;
-    scrollLeft.current = ref.current.scrollLeft;
-    ref.current.style.cursor = "grabbing";
-  }, [ref]);
+  const handleMouseDown = useCallback(
+    (e) => {
+      if (!ref.current) return;
+      isDragging.current = true;
+      startX.current = e.pageX - ref.current.offsetLeft;
+      scrollLeft.current = ref.current.scrollLeft;
+      ref.current.style.cursor = "grabbing";
+    },
+    [ref],
+  );
 
   const handleMouseLeave = useCallback(() => {
     if (!ref.current) return;
@@ -69,16 +72,19 @@ function useDragScroll(ref) {
     }
   }, [ref]);
 
-  const handleMouseMove = useCallback((e) => {
-    if (!ref.current || !isDragging.current) return;
-    e.preventDefault();
-    const container = ref.current;
-    const x = e.pageX - container.offsetLeft;
-    const walk = (x - startX.current) * 1.5;
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    const newScrollLeft = scrollLeft.current - walk;
-    container.scrollLeft = Math.max(0, Math.min(newScrollLeft, maxScroll));
-  }, [ref]);
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!ref.current || !isDragging.current) return;
+      e.preventDefault();
+      const container = ref.current;
+      const x = e.pageX - container.offsetLeft;
+      const walk = (x - startX.current) * 1.5;
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      const newScrollLeft = scrollLeft.current - walk;
+      container.scrollLeft = Math.max(0, Math.min(newScrollLeft, maxScroll));
+    },
+    [ref],
+  );
 
   return {
     onMouseDown: handleMouseDown,
@@ -141,9 +147,10 @@ export default function Page() {
     const diffMs = now - date;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) !== 1 ? 's' : ''} ago`;
-    return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+    if (diffDays < 30)
+      return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) !== 1 ? "s" : ""} ago`;
+    return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} ago`;
   };
 
   useEffect(() => {
@@ -262,26 +269,40 @@ export default function Page() {
         try {
           const [priceRes, promoRes] = await Promise.all([
             axiosAuth.get(`/promotions/product/${pid}/discounted-price`).catch(() => ({ data: null })),
-            axiosAuth.get(`/promotions/product/${pid}`).catch(() => ({ data: null }))
+            axiosAuth.get(`/promotions/product/${pid}`).catch(() => ({ data: null })),
           ]);
 
           // discounted price
           const data = priceRes?.data?.data;
           if (typeof data === "number") discounted = data;
           else if (data && typeof data === "object") {
-            discounted = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+            discounted =
+              data.discountedPrice ??
+              data.price ??
+              data.finalPrice ??
+              data.discounted_price ??
+              data.value ??
+              null;
           }
 
           // promotion percentage for badge
           const promo = promoRes?.data?.data;
           if (promo && typeof promo === "object") {
-            const raw = promo.discountPercentage ?? promo.discount_percentage ?? promo.discountPercent ?? promo.discount_percent ?? null;
+            const raw =
+              promo.discountPercentage ??
+              promo.discount_percentage ??
+              promo.discountPercent ??
+              promo.discount_percent ??
+              null;
             if (typeof raw === "number" && raw > 0) pct = Math.round(raw);
           }
         } catch {
           // ignore individual errors
         }
-        return [pid, { discountedPrice: discounted != null ? Number(discounted) : null, discountPercentage: pct }];
+        return [
+          pid,
+          { discountedPrice: discounted != null ? Number(discounted) : null, discountPercentage: pct },
+        ];
       });
       const results = await Promise.all(promises);
       const priceMap = {};
@@ -310,7 +331,7 @@ export default function Page() {
           favs
             .map((f) => f.product?.id ?? f.productId ?? f.id)
             .filter(Boolean)
-            .map(Number)
+            .map(Number),
         );
         setFavoriteIds(ids);
       } catch {
@@ -320,41 +341,47 @@ export default function Page() {
     fetchUserFavorites();
   }, [user]);
 
-  const handleFavoriteClick = useCallback(async (productId) => {
-    if (!user) {
-      const message = loginFirst.messages.loginRequiredFavorite;
-      router.push(`/login?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`);
-      return;
-    }
-
-    const pid = Number(productId);
-    const isFavorited = favoriteIds.has(pid);
-
-    try {
-      if (isFavorited) {
-        await removeFavorite(pid);
-        setFavoriteIds((prev) => {
-          const next = new Set(prev);
-          next.delete(pid);
-          return next;
-        });
-      } else {
-        await addToFavorite(pid);
-        setFavoriteIds((prev) => new Set(prev).add(pid));
+  const handleFavoriteClick = useCallback(
+    async (productId) => {
+      if (!user) {
+        const message = loginFirst.messages.loginRequiredFavorite;
+        router.push(`/login?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`);
+        return;
       }
-    } catch {
-      // error already handled in hook
-    }
-  }, [user, loginFirst, router, addToFavorite, removeFavorite, favoriteIds]);
 
-  const handleAddToCartClick = useCallback(async (productId) => {
-    if (!user) {
-      const message = loginFirst.messages.loginRequiredCart;
-      router.push(`/login?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`);
-      return;
-    }
-    await addToCart(productId, 1);
-  }, [user, loginFirst, router, addToCart]);
+      const pid = Number(productId);
+      const isFavorited = favoriteIds.has(pid);
+
+      try {
+        if (isFavorited) {
+          await removeFavorite(pid);
+          setFavoriteIds((prev) => {
+            const next = new Set(prev);
+            next.delete(pid);
+            return next;
+          });
+        } else {
+          await addToFavorite(pid);
+          setFavoriteIds((prev) => new Set(prev).add(pid));
+        }
+      } catch {
+        // error already handled in hook
+      }
+    },
+    [user, loginFirst, router, addToFavorite, removeFavorite, favoriteIds],
+  );
+
+  const handleAddToCartClick = useCallback(
+    async (productId) => {
+      if (!user) {
+        const message = loginFirst.messages.loginRequiredCart;
+        router.push(`/login?redirect=${encodeURIComponent("/")}&message=${encodeURIComponent(message)}`);
+        return;
+      }
+      await addToCart(productId, 1);
+    },
+    [user, loginFirst, router, addToCart],
+  );
 
   // Open promotion details modal for a product (lazy fetch full promo data)
   const openPromotionModal = useCallback(async (product) => {
@@ -372,10 +399,7 @@ export default function Page() {
 
   const featuredProduct = products[0];
   const overviewProducts = products.slice(0, 3);
-  const productById = useMemo(
-    () => new Map(products.map((product) => [product?.id, product])),
-    [products]
-  );
+  const productById = useMemo(() => new Map(products.map((product) => [product?.id, product])), [products]);
   const recommendationFeedback = productsFeedback
     .filter((feedback) => feedback?.visibleOnFrontend !== false)
     .slice(0, 7);
@@ -386,11 +410,23 @@ export default function Page() {
 
   const ImagesInRecommendation = [
     { image: "/assets/ImagesInRecommendation/boss_image.png", name: "Boss Glow", role: "Influencer" },
-    { image: "/assets/ImagesInRecommendation/none_sence_image.png", name: "None Sense", role: "Skincare Expert" },
+    {
+      image: "/assets/ImagesInRecommendation/none_sence_image.png",
+      name: "None Sense",
+      role: "Skincare Expert",
+    },
     { image: "/assets/ImagesInRecommendation/ohio_image.png", name: "Ohio Fresh", role: "Beauty Blogger" },
     { image: "/assets/ImagesInRecommendation/obey_iamge.png", name: "Obey Clean", role: "Dermatologist" },
-    { image: "/assets/ImagesInRecommendation/bro_jirim_image.png", name: "Bro Jirim", role: "Content Creator" },
-    { image: "/assets/ImagesInRecommendation/phol_sophea_image.png", name: "Phol Sophea", role: "Makeup Artist" },
+    {
+      image: "/assets/ImagesInRecommendation/bro_jirim_image.png",
+      name: "Bro Jirim",
+      role: "Content Creator",
+    },
+    {
+      image: "/assets/ImagesInRecommendation/phol_sophea_image.png",
+      name: "Phol Sophea",
+      role: "Makeup Artist",
+    },
     { image: "/assets/ImagesInRecommendation/profile_image.png", name: "Profile Pro", role: "Influencer" },
   ];
   const averagePrice = products.length
@@ -416,9 +452,15 @@ export default function Page() {
       {/* HERO SECTION */}
       <div className="flex flex-col md:flex-row justify-center items-center w-full min-h-screen bg-[#EE90B9] overflow-hidden relative px-4 sm:px-8 md:px-16 py-0 max-[767px]:gap-0 md:gap-8">
         <div className="flex flex-col justify-center w-full md:w-1/2 text-center md:text-left text-[#1f2937] z-[2] max-[767px]:mt-[10vh]">
-          <p className="text-[57px] font-bold text-[#2F2F2F] max-[992px]:text-[40px] max-[600px]:text-[33px]">WELCOME TO SKIN.ME</p>
-          <p className="tracking-[-0.05em] text-[44px] font-semibold text-white mb-2 max-[992px]:text-[28px] max-[600px]:text-[22px]">Most Essential Skin Care Product</p>
-          <p className="opacity-[0.8] text-[20px] text-[#4c4c4c] mb-4 max-[992px]:text-[16px] max-[600px]:text-sm">Give you the best skincare | product is our mission.</p>
+          <p className="text-[57px] font-bold text-[#2F2F2F] max-[992px]:text-[40px] max-[600px]:text-[33px]">
+            WELCOME TO SKIN.ME
+          </p>
+          <p className="tracking-[-0.05em] text-[44px] font-semibold text-white mb-2 max-[992px]:text-[28px] max-[600px]:text-[22px]">
+            Most Essential Skin Care Product
+          </p>
+          <p className="opacity-[0.8] text-[20px] text-[#4c4c4c] mb-4 max-[992px]:text-[16px] max-[600px]:text-sm">
+            Give you the best skincare | product is our mission.
+          </p>
           <div>
             <button
               onClick={scrollToProducts}
@@ -430,68 +472,71 @@ export default function Page() {
         </div>
 
         <div className="w-[20rem] h-[25rem] md:w-1/2 md:h-[50rem] md:mt-4 z-[4] rounded-[30px] overflow-hidden flex items-center justify-center">
-          {featuredProduct && (
-            <Image
-              sizes="(max-width: 768px) 20rem, 50vw"
-              priority
-              src={getProductImageUrl(featuredProduct)}
-              alt={featuredProduct?.name || "skin product"}
-              width={640}
-              height={800}
-              quality={85}
-              className="max-w-full max-h-full object-contain z-[5] rounded-[10px] mt-8 max-[767px]:-mt-8"
-              fetchPriority="high"
-              unoptimized
-            />
-          )}
+          {/* {featuredProduct && ( */}
+          <Image
+            sizes="(max-width: 768px) 20rem, 50vw"
+            priority
+            // src={getProductImageUrl(featuredProduct)}
+            src="/assets/Banner/FeatureBanner.jpg"
+            alt={"skin product"}
+            width={500}
+            height={650}
+            quality={85}
+            className="max-w-full max-h-full object-contain z-[5] rounded-[15px] mt-8 max-[767px]:-mt-8 box-shadow-[0_4px_12px_rgba(235,97,162,0.3)] bg-opacity-20 "
+            fetchPriority="high"
+            unoptimized
+          />
+          {/* )} */}
         </div>
       </div>
 
       {/* OVERVIEW SECTION */}
-      <div ref={overviewRef} className={`py-[4rem] max-[1350px]:mb-[-0.75rem] max-[1350px]:mt-[0.75rem] max-[1300px]:mb-[-7.35rem] max-[1300px]:mt-[2.35rem] max-[1300px]:mb-[-5.35rem] max-[1100px]:mb-[-12.5rem] max-[990px]:mb-[-22.5rem]  max-[990px]:mt-[-2.5rem]    relative max-[1390px]:[transform:scale(0.95)] max-[1300px]:[transform:scale(0.85)] max-[1250px]:[transform:scale(0.83)] max-[1200px]:[transform:scale(0.80)] max-[1150px]:[transform:scale(0.75)] max-[1100px]:[transform:scale(0.70)] max-[660px]:[transform:scale(0.65)] origin-top ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out'} ${overviewFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
-            <div className="flex flex-row items-center justify-center relative gap-[5rem] max-[990px]:mt-16 max-[990px]:flex-col max-[990px]:items-center max-[990px]:gap-[2rem]">
-              <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] flex-shrink-0 max-[990px]:items-center self-center mt-[1rem]">
-                <div className="text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full max-[990px]:text-center">
-                  LET'S HAVE A LOOK
-                </div>
-                <div className="mb-[1rem] text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] text-left w-full max-[1390px]:mb-[0.75rem] max-[1300px]:mb-[0.75rem] max-[1250px]:mb-[0.5rem] max-[1200px]:mb-[0.5rem] max-[1150px]:mb-[0.5rem]  max-[660px]:mb-[1rem] max-[990px]:text-center">
-                  This is the overview about our products that you can spend a few minutes to see how they look.
-                </div>
-                <div className="flex flex-row gap-[2rem]">
-                  <div className="flex flex-row gap-[2rem] flex-shrink-0 max-[990px]:justify-center max-[990px]:items-center">
-                    {overviewProducts.slice(0, 2).map((product) => (
-                      <Image
-                        key={product.id}
-                        src={getProductImageUrl(product)}
-                        alt={product?.name || "Product overview"}
-                        width={352}
-                        height={352}
-                        className="w-[18rem] h-[18rem] rounded-[10px] flex-shrink-0 object-cover"
-                        unoptimized
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {overviewProducts[2] && (
-                <div className="mt-[8rem] w-[38rem] h-[38rem] flex-shrink-0 max-[1390px]:mt-[7rem] max-[1300px]:mt-[6rem] max-[1250px]:mt-[5rem] max-[1200px]:mt-[4.5rem] max-[1150px]:mt-[4rem] max-[1100px]:mt-[3.5rem] max-[660px]:mt-[3rem] max-[990px]:ml-[1rem] max-[660px]:mb-[-5rem]"  >
+      <div
+        ref={overviewRef}
+        className={`py-[4rem] max-[1350px]:mb-[-0.75rem] max-[1350px]:mt-[0.75rem] max-[1300px]:mb-[-7.35rem] max-[1300px]:mt-[2.35rem] max-[1300px]:mb-[-5.35rem] max-[1100px]:mb-[-12.5rem] max-[990px]:mb-[-22.5rem]  max-[990px]:mt-[-2.5rem]    relative max-[1390px]:[transform:scale(0.95)] max-[1300px]:[transform:scale(0.85)] max-[1250px]:[transform:scale(0.83)] max-[1200px]:[transform:scale(0.80)] max-[1150px]:[transform:scale(0.75)] max-[1100px]:[transform:scale(0.70)] max-[660px]:[transform:scale(0.65)] origin-top ${noSectionAnimation ? "" : "transition-all duration-1000 ease-out"} ${overviewFinalVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-32"}`}
+      >
+        <div className="flex flex-row items-center justify-center relative gap-[5rem] max-[990px]:mt-16 max-[990px]:flex-col max-[990px]:items-center max-[990px]:gap-[2rem]">
+          <div className="flex flex-col justify-center items-start w-[35rem] mx-0 ml-4 z-[5] flex-shrink-0 max-[990px]:items-center self-center mt-[1rem]">
+            <div className="text-[#eb61a1] text-[50px] font-bold font-[Arial,Helvetica,sans-serif] text-left w-full max-[990px]:text-center">
+              LET'S HAVE A LOOK
+            </div>
+            <div className="mb-[1rem] text-black text-[25px] font-medium font-[Arial,Helvetica,sans-serif] text-left w-full max-[1390px]:mb-[0.75rem] max-[1300px]:mb-[0.75rem] max-[1250px]:mb-[0.5rem] max-[1200px]:mb-[0.5rem] max-[1150px]:mb-[0.5rem]  max-[660px]:mb-[1rem] max-[990px]:text-center">
+              This is the overview about our products that you can spend a few minutes to see how they look.
+            </div>
+            <div className="flex flex-row gap-[2rem]">
+              <div className="flex flex-row gap-[2rem] flex-shrink-0 max-[990px]:justify-center max-[990px]:items-center">
+                {overviewProducts.slice(0, 2).map((product) => (
                   <Image
-                    src={getProductImageUrl(overviewProducts[2])}
-                    alt={overviewProducts[2]?.name || "Product overview"}
-                    width={560}
-                    height={480}
-                    className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem]"
+                    key={product.id}
+                    src={getProductImageUrl(product)}
+                    alt={product?.name || "Product overview"}
+                    width={352}
+                    height={352}
+                    className="w-[18rem] h-[18rem] rounded-[10px] flex-shrink-0 object-cover"
                     unoptimized
                   />
-                </div>
-              )}
+                ))}
+              </div>
             </div>
+          </div>
+          {overviewProducts[2] && (
+            <div className="mt-[8rem] w-[38rem] h-[38rem] flex-shrink-0 max-[1390px]:mt-[7rem] max-[1300px]:mt-[6rem] max-[1250px]:mt-[5rem] max-[1200px]:mt-[4.5rem] max-[1150px]:mt-[4rem] max-[1100px]:mt-[3.5rem] max-[660px]:mt-[3rem] max-[990px]:ml-[1rem] max-[660px]:mb-[-5rem]">
+              <Image
+                src={getProductImageUrl(overviewProducts[2])}
+                alt={overviewProducts[2]?.name || "Product overview"}
+                width={560}
+                height={480}
+                className="w-full h-full object-cover rounded-[10px] block -mt-[3.3rem]"
+                unoptimized
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* LOGO MOVING SECTION */}
       <div className="bg-[#0A3D3F] py-16 max-[1000px]:py-12 max-[600px]:py-10 overflow-hidden relative z-[1]">
         <div className="flex w-max animate-marquee">
-
           {[0, 1].map((setIndex) => (
             <div key={setIndex} className="flex whitespace-nowrap">
               {categoryItems.map((category, index) => (
@@ -504,279 +549,324 @@ export default function Page() {
               ))}
             </div>
           ))}
-
         </div>
       </div>
 
       {/* PRODUCTS SECTION  */}
-      <section ref={productRef} id="product" className={`py-20 px-8 text-center max-[1180px]:mt-[-3rem] ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-200'} ${productFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
-            <div className="max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-12 uppercase">
-                <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[1000px]:text-[2.5rem] max-[600px]:text-[28px]">OUR PRODUCTS</h2>
-                <button
-                  className="bg-[#eb61a2] text-white border-none px-[3rem] py-3 rounded-[0.5rem] text-[1.5rem] cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[1000px]:text-[1.25rem] max-[600px]:text-sm"
-                  onClick={() => router.push("/products")}
-                >
-                  View All
-                </button>
-              </div>
+      <section
+        ref={productRef}
+        id="product"
+        className={`py-20 px-8 text-center max-[1180px]:mt-[-3rem] ${noSectionAnimation ? "" : "transition-all duration-1000 ease-out delay-200"} ${productFinalVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-32"}`}
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-12 uppercase">
+            <h2 className="text-[3rem] text-[#eb61a2] font-bold max-[1000px]:text-[2.5rem] max-[600px]:text-[28px]">
+              OUR PRODUCTS
+            </h2>
+            <button
+              className="bg-[#eb61a2] text-white border-none px-[3rem] py-3 rounded-[0.5rem] text-[1.5rem] cursor-pointer transition-[0.1s] ease hover:bg-[#c8538a] max-[1000px]:text-[1.25rem] max-[600px]:text-sm"
+              onClick={() => router.push("/products")}
+            >
+              View All
+            </button>
+          </div>
 
-              {loading ? (
-                <p className="text-center text-gray-500 text-lg mt-20">Loading products...</p>
-              ) : products.length === 0 ? (
-                <p className="text-center text-gray-500 text-lg mt-20">No products found.</p>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {products.slice(0, 10).map((p) => {
-                    const brand = typeof p?.brand === "string" ? p.brand : p?.brand?.name ?? "";
-                    const desc = p?.description?.trim() || "No description";
-                    return (
-                      <div
-                        key={p.id}
-                        className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+          {loading ? (
+            <p className="text-center text-gray-500 text-lg mt-20">Loading products...</p>
+          ) : products.length === 0 ? (
+            <p className="text-center text-gray-500 text-lg mt-20">No products found.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {products.slice(0, 10).map((p) => {
+                const brand = typeof p?.brand === "string" ? p.brand : (p?.brand?.name ?? "");
+                const desc = p?.description?.trim() || "No description";
+                return (
+                  <div
+                    key={p.id}
+                    className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+                  >
+                    <div className="relative h-[200px] bg-gray-100">
+                      <Image
+                        src={getProductImageUrl(p)}
+                        alt={p?.name || "Product"}
+                        fill
+                        className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                        sizes="(max-width: 600px) 50vw, 200px"
+                        unoptimized
+                        onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                      />
+
+                      {/* Discount % badge (only if active promotion with percentage) */}
+                      {discountPercentages[p?.id] != null && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openPromotionModal(p);
+                          }}
+                          className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[12px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
+                          title="View promotion details"
+                        >
+                          {discountPercentages[p.id]}%
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                        onClick={() => handleFavoriteClick(p.id)}
                       >
-                        <div className="relative h-[200px] bg-gray-100">
-                           <Image
-                             src={getProductImageUrl(p)}
-                             alt={p?.name || "Product"}
-                             fill
-                             className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
-                             sizes="(max-width: 600px) 50vw, 200px"
-                             unoptimized
-                             onClick={() => router.push(`/product_details?productId=${p.id}`)}
-                           />
-
-                            {/* Discount % badge (only if active promotion with percentage) */}
-                            {discountPercentages[p?.id] != null && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openPromotionModal(p);
-                                }}
-                                className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[12px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
-                                title="View promotion details"
-                              >
-                                {discountPercentages[p.id]}%
-                              </button>
-                            )}
-
-                            <button
-                              type="button"
-                              className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
-                              onClick={() => handleFavoriteClick(p.id)}
-                            >
-                              <FaHeart 
-                                className={`text-sm ${favoriteIds.has(p.id) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} 
-                              />
-                            </button>
-                         </div>
-                        <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
-                          {brand && (
-                            <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
-                              {brand}
-                            </span>
-                          )}
-                          <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p?.name}>
-                            {p?.name || "No Name"}
-                          </h3>
-                          <p className="text-xs text-gray-500 truncate opacity-80" title={desc}>
-                            {desc}
-                          </p>
-                            <ProductPrice
-                              price={p?.price}
-                              discountedPrice={discountedPrices[p?.id]}
-                              className="mt-1"
-                              centered
-                            />
-                           <button
-                             type="button"
-                             className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
-                             onClick={() => handleAddToCartClick(p.id)}
-                           >
-                             <FaCartPlus className="text-base" /> Add to Cart
-                           </button>
-
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                        <FaHeart
+                          className={`text-sm ${favoriteIds.has(p.id) ? "text-[#F83E94]" : "text-[#2F2F2F]"}`}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
+                      {brand && (
+                        <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                          {brand}
+                        </span>
+                      )}
+                      <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p?.name}>
+                        {p?.name || "No Name"}
+                      </h3>
+                      <p className="text-xs text-gray-500 truncate opacity-80" title={desc}>
+                        {desc}
+                      </p>
+                      <ProductPrice
+                        price={p?.price}
+                        discountedPrice={discountedPrices[p?.id]}
+                        className="mt-1"
+                        centered
+                      />
+                      <button
+                        type="button"
+                        className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                        onClick={() => handleAddToCartClick(p.id)}
+                      >
+                        <FaCartPlus className="text-base" /> Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          )}
+        </div>
       </section>
       {/* CUSTOMER STORIES RECOMMENDATION SECTION */}
-      <div ref={recommendRef} className={`pt-8 pb-20 px-8 ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${recommendFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
-            <div className="max-w-7xl mx-auto">
+      <div
+        ref={recommendRef}
+        className={`pt-8 pb-20 px-8 ${noSectionAnimation ? "" : "transition-all duration-1000 ease-out delay-300"} ${recommendFinalVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-32"}`}
+      >
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <h2 className="text-[4rem] font-bold text-[#3C3C3C] mb-4 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">
+              GLOBAL FEEDBACKS
+            </h2>
+            <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
+              Discover customer-loved skincare essentials for healthy, glowing skin — curated for every skin
+              type and daily routine.
+            </p>
+          </div>
 
-              {/* Header */}
-              <div className="text-center mb-16">
-                <h2 className="text-[4rem] font-bold text-[#3C3C3C] mb-4 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">
-                  GLOBAL FEEDBACKS
-                </h2>
-                <p className="text-[#000] text-[1.5rem] font-sans whitespace-pre-line text-left leading-relaxed max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
-                  Discover customer-loved skincare essentials for healthy, glowing skin — curated for every skin type and daily routine.
-                </p>
-              </div>
+          {/* Featured Large Testimonial */}
 
-              {/* Featured Large Testimonial */}
+          {/* 3-column smaller testimonials with click scroll */}
+          <div className="relative">
+            {/* Left scroll button with shadow */}
+            <button
+              onClick={() => {
+                const container = document.getElementById("testimonials-container");
+                const cards = container?.querySelectorAll(".testimonial-card");
+                if (container && cards?.length > 0) {
+                  const gap = 24;
+                  const cardWidth = cards[0].offsetWidth;
+                  const scrollAmount = cardWidth + gap;
+                  const newScrollLeft = container.scrollLeft - scrollAmount;
+                  container.scrollTo({ left: Math.max(0, newScrollLeft), behavior: "smooth" });
+                }
+              }}
+              disabled={!canScrollLeft}
+              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -ml-6 max-[600px]:-ml-2 ${!canScrollLeft ? "opacity-40 cursor-not-allowed" : ""}`}
+            >
+              <FaChevronLeft size={20} />
+            </button>
 
+            {/* Right scroll button with shadow */}
+            <button
+              onClick={() => {
+                const container = document.getElementById("testimonials-container");
+                const cards = container?.querySelectorAll(".testimonial-card");
+                if (container && cards?.length > 0) {
+                  const gap = 24;
+                  const cardWidth = cards[0].offsetWidth;
+                  const scrollAmount = cardWidth + gap;
+                  const maxScroll = container.scrollWidth - container.clientWidth;
+                  const newScrollLeft = container.scrollLeft + scrollAmount;
+                  container.scrollTo({ left: Math.min(maxScroll, newScrollLeft), behavior: "smooth" });
+                }
+              }}
+              disabled={!canScrollRight}
+              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -mr-6 max-[600px]:-mr-2 ${!canScrollRight ? "opacity-40 cursor-not-allowed" : ""}`}
+            >
+              <FaChevronRight size={20} />
+            </button>
 
-              {/* 3-column smaller testimonials with click scroll */}
-              <div className="relative">
-                {/* Left scroll button with shadow */}
-                <button
-                  onClick={() => {
-                    const container = document.getElementById('testimonials-container');
-                    const cards = container?.querySelectorAll('.testimonial-card');
-                    if (container && cards?.length > 0) {
-                      const gap = 24;
-                      const cardWidth = cards[0].offsetWidth;
-                      const scrollAmount = cardWidth + gap;
-                      const newScrollLeft = container.scrollLeft - scrollAmount;
-                      container.scrollTo({ left: Math.max(0, newScrollLeft), behavior: 'smooth' });
-                    }
-                  }}
-                  disabled={!canScrollLeft}
-                  className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -ml-6 max-[600px]:-ml-2 ${!canScrollLeft ? 'opacity-40 cursor-not-allowed' : ''}`}
-                >
-                  <FaChevronLeft size={20} />
-                </button>
+            {/* Gradient shadows on both sides */}
+            <div
+              ref={leftGradientRef}
+              className="absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-white to-transparent z-5 pointer-events-none transition-opacity duration-300"
+            ></div>
+            <div
+              ref={rightGradientRef}
+              className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-white to-transparent z-5 pointer-events-none transition-opacity duration-300"
+            ></div>
 
-                {/* Right scroll button with shadow */}
-                <button
-                  onClick={() => {
-                    const container = document.getElementById('testimonials-container');
-                    const cards = container?.querySelectorAll('.testimonial-card');
-                    if (container && cards?.length > 0) {
-                      const gap = 24;
-                      const cardWidth = cards[0].offsetWidth;
-                      const scrollAmount = cardWidth + gap;
-                      const maxScroll = container.scrollWidth - container.clientWidth;
-                      const newScrollLeft = container.scrollLeft + scrollAmount;
-                      container.scrollTo({ left: Math.min(maxScroll, newScrollLeft), behavior: 'smooth' });
-                    }
-                  }}
-                  disabled={!canScrollRight}
-                  className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] rounded-full w-12 h-12 flex items-center justify-center text-[#eb61a2] hover:bg-[#eb61a2] hover:text-white transition-all duration-300 -mr-6 max-[600px]:-mr-2 ${!canScrollRight ? 'opacity-40 cursor-not-allowed' : ''}`}
-                >
-                  <FaChevronRight size={20} />
-                </button>
-
-                {/* Gradient shadows on both sides */}
-                <div ref={leftGradientRef} className="absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-white to-transparent z-5 pointer-events-none transition-opacity duration-300"></div>
-                <div ref={rightGradientRef} className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-white to-transparent z-5 pointer-events-none transition-opacity duration-300"></div>
-
-                <div
-                  ref={testimonialsRef}
-                  id="testimonials-container"
-                  className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide cursor-grab select-none"
-                  {...dragScrollHandlers}
-                >
-                  {recommendationFeedback.map((feedback, idx) => {
-                    const stars = Math.max(1, Math.min(5, Number(feedback?.rating) || 5));
-                    const text = feedback?.comment?.trim() || "Recommended skincare product";
-                    const recItem = ImagesInRecommendation[idx] || {};
-                    const product = productById.get(feedback?.productId);
-                    const reviewerImage = feedback?.imageUrl || recItem.image || getProductImageUrl(product);
-                    const feedbackKey = feedback.id ?? `feedback-${idx}`;
-                    const isExpanded = expandedFeedbackId === feedbackKey;
-                    return (
-                      <div
-                        key={feedbackKey}
-                        className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[240px] max-[600px]:p-4 flex-shrink-0"
-                      >
-                         <div className="flex items-center gap-3 max-[600px]:gap-2">
-                           <Image
-                             src={reviewerImage}
-                             alt={feedback?.userDisplayName || "Customer"}
-                             width={48}
-                             height={48}
-                             className="w-12 h-12 max-[600px]:w-9 max-[600px]:h-9 rounded-full object-cover flex-shrink-0"
-                             unoptimized
-                           />
-                           <div>
-                             <p className="font-bold text-[#3C3C3C] text-sm max-[600px]:text-xs">{feedback?.userDisplayName || recItem.name || "Customer"}</p>
-                             <p className="text-[#aaa] text-xs max-[600px]:text-[10px]">{recItem.role || "Verified Customer"}</p>
-                           </div>
-                         </div>
-                         <div className="bg-[#EDEDED] rounded-xl p-4 mt-2 max-[600px]:p-3 flex flex-col justify-between flex-grow">
-                           <div>
-                             <div className="flex gap-2 mb-2 max-[600px]:mb-1">
-                               {[1, 2, 3, 4, 5].map(i => (
-                                 <span key={i} className={`text-4xl max-[600px]:text-2xl ${i <= stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}>&#9733;</span>
-                               ))}
-                             </div>
-                             <p className="text-[#3C3C3C] text-sm max-[600px]:text-xs font-medium mb-1">
-                               On {feedback?.productName || product?.name || "Product"}
-                             </p>
-                             <p
-                               className={`text-[#555] text-sm max-[600px]:text-xs leading-relaxed overflow-hidden transition-[max-height] duration-500 ease-in-out ${!isExpanded ? 'line-clamp-3' : ''}`}
-                               style={{ maxHeight: isExpanded ? '500px' : '4.5em' }}
-                             >
-                              {text}
-                            </p>
-                            {text.length > 80 && (
-                              <button
-                                onClick={() => setExpandedFeedbackId(isExpanded ? null : feedbackKey)}
-                                className="flex items-center gap-1 text-xs font-semibold text-[#eb61a2] mt-1 hover:underline"
-                              >
-                                {isExpanded ? 'Show less' : 'Read more'}
-                                <FaChevronDown className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                              </button>
-                            )}
-                          </div>
-                           <div className="flex justify-end pt-4 max-[600px]:pt-3">
-                             <p className="text-xs text-[#999]">{timeAgo(feedback?.createdAt)}</p>
-                           </div>
-                        </div>
+            <div
+              ref={testimonialsRef}
+              id="testimonials-container"
+              className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide cursor-grab select-none"
+              {...dragScrollHandlers}
+            >
+              {recommendationFeedback.map((feedback, idx) => {
+                const stars = Math.max(1, Math.min(5, Number(feedback?.rating) || 5));
+                const text = feedback?.comment?.trim() || "Recommended skincare product";
+                const recItem = ImagesInRecommendation[idx] || {};
+                const product = productById.get(feedback?.productId);
+                const reviewerImage = feedback?.imageUrl || recItem.image || getProductImageUrl(product);
+                const feedbackKey = feedback.id ?? `feedback-${idx}`;
+                const isExpanded = expandedFeedbackId === feedbackKey;
+                return (
+                  <div
+                    key={feedbackKey}
+                    className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[240px] max-[600px]:p-4 flex-shrink-0"
+                  >
+                    <div className="flex items-center gap-3 max-[600px]:gap-2">
+                      <Image
+                        src={reviewerImage}
+                        alt={feedback?.userDisplayName || "Customer"}
+                        width={48}
+                        height={48}
+                        className="w-12 h-12 max-[600px]:w-9 max-[600px]:h-9 rounded-full object-cover flex-shrink-0"
+                        unoptimized
+                      />
+                      <div>
+                        <p className="font-bold text-[#3C3C3C] text-sm max-[600px]:text-xs">
+                          {feedback?.userDisplayName || recItem.name || "Customer"}
+                        </p>
+                        <p className="text-[#aaa] text-xs max-[600px]:text-[10px]">
+                          {recItem.role || "Verified Customer"}
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Bottom stats bar */}
-              <div className="mt-14 grid grid-cols-3 gap-4 text-center max-[1000px]:mt-10 max-[600px]:mt-8">
-                {stats.map((stat, i) => (
-                  <div key={i} className="bg-white rounded-2xl py-6 px-4 border border-[#ffd6ec] shadow-sm max-[1000px]:py-4 max-[600px]:py-3">
-                    <p className="text-3xl font-bold text-black mb-1 max-[1000px]:text-2xl max-[600px]:text-xl">{stat.number}</p>
-                    <p className="text-sm text-[#888] font-medium max-[1000px]:text-xs">{stat.label}</p>
+                    </div>
+                    <div className="bg-[#EDEDED] rounded-xl p-4 mt-2 max-[600px]:p-3 flex flex-col justify-between flex-grow">
+                      <div>
+                        <div className="flex gap-2 mb-2 max-[600px]:mb-1">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <span
+                              key={i}
+                              className={`text-4xl max-[600px]:text-2xl ${i <= stars ? "text-yellow-400" : "text-transparent [-webkit-text-stroke:2px_#facc15]"}`}
+                            >
+                              &#9733;
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-[#3C3C3C] text-sm max-[600px]:text-xs font-medium mb-1">
+                          On {feedback?.productName || product?.name || "Product"}
+                        </p>
+                        <p
+                          className={`text-[#555] text-sm max-[600px]:text-xs leading-relaxed overflow-hidden transition-[max-height] duration-500 ease-in-out ${!isExpanded ? "line-clamp-3" : ""}`}
+                          style={{ maxHeight: isExpanded ? "500px" : "4.5em" }}
+                        >
+                          {text}
+                        </p>
+                        {text.length > 80 && (
+                          <button
+                            onClick={() => setExpandedFeedbackId(isExpanded ? null : feedbackKey)}
+                            className="flex items-center gap-1 text-xs font-semibold text-[#eb61a2] mt-1 hover:underline"
+                          >
+                            {isExpanded ? "Show less" : "Read more"}
+                            <FaChevronDown
+                              className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                            />
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex justify-end pt-4 max-[600px]:pt-3">
+                        <p className="text-xs text-[#999]">{timeAgo(feedback?.createdAt)}</p>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-
+                );
+              })}
             </div>
+          </div>
+
+          {/* Bottom stats bar */}
+          <div className="mt-14 grid grid-cols-3 gap-4 text-center max-[1000px]:mt-10 max-[600px]:mt-8">
+            {stats.map((stat, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl py-6 px-4 border border-[#ffd6ec] shadow-sm max-[1000px]:py-4 max-[600px]:py-3"
+              >
+                <p className="text-3xl font-bold text-black mb-1 max-[1000px]:text-2xl max-[600px]:text-xl">
+                  {stat.number}
+                </p>
+                <p className="text-sm text-[#888] font-medium max-[1000px]:text-xs">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ABOUT US SECTION */}
-      <div ref={aboutRef} id="aboutus" className={`pt-8 pb-20 px-8 text-center ${noSectionAnimation ? '' : 'transition-all duration-1000 ease-out delay-300'} ${aboutFinalVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'}`}>
-            <div className="max-w-7xl mx-auto">
-              <p className="text-[4rem] font-bold text-[#000] mb-6 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">ABOUT US</p>
-              <div className="text-[#000] text-[1.5rem] font-sans text-left leading-relaxed w-full max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
-                <p className="mb-2"><span className="font-bold">SKIN.ME</span> is more than skincare — it's a daily ritual of self-respect and renewal.</p>
-                <p className="mb-2">We create minimalist, effective formulas designed for real skin and real lives. Inspired by nature and backed by science, our products are gentle yet powerful.</p>
-                <p className="mb-2"><span className="font-bold">Our Promise:</span></p>
-                <ul className="list-disc list-inside mb-2">
-                  <li>Clean and safe ingredients</li>
-                  <li>Honest and transparent beauty</li>
-                  <li>Simple, effective skincare</li>
-                </ul>
-                <p>Every product reflects our commitment to quality and care. Join us in redefining skincare with confidence and simplicity.</p>
-              </div>            </div>
-            <div className="grid grid-cols-4 gap-[2rem] mt-8 max-w-7xl mx-auto justify-center max-[992px]:grid-cols-2 max-[600px]:gap-[1rem]">
-              {products.slice(0, 4).map((product) => (
-                <Image
-                  key={product.id}
-                  src={getProductImageUrl(product)}
-                  alt={product?.name || "Product"}
-                  width={280}
-                  height={280}
-                  className="w-full h-auto rounded-[10px] object-cover"
-                  unoptimized
-                />
-              ))}
-            </div>
+      <div
+        ref={aboutRef}
+        id="aboutus"
+        className={`pt-8 pb-20 px-8 text-center ${noSectionAnimation ? "" : "transition-all duration-1000 ease-out delay-300"} ${aboutFinalVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-32"}`}
+      >
+        <div className="max-w-7xl mx-auto">
+          <p className="text-[4rem] font-bold text-[#000] mb-6 max-[1000px]:text-[3rem] max-[600px]:text-[2.5rem]">
+            ABOUT US
+          </p>
+          <div className="text-[#000] text-[1.5rem] font-sans text-left leading-relaxed w-full max-[1000px]:text-[1.25rem] max-[600px]:text-[1.125rem]">
+            <p className="mb-2">
+              <span className="font-bold">SKIN.ME</span> is more than skincare — it's a daily ritual of
+              self-respect and renewal.
+            </p>
+            <p className="mb-2">
+              We create minimalist, effective formulas designed for real skin and real lives. Inspired by
+              nature and backed by science, our products are gentle yet powerful.
+            </p>
+            <p className="mb-2">
+              <span className="font-bold">Our Promise:</span>
+            </p>
+            <ul className="list-disc list-inside mb-2">
+              <li>Clean and safe ingredients</li>
+              <li>Honest and transparent beauty</li>
+              <li>Simple, effective skincare</li>
+            </ul>
+            <p>
+              Every product reflects our commitment to quality and care. Join us in redefining skincare with
+              confidence and simplicity.
+            </p>
+          </div>{" "}
+        </div>
+        <div className="grid grid-cols-4 gap-[2rem] mt-8 max-w-7xl mx-auto justify-center max-[992px]:grid-cols-2 max-[600px]:gap-[1rem]">
+          {products.slice(0, 4).map((product) => (
+            <Image
+              key={product.id}
+              src={getProductImageUrl(product)}
+              alt={product?.name || "Product"}
+              width={280}
+              height={280}
+              className="w-full h-auto rounded-[10px] object-cover"
+              unoptimized
+            />
+          ))}
+        </div>
       </div>
 
       {/* PROMOTION MODAL (pop-up on home page products) */}
@@ -823,11 +913,12 @@ export default function Page() {
                       <div className="font-bold text-xl text-gray-900 leading-tight">
                         {promoModal.product?.name}
                       </div>
-                       <div className="text-[#eb61a2] font-extrabold text-4xl mt-1">
-                         {typeof promoModal.promotion?.discountPercentage === 'number'
-                           ? promoModal.promotion.discountPercentage
-                           : '?'}% OFF
-                       </div>
+                      <div className="text-[#eb61a2] font-extrabold text-4xl mt-1">
+                        {typeof promoModal.promotion?.discountPercentage === "number"
+                          ? promoModal.promotion.discountPercentage
+                          : "?"}
+                        % OFF
+                      </div>
                     </div>
                   </div>
 
@@ -839,17 +930,34 @@ export default function Page() {
 
                   <div className="mt-4 text-xs text-gray-500">
                     {promoModal.promotion.startDate || promoModal.promotion.start_date ? (
-                      <>Valid from <span className="font-medium text-gray-700">{new Date(promoModal.promotion.startDate || promoModal.promotion.start_date).toLocaleDateString()}</span></>
+                      <>
+                        Valid from{" "}
+                        <span className="font-medium text-gray-700">
+                          {new Date(
+                            promoModal.promotion.startDate || promoModal.promotion.start_date,
+                          ).toLocaleDateString()}
+                        </span>
+                      </>
                     ) : null}
                     {(promoModal.promotion.endDate || promoModal.promotion.end_date) && (
-                      <> until <span className="font-medium text-gray-700">{new Date(promoModal.promotion.endDate || promoModal.promotion.end_date).toLocaleDateString()}</span></>
+                      <>
+                        {" "}
+                        until{" "}
+                        <span className="font-medium text-gray-700">
+                          {new Date(
+                            promoModal.promotion.endDate || promoModal.promotion.end_date,
+                          ).toLocaleDateString()}
+                        </span>
+                      </>
                     )}
                   </div>
                 </>
               ) : (
                 <div className="text-center py-6">
                   <p className="text-lg font-semibold text-[#eb61a2]">Limited-time offer</p>
-                  <p className="text-sm text-gray-500 mt-1">Special discount is currently active on this product.</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Special discount is currently active on this product.
+                  </p>
                 </div>
               )}
             </div>

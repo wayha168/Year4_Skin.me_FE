@@ -151,8 +151,6 @@ export default function DiscountModal() {
         ctaText,
       });
 
-      console.log("[DiscountModal] promotions/all payload:", payload);
-      console.log("[DiscountModal] selected promotion (default):", promotion);
     } catch (error) {
       console.error("[DiscountModal] Error fetching discount data:", error);
     }

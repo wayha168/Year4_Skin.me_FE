@@ -5,25 +5,14 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import axiosAuth from "../../app/lib/api/axiosConfig";
 import useAuthContext from "../../app/lib/Authentication/AuthContext";
-import {
-  FaArrowUp,
-  FaEdit,
-  FaImage,
-  FaPaperclip,
-  FaPlus,
-  FaSpinner,
-  FaTrashAlt,
-} from "react-icons/fa";
+import { FaArrowUp, FaEdit, FaImage, FaPaperclip, FaPlus, FaSpinner, FaTrashAlt } from "react-icons/fa";
 import { FaWandSparkles } from "react-icons/fa6";
 import { CHATBOT_API_BASE } from "../../app/lib/api/config";
-
-
 
 const WELCOME_MESSAGE =
   "Hello! I’m Skin.me Assistant. I can help with skincare questions, product guidance, and skin image analysis.";
 
-const ERROR_MESSAGE =
-  "Sorry, I couldn't respond just now. Please try again in a moment and I’ll help you.";
+const ERROR_MESSAGE = "Sorry, I couldn't respond just now. Please try again in a moment and I’ll help you.";
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
@@ -63,7 +52,7 @@ function formatAssistantHtml(text) {
   const escaped = escapeHtml(text);
   const withLinks = escaped.replace(
     /(https?:\/\/[^\s<]+)/g,
-    '<a href="$1" target="_blank" rel="noreferrer" class="text-[#b5487f] underline break-all">$1</a>'
+    '<a href="$1" target="_blank" rel="noreferrer" class="text-[#b5487f] underline break-all">$1</a>',
   );
   return withLinks.replace(/\n/g, "<br />");
 }
@@ -174,21 +163,25 @@ export default function ChatAssistantPage() {
         if (Array.isArray(act.messages) && act.messages.length > 0) {
           grouped[sid].messages = act.messages;
           if (act.title) grouped[sid].title = act.title;
-        } 
+        }
         // If it stores individual messages
         else if (act.prompt || act.message) {
           grouped[sid].messages.push({
             id: act.id || `msg-${Date.now()}`,
             role: "user",
             text: act.prompt || act.message,
-            time: act.createdAt ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "",
+            time: act.createdAt
+              ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "",
           });
           if (act.response) {
             grouped[sid].messages.push({
               id: `assistant-${act.id || Date.now()}`,
               role: "assistant",
               text: act.response,
-              time: act.createdAt ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "",
+              time: act.createdAt
+                ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "",
             });
           }
         }
@@ -198,7 +191,7 @@ export default function ChatAssistantPage() {
     } catch (err) {
       if (err.response?.status === 404) {
         // Expected for now — the GET endpoint for chat history doesn't exist yet
-        console.log("No chat history found yet (404 from backend)");
+        // console.log("No chat history found yet (404 from backend)");
       } else {
         console.error("Failed to load chat history:", err);
       }
@@ -328,13 +321,7 @@ export default function ChatAssistantPage() {
 
     const newTitle = editingTitle.trim() || "Untitled Chat";
 
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === editingChatId
-          ? { ...chat, title: newTitle }
-          : chat
-      )
-    );
+    setChats((prev) => prev.map((chat) => (chat.id === editingChatId ? { ...chat, title: newTitle } : chat)));
 
     // Save the whole conversation with the updated title
     const chatToUpdate = chats.find((c) => c.id === editingChatId);
@@ -370,11 +357,11 @@ export default function ChatAssistantPage() {
         messages: chatToSave.messages,
         savedAt: new Date().toISOString(),
       });
-      console.log("✅ Chat saved to backend:", chatToSave.id);
+      // console.log("✅ Chat saved to backend:", chatToSave.id);
     } catch (err) {
       if (err.response?.status === 404) {
         // Expected for now — backend POST /chat-activity route not implemented yet
-        console.log("⚠️ Chat save skipped (404 - /chat-activity endpoint not ready)");
+        // console.log("⚠️ Chat save skipped (404 - /chat-activity endpoint not ready)");
       } else {
         console.error("Failed to save chat to backend:", err.response?.data || err.message);
       }
@@ -383,7 +370,7 @@ export default function ChatAssistantPage() {
 
   const selectedImagePreview = useMemo(
     () => (selectedImage ? URL.createObjectURL(selectedImage) : null),
-    [selectedImage]
+    [selectedImage],
   );
 
   useEffect(() => {
@@ -430,7 +417,7 @@ export default function ChatAssistantPage() {
       {
         headers: { "Content-Type": "application/json" },
         timeout: 30000,
-      }
+      },
     );
 
     return extractReply(response.data);
@@ -473,8 +460,8 @@ export default function ChatAssistantPage() {
               title: chat.title === "New Chat" ? trimmed.slice(0, 30) : chat.title,
               messages: [...chat.messages, userMessage],
             }
-          : chat
-      )
+          : chat,
+      ),
     );
 
     setInput("");
@@ -501,10 +488,8 @@ export default function ChatAssistantPage() {
 
       setChats((prevChats) =>
         prevChats.map((chat) =>
-          chat.id === currentChatId
-            ? { ...chat, messages: [...chat.messages, assistantMessage] }
-            : chat
-        )
+          chat.id === currentChatId ? { ...chat, messages: [...chat.messages, assistantMessage] } : chat,
+        ),
       );
     } catch (error) {
       console.error("Chat assistant error:", error);
@@ -512,9 +497,12 @@ export default function ChatAssistantPage() {
       const rawError = error?.response?.data?.message || error?.message || "";
       let displayError = ERROR_MESSAGE;
 
-      if (rawError.toLowerCase().includes("does not support image") || 
-          rawError.toLowerCase().includes("image input")) {
-        displayError = "Sorry, the current AI model doesn't support image analysis right now. Please try asking a text question instead.";
+      if (
+        rawError.toLowerCase().includes("does not support image") ||
+        rawError.toLowerCase().includes("image input")
+      ) {
+        displayError =
+          "Sorry, the current AI model doesn't support image analysis right now. Please try asking a text question instead.";
       }
 
       const errorMessage = {
@@ -528,10 +516,8 @@ export default function ChatAssistantPage() {
 
       setChats((prevChats) =>
         prevChats.map((chat) =>
-          chat.id === currentChatId
-            ? { ...chat, messages: [...chat.messages, errorMessage] }
-            : chat
-        )
+          chat.id === currentChatId ? { ...chat, messages: [...chat.messages, errorMessage] } : chat,
+        ),
       );
     } finally {
       setLoading(false);
@@ -593,72 +579,66 @@ export default function ChatAssistantPage() {
           </div>
 
           <div className="space-y-1">
-             {chats.map((chat) => (
-               <div
-                 key={chat.id}
-                 onClick={() => {
-                   if (editingChatId !== chat.id) switchChat(chat.id);
-                 }}
-                 onDoubleClick={() => startRenaming(chat)}
-                 className={`group flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition ${
-                   currentChatId === chat.id
-                     ? "bg-[#fff2f8] border border-[#eb61a2]"
-                     : "hover:bg-[#fff8fb]"
-                 }`}
-               >
-                 <div className="flex-1 min-w-0">
-                   {editingChatId === chat.id ? (
-                     <input
-                       type="text"
-                       value={editingTitle}
-                       onChange={(e) => setEditingTitle(e.target.value)}
-                       onBlur={saveRename}
-                       onKeyDown={(e) => {
-                         if (e.key === "Enter") saveRename();
-                         if (e.key === "Escape") cancelRename();
-                       }}
-                       autoFocus
-                       className="w-full text-sm font-medium bg-white border border-[#eb61a2] rounded px-2 py-1 focus:outline-none"
-                       onClick={(e) => e.stopPropagation()}
-                     />
-                   ) : (
-                     <p className="text-sm font-medium text-[#1f2937] truncate">
-                       {chat.title}
-                     </p>
-                   )}
-                   <p className="text-[11px] text-[#6b7280]">
-                     {chat.messages.length} messages
-                   </p>
-                 </div>
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => {
+                  if (editingChatId !== chat.id) switchChat(chat.id);
+                }}
+                onDoubleClick={() => startRenaming(chat)}
+                className={`group flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition ${
+                  currentChatId === chat.id ? "bg-[#fff2f8] border border-[#eb61a2]" : "hover:bg-[#fff8fb]"
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  {editingChatId === chat.id ? (
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={saveRename}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveRename();
+                        if (e.key === "Escape") cancelRename();
+                      }}
+                      autoFocus
+                      className="w-full text-sm font-medium bg-white border border-[#eb61a2] rounded px-2 py-1 focus:outline-none"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-[#1f2937] truncate">{chat.title}</p>
+                  )}
+                  <p className="text-[11px] text-[#6b7280]">{chat.messages.length} messages</p>
+                </div>
 
-                 <div className="flex items-center gap-1">
-                   {/* Pencil icon for rename on hover */}
-                   <button
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       startRenaming(chat);
-                     }}
-                     className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-[#eb61a2] p-1 transition"
-                     title="Rename chat"
-                   >
-                     <FaEdit className="text-xs" />
-                   </button>
+                <div className="flex items-center gap-1">
+                  {/* Pencil icon for rename on hover */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startRenaming(chat);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-[#eb61a2] p-1 transition"
+                    title="Rename chat"
+                  >
+                    <FaEdit className="text-xs" />
+                  </button>
 
-                   {chats.length > 1 && (
-                     <button
-                       onClick={(e) => {
-                         e.stopPropagation();
-                         deleteChat(chat.id);
-                       }}
-                       className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 p-1"
-                       title="Delete chat"
-                     >
-                       <FaTrashAlt className="text-xs" />
-                     </button>
-                   )}
-                 </div>
-               </div>
-             ))}
+                  {chats.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteChat(chat.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 p-1"
+                      title="Delete chat"
+                    >
+                      <FaTrashAlt className="text-xs" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </aside>
@@ -823,9 +803,7 @@ export default function ChatAssistantPage() {
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   placeholder={
-                    selectedImage
-                      ? "Add a note for this skin image..."
-                      : "Message Skin.me Assistant..."
+                    selectedImage ? "Add a note for this skin image..." : "Message Skin.me Assistant..."
                   }
                   className="max-h-40 min-h-[48px] flex-1 resize-none bg-transparent px-2 py-3 text-sm text-[#1f2937] outline-none placeholder:text-[#94a3b8]"
                   onKeyDown={(event) => {

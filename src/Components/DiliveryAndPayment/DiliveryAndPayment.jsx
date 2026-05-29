@@ -708,7 +708,7 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
                        {opt.label}
                      </span>
                    </button>
-                 );
+                 ); 
                })}
             </div>
             {!paymentType && (

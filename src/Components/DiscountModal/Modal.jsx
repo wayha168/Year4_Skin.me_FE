@@ -337,7 +337,7 @@ export default function DiscountModal() {
 
         {/* ── Right panel ── */}
         <div className="relative flex-1 p-4 sm:p-5 md:p-7 overflow-y-auto">
-          <button onClick={closeModal} className="absolute right-0.5 top-0.5 z-10">
+          <button onClick={closeModal} className="absolute right-1 top-1 z-10">
             <X className="h-8 w-8 text-red-500" />
           </button>
 

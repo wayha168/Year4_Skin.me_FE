@@ -37,6 +37,9 @@ export default function DiscountModal() {
     return null;
   };
 
+  const selectedPromotion = promotionsList[selectedPromotionIndex];
+  const selectedPercent = extractPercent(selectedPromotion);
+
   const resolveImageUrl = (rawUrl) => {
     if (!rawUrl || typeof rawUrl !== "string" || rawUrl.trim() === "") return null;
     if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) return rawUrl;
@@ -131,14 +134,17 @@ export default function DiscountModal() {
         return;
       }
 
+      const displayPromotions = normalizedPromotions.slice(0, 6);
       let maxPercent = 0;
-      let maxPercentPromotion = normalizedPromotions[0];
+      let maxPercentPromotion = displayPromotions[0];
+      let maxPercentPromotionIndex = 0;
 
-      for (const p of normalizedPromotions) {
+      for (const [index, p] of displayPromotions.entries()) {
         const pct = extractPercent(p);
         if (pct !== null && pct > maxPercent) {
           maxPercent = pct;
           maxPercentPromotion = p;
+          maxPercentPromotionIndex = index;
         }
       }
 
@@ -170,13 +176,13 @@ export default function DiscountModal() {
 
       const imageSrc = getPromoImage(maxPercentPromotion) || DEFAULT_IMAGE;
 
-      const promotionsWithImage = normalizedPromotions.slice(0, 6).map((p) => ({
+      const promotionsWithImage = displayPromotions.map((p) => ({
         ...p,
         __resolvedImageSrc: getPromoImage(p) || DEFAULT_IMAGE,
       }));
 
       setPromotionsList(promotionsWithImage);
-      setSelectedPromotionIndex(0);
+      setSelectedPromotionIndex(maxPercentPromotionIndex);
 
       setModalData({
         heading,
@@ -232,17 +238,12 @@ export default function DiscountModal() {
       modalData.description;
     const ctaText =
       p?.ctaText ?? p?.cta ?? p?.buttonText ?? p?.button_text ?? "Shop Now";
-    const percentNum = extractPercent(p);
     const imgResolved = p?.__resolvedImageSrc;
 
     setModalData((prev) => ({
       ...prev,
       heading,
       badgeText,
-      percentText:
-        percentNum && percentNum > 0
-          ? `UP TO ${Math.round(percentNum)}% OFF`
-          : prev.percentText,
       description,
       imageSrc:
         typeof imgResolved === "string" && imgResolved.trim() !== ""
@@ -290,7 +291,12 @@ export default function DiscountModal() {
         <div className="w-[42%] bg-black p-3 sm:p-4 text-white flex flex-col">
 
           {/* Main sliding image with CSS transition */}
-          <div className="overflow-hidden rounded-2xl flex-shrink-0">
+          <div className="relative overflow-hidden rounded-2xl flex-shrink-0">
+            {selectedPercent && selectedPercent > 0 ? (
+              <div className="absolute left-2 top-2 z-10 rounded-full bg-pink-500 px-2.5 py-1 text-[11px] sm:text-xs font-extrabold leading-none text-white shadow-lg">
+                {Math.round(selectedPercent)}% OFF
+              </div>
+            ) : null}
             <img
               key={modalData.imageSrc}
               src={modalData.imageSrc}
@@ -331,7 +337,7 @@ export default function DiscountModal() {
 
         {/* ── Right panel ── */}
         <div className="relative flex-1 p-4 sm:p-5 md:p-7 overflow-y-auto">
-          <button onClick={closeModal} className="absolute right-6 top-5 z-10">
+          <button onClick={closeModal} className="absolute right-0.5 top-0.5 z-10">
             <X className="h-8 w-8 text-red-500" />
           </button>
 

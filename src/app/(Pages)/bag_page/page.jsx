@@ -14,6 +14,7 @@ import { FaShoppingBag, FaHeart, FaCartPlus } from "react-icons/fa";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
 import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
+import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 
 const DefaultProductImage = "/assets/third_image.png";
 

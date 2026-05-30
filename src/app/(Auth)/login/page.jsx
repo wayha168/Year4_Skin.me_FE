@@ -154,8 +154,9 @@ function LoginFormWithGoogle() {
   const { googleLogin } = useAuthContext();
   const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_REDIRECT_URI || "postmessage";
   const redirectTo = searchParams.get("redirect") || "";
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  // One auth code = one exchange; block duplicate onSuccess (e.g. dev Strict Mode) from reusing the same code.
+const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+   const [loginError, setLoginError] = useState("");
+   // One auth code = one exchange; block duplicate onSuccess (e.g. dev Strict Mode) from reusing the same code.
   const googleExchangeInFlight = useRef(false);
 
   const googleOAuthRedirectUri = useMemo(() => getGoogleOAuthRedirectUri(), []);
@@ -188,7 +189,16 @@ function LoginFormWithGoogle() {
     },
   });
 
-  return <LoginForm onGoogleClick={() => loginWithGoogle()} isGoogleLoading={isGoogleLoading} />;
+   return (
+     <>
+       {loginError && (
+         <p className="bg-red-100 text-red-600 p-3 rounded-md text-center mb-4 font-semibold">
+           {loginError}
+         </p>
+       )}
+       <LoginForm onGoogleClick={() => loginWithGoogle()} isGoogleLoading={isGoogleLoading} />
+     </>
+   );
 }
 
 const Login = () => {

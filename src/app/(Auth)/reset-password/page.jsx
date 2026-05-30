@@ -1,15 +1,10 @@
 "use client";
 
-/**
- * Reset password page. User arrives here by clicking the link in the forgot-password email.
- * Backend must send a link like: {frontendUrl}/reset-password?token=XXX&email=user@example.com
- * On submit we call POST /api/v1/auth/reset-password with email, token, password, confirmPassword (query params).
- */
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { API_BASE } from "../../lib/api/config";
+import axiosAuth from "../../lib/api/axiosConfig";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
@@ -32,47 +27,44 @@ export default function ResetPasswordPage() {
     }
   }, [hasValidParams]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!hasValidParams || !password.trim() || password !== confirmPassword) {
-      setMessage("Passwords do not match.");
-      setIsError(true);
-      return;
-    }
-    setIsLoading(true);
-    setMessage(null);
-    setIsError(false);
+   const handleSubmit = async (e) => {
+     e.preventDefault();
+     if (!hasValidParams || !password.trim() || password !== confirmPassword) {
+       setMessage("Passwords do not match.");
+       setIsError(true);
+       return;
+     }
+     setIsLoading(true);
+     setMessage(null);
+     setIsError(false);
 
-    try {
-      const params = new URLSearchParams({
-        email: email.trim(),
-        token: token.trim(),
-        password: password.trim(),
-        confirmPassword: confirmPassword.trim(),
-      });
-      const res = await fetch(`${API_BASE}/auth/reset-password?${params.toString()}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
+      try {
+        const params = new URLSearchParams({
+          email: email.trim(),
+          token: token.trim(),
+          password: password.trim(),
+          confirmPassword: confirmPassword.trim(),
+        });
+        const res = await axiosAuth.post(`/auth/reset-password?${params.toString()}`);
+        const data = res.data;
 
-      if (res.ok) {
-        setMessage(data?.message || "Your password has been reset. You can now log in.");
-        setSuccess(true);
-        setIsError(false);
-      } else {
-        setMessage(data?.message || "Reset failed. The link may have expired. Request a new one.");
+        if (res.status === 200) {
+          setMessage(data?.message || "Your password has been reset. You can now log in.");
+          setSuccess(true);
+          setIsError(false);
+        } else {
+          setMessage(data?.message || "Reset failed. The link may have expired. Request a new one.");
+          setIsError(true);
+        }
+      } catch (err) {
+        console.error("Reset password error:", err);
+        const message = err.response?.data?.message || err.message || "Network error. Please try again.";
+        setMessage(message);
         setIsError(true);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error("Reset password error:", err);
-      setMessage("Network error. Please try again.");
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+   };
 
   const mainImage = "/assets/product_homepage.png";
 

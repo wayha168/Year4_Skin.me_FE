@@ -65,26 +65,33 @@ export default function AddressInputWithGoogle({
     onLocationChangeRef.current?.(nextLocation);
   };
 
-  useEffect(() => {
-    if (!apiKey) return;
-    if (window.google?.maps?.places) {
-      setScriptLoaded(true);
-      return;
-    }
-    // Prevent duplicate script injection
-    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-    if (existingScript) {
-      existingScript.onload = () => setScriptLoaded(true);
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-      apiKey
-    )}&loading=async&libraries=places,geometry&callback=${cbName}`;
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-  }, [apiKey]);
+   useEffect(() => {
+     if (!apiKey) return;
+     if (window.google?.maps) {
+       setScriptLoaded(true);
+       return;
+     }
+     // Prevent duplicate script injection
+     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+     if (existingScript) {
+       existingScript.onload = () => setScriptLoaded(true);
+       return;
+     }
+     const script = document.createElement("script");
+     const cbName = "skinmeGoogleMapsCallback";
+     // Only define the callback if it doesn't exist
+     if (typeof window[cbName] !== "function") {
+       window[cbName] = () => {
+         setScriptLoaded(true);
+       };
+     }
+     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
+       apiKey
+     )}&callback=${cbName}`;
+     script.async = true;
+     script.defer = true;
+     document.head.appendChild(script);
+   }, [apiKey]);
 
   useEffect(() => {
     if (!scriptLoaded || !mapContainerRef.current || !window.google?.maps || mapRef.current) return;
@@ -169,16 +176,16 @@ export default function AddressInputWithGoogle({
 
     const attachPlain = () => setUsePlainInput(true);
 
-    (async () => {
-      try {
-        await window.google.maps.importLibrary("places");
-        if (cancelled || !pacHostRef.current) return;
+     (async () => {
+       try {
+         const { PlacesLibrary } = await window.google.maps.importLibrary("places");
+         if (cancelled || !pacHostRef.current) return;
 
-        const Ctor = window.google.maps.places.PlaceAutocompleteElement;
-        if (!Ctor) {
-          attachPlain();
-          return;
-        }
+         const Ctor = PlacesLibrary.PlaceAutocompleteElement;
+         if (!Ctor) {
+           attachPlain();
+           return;
+         }
 
         const pac = new Ctor({
           includedRegionCodes: ["kh"],

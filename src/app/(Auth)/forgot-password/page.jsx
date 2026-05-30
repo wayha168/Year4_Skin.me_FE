@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { API_BASE } from "../../lib/api/config";
+import Loading from "../../../Components/Loading/Loading";
+import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -46,68 +47,59 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const mainImage = "/assets/product_homepage.png";
-
   return (
-    <section className="min-h-screen bg-pink-100 flex items-center justify-center relative overflow-hidden">
-      <Image
-        className="absolute left-0 bottom-0 opacity-20 pointer-events-none"
-        src={mainImage}
-        alt=""
-        width={600}
-        height={600}
-        priority
-        style={{ width: "auto", height: "auto" }}
-      />
+    <section className="min-h-screen bg-[#DEDEDE] flex items-center justify-center relative overflow-hidden">
+      {message && (
+        <div className={`absolute top-20 max-w-md w-full mx-4 p-3 rounded-xl shadow-lg z-50 text-center font-semibold ${
+          isError ? "bg-red-600 text-white" : "bg-green-600 text-white"
+        }`}>
+          {message}
+        </div>
+      )}
 
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg z-40 mx-4">
-        <h1 className="text-3xl font-bold text-pink-400 text-center mb-2 uppercase">Forgot Password</h1>
+        <h1 className="text-3xl font-bold text-pink-400 text-center mb-4 uppercase">Forgot Password</h1>
         <p className="text-gray-600 text-sm text-center mb-4">
           Enter your email and we&apos;ll send you a link to reset your password.
         </p>
 
-        {message && (
-          <p
-            className={`p-3 rounded-md text-center mb-4 font-semibold ${
-              isError ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"
-            }`}
-          >
-            {message}
-          </p>
-        )}
-
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Email</label>
+            <label className="text-sm font-medium text-gray-800 block mb-1">Email</label>
             <input
               type="email"
               name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="example@gmail.com"
               required
               disabled={isLoading}
-              className="w-full p-2 border border-gray-300 rounded-lg outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition"
+              className="w-full p-2 border border-gray-400 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition placeholder:text-gray-400 placeholder:opacity-100"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full p-3 mt-2 font-bold rounded-lg text-white transition ${
-              isLoading ? "bg-pink-300 cursor-not-allowed" : "bg-pink-400 hover:bg-pink-500 active:scale-[0.98]"
-            }`}
+            className={`w-full p-2 mt-2 font-bold text-xl rounded-lg text-white transition ${isLoading 
+                ? "bg-pink-300 cursor-not-allowed" 
+                : "bg-[#F071B4] hover:bg-[#E06AA5] active:scale-[0.98]"
+              }`}
           >
             {isLoading ? "Sending..." : "Send reset link"}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-gray-700">
-          <Link href="/login" className="text-pink-400 font-bold underline hover:text-pink-500">
+        <p className="mt-4 text-center text-gray-500 text-sm">
+          <Link href="/login" className="text-[#3C83C1] underline">
             Back to Login
           </Link>
         </p>
       </div>
+
+      {isLoading && <Loading />}
+
+      <MessageWidget />
     </section>
   );
 }

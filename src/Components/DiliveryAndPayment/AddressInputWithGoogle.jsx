@@ -67,30 +67,16 @@ export default function AddressInputWithGoogle({
 
   useEffect(() => {
     if (!apiKey) return;
-
-    if (window.google?.maps?.importLibrary) {
+    if (window.google?.maps?.places) {
       setScriptLoaded(true);
       return;
     }
-
-    const cbName = `__skinmeGmaps_${Date.now()}`;
-    window[cbName] = () => {
-      setScriptLoaded(true);
-      try {
-        delete window[cbName];
-      } catch (_) {
-        window[cbName] = undefined;
-      }
-    };
-
-    const existing = document.querySelector(
-      'script[src^="https://maps.googleapis.com/maps/api/js"]'
-    );
-    if (existing) {
-      if (window.google?.maps) setScriptLoaded(true);
+    // Prevent duplicate script injection
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existingScript) {
+      existingScript.onload = () => setScriptLoaded(true);
       return;
     }
-
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
       apiKey

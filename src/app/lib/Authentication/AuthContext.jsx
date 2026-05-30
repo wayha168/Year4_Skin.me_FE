@@ -110,36 +110,70 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const setLoginError = (message) => setError(message ?? "");
-
-  // POST /api/v1/auth/google — backend must exchange `code` with Google using the same redirectUri the browser used (often "postmessage").
+  // Google login: fetch backend auth API directly (same as other API calls via API_BASE)
   const googleLogin = async (code, redirectUri) => {
-    const uri = (redirectUri ?? getGoogleOAuthRedirectUri()).trim() || "postmessage";
     try {
       setError("");
-      const { data: body } = await axiosAuth.post("/auth/google", { code, redirectUri: uri });
-      const userData = body?.data ?? body;
-      const token = userData?.jwtToken;
 
-      if (token) {
+      const payload = { code, ...(redirectUri ? { redirectUri } : {}) };
 
-        Cookies.set("token", token, {
+      const res = await fetch(`${API_BASE}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      });
+
+      // Read body safely (some backends may not return JSON on errors)
+      const rawText = await res.text().catch(() => "");
+      let data = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          data = {};
+        }
+      }
+
+      // Common places a JWT may be returned
+      const jwtToken =
+        data?.data?.jwtToken ??
+        data?.jwtToken ??
+        data?.data?.token ??
+        data?.token ??
+        data?.data?.accessToken ??
+        data?.accessToken;
+
+      const userData = data?.data ?? data;
+
+      if (res.ok && jwtToken) {
+        Cookies.set("token", jwtToken, {
           expires: 7,
           path: "/",
           sameSite: "Lax",
           secure: typeof window !== "undefined" && window.location?.protocol === "https:",
         });
         localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("token", token);
-        setUser({ ...userData, token });
+        localStorage.setItem("token", jwtToken);
+        setUser({ ...userData, token: jwtToken });
         return userData;
       }
-      setError(body?.message || "Google sign-in failed");
+
+      // Show real backend error (helps debug 401)
+      const statusMsg = res.status ? `(${res.status}) ` : "";
+      const backendMsg =
+        data?.message ||
+        data?.error ||
+        data?.data?.message ||
+        data?.data?.error ||
+        rawText ||
+        "Google sign-in failed";
+
+      setError(`${statusMsg}${backendMsg}`);
       return null;
     } catch (err) {
       console.error("Google login error:", err);
-      const msg = err?.response?.data?.message || err?.message || "Google sign-in failed";
-      setError(typeof msg === "string" ? msg : "Google sign-in failed");
+      setError("Network error during Google sign-in");
       return null;
     }
   };
@@ -185,7 +219,12 @@ export const AuthProvider = ({ children }) => {
   const signup = async (data) => {
     try {
       setError("");
-      const res = await fetch(`${API_BASE}/auth/signup`, {
+
+      // Important: use relative API routes (Next.js rewrites) to avoid client-side CORS.
+      // Backend calls must NOT go directly to https://backend.skinme.store from the browser.
+      const signupUrl = `${API_BASE}/auth/signup`;
+
+      const res = await fetch(signupUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -197,12 +236,14 @@ export const AuthProvider = ({ children }) => {
         }),
         credentials: "include",
       });
+
       const resData = await res.json().catch(() => ({}));
 
       if (res.ok || res.status === 200 || res.status === 201) {
         const userData = await login({ email: data.email, password: data.password });
         return userData;
       }
+
       setError(resData?.message || "Signup failed");
       return null;
     } catch (err) {
@@ -247,7 +288,18 @@ export const AuthProvider = ({ children }) => {
   // which would otherwise get 401 and the axios interceptor would clear the session (F5 logout).
   return (
     <AuthContext.Provider
-      value={{ user, loading, error, login, googleLogin, signup, logout, clearSession, isAdmin, setLoginError }}
+      value={{
+        user,
+        loading,
+        error,
+        setLoginError: setError,
+        login,
+        googleLogin,
+        signup,
+        logout,
+        clearSession,
+        isAdmin,
+      }}
     >
       {loading ? (
         <div className="flex items-center justify-center min-h-screen bg-white" aria-label="Loading">

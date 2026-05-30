@@ -3,12 +3,14 @@
 
 import React, { useState, useRef, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "react-toastify";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 import DiliveryAndPayment from "../../../Components/DiliveryAndPayment/DiliveryAndPayment";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
+import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
 const DefaultProductImage = "/assets/third_image.png";
 
 /** Read-only quantity display on checkout (quantity is edited on my-bag page). */
@@ -32,6 +34,7 @@ function CheckOutContent() {
   const [singleQty, setSingleQty] = useState(Math.max(1, parseInt(quantityParam, 10) || 1));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [discountedPrices, setDiscountedPrices] = useState({});
 
   // Single product: fetch one product by ID
   useEffect(() => {
@@ -83,6 +86,57 @@ function CheckOutContent() {
   useEffect(() => {
     if (productId) setSingleQty(Math.max(1, parseInt(quantityParam, 10) || 1));
   }, [quantityParam, productId]);
+
+  // Fetch discounted prices for checkout items
+  useEffect(() => {
+    const ids = [];
+    if (product?.id) ids.push(product.id);
+    cartItems.forEach((item) => {
+      const pid = item?.product?.id ?? item?.productId;
+      if (pid) ids.push(pid);
+    });
+    const uniqueIds = [...new Set(ids.filter(Boolean))];
+    if (!uniqueIds.length) {
+      setDiscountedPrices({});
+      return;
+    }
+
+    const fetchDiscounts = async () => {
+      const promises = uniqueIds.map(async (pid) => {
+        try {
+          const res = await axiosAuth.get(`/promotions/product/${pid}/discounted-price`);
+          const data = res.data?.data;
+          let final = null;
+          if (typeof data === "number") final = data;
+          else if (data && typeof data === "object") {
+            final = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? data.value ?? null;
+          }
+          return [pid, final != null ? Number(final) : null];
+        } catch {
+          return [pid, null];
+        }
+      });
+      const results = await Promise.all(promises);
+      const map = {};
+      results.forEach(([id, val]) => {
+        if (val != null) map[id] = val;
+      });
+      setDiscountedPrices(map);
+    };
+    fetchDiscounts();
+  }, [product, cartItems]);
+
+  // Show success toast when redirected from Stripe
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      toast.success("Payment Successfully", {
+        duration: 4000,
+        position: "top-center",
+      });
+      // Clean the URL
+      router.replace("/check_out", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   let totalPrice = "0.00";
   let itemCount = 0;
@@ -153,8 +207,15 @@ function CheckOutContent() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-[#f5f5f7] pt-[6.5rem] pb-20 px-4 sm:px-6">
+      
+      <div className="min-h-screen bg-[#F7F7F7] pt-[6.5rem] pb-20 px-4 sm:px-6">
+        <div className="w-full  -mt-[6.5rem]">
+          <h1 className="mt-[12px] w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#F7F7F7] text-[#EB61A2] pb-[20px] max-[750px]:pr-4 max-[750px]:text-[1.8rem]">
+            Checkout
+          </h1>
+        </div>
         <div className="max-w-6xl mx-auto">
+          
           <header className="mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a] tracking-tight">Checkout</h1>
             <p className="text-[#6b7280] text-sm mt-1">Review your order and complete delivery & payment</p>
@@ -182,7 +243,13 @@ function CheckOutContent() {
                         <div>
                           <h3 className="font-medium text-[#1a1a1a] truncate">{product.name}</h3>
                           <p className="text-[#9ca3af] text-xs sm:text-sm mt-0.5">{product.brand?.name || "—"}</p>
-                          <p className="text-[#eb61a2] font-semibold text-sm sm:text-base mt-1">{formatPrice(product.price)}</p>
+                           <ProductPrice
+                             price={product.price}
+                             discountedPrice={discountedPrices[product.id]}
+                             className="mt-1 text-[#eb61a2] font-semibold text-sm sm:text-base"
+                             priceClassName="font-semibold text-sm sm:text-base text-[#eb61a2]"
+                           />
+
                         </div>
                         <div className="flex items-center justify-between gap-3 mt-2">
                           <QuantityReadOnly value={singleQty} />
@@ -213,7 +280,13 @@ function CheckOutContent() {
                             <div>
                               <h3 className="font-medium text-[#1a1a1a] truncate">{p?.name}</h3>
                               <p className="text-[#9ca3af] text-xs sm:text-sm mt-0.5">{p?.brand?.name || "—"}</p>
-                              <p className="text-[#eb61a2] font-semibold text-sm sm:text-base mt-1">{formatPrice(price)}</p>
+                               <ProductPrice
+                                 price={price}
+                                 discountedPrice={discountedPrices[item?.product?.id ?? item?.productId]}
+                                 className="mt-1 text-[#eb61a2] font-semibold text-sm sm:text-base"
+                                 priceClassName="font-semibold text-sm sm:text-base text-[#eb61a2]"
+                               />
+
                             </div>
                             <div className="flex items-center justify-between gap-3 mt-2">
                               <QuantityReadOnly value={qty} />
@@ -232,7 +305,7 @@ function CheckOutContent() {
                   <button
                     type="button"
                     className="w-full py-3 rounded-xl border border-[#e5e7eb] bg-white text-[#374151] font-medium hover:bg-[#f9fafb] transition-colors"
-                    onClick={() => router.back()}
+                    onClick={() => router.push("/products")}
                   >
                     ← Continue shopping
                   </button>

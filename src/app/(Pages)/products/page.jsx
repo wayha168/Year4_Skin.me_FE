@@ -1,8 +1,6 @@
-// src/app/products/page.tsx   ← must be this exact path
-
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -10,14 +8,38 @@ import axiosAuth from "../../../app/lib/api/axiosConfig";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
 
-import { FaCartPlus, FaHeart, FaChevronRight, FaChevronLeft } from "react-icons/fa";
-import useAuthContext from "../../../app/lib/Authentication/AuthContext";
+import { FaCartPlus, FaHeart } from "react-icons/fa";
 import Loading from "../../../Components/Loading/Loading";
 import useUserActions from "../../../Components/Hooks/userUserActions";
+import useAuthContext from "../../../app/lib/Authentication/AuthContext";
 import { getProductImageUrl } from "../../../app/lib/productImage";
 import { formatPrice } from "../../../app/lib/formatPrice";
+import ProductPrice from "../../../Components/ProductPrice/ProductPrice";
 
 const ThirdImage = "/assets/third_image.png";
+
+const getBrand = (product) => {
+  if (typeof product?.brand === "string") return product.brand;
+  return (
+    product?.brand?.name ??
+    product?.brandName ??
+    product?.brand_name ??
+    product?.brand?.brandName ??
+    product?.brand?.brand_name ??
+    ""
+  );
+};
+
+const getCategoryName = (product) => {
+  if (typeof product?.category === "string") return product.category;
+  return product?.category?.name ?? product?.categoryName ?? "Uncategorized";
+};
+
+const getResponseItems = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.content)) return data.content;
+  return [];
+};
 
 const Products = () => {
   const router = useRouter();
@@ -25,39 +47,56 @@ const Products = () => {
   const searchFromUrl = searchParams.get("search") || "";
 
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [searchTerm, setSearchTerm] = useState(searchFromUrl);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("all");
+  const [searchTerm, setSearchTerm] = useState(searchFromUrl);
+  const [sidebarCompact, setSidebarCompact] = useState(false);
+  const [discountedPrices, setDiscountedPrices] = useState({});
+  const [discountPercentages, setDiscountPercentages] = useState({});
+  const [promoModal, setPromoModal] = useState(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
+  const [popularProducts, setPopularProducts] = useState([]);
 
-  // Sync search term from URL (e.g. when navigating from Navbar search)
+  const urlFilters = useMemo(() => {
+    const readList = (key) =>
+      searchParams
+        .get(key)
+        ?.split(",")
+        .map((item) => item.trim())
+        .filter(Boolean) || [];
+
+    const brands = readList("brand");
+    const rating = readList("rating");
+    const ageRange = readList("ageRange");
+    const skinType = readList("skinType");
+    const popular = readList("popular");
+    return { brands, rating, ageRange, skinType, popular };
+  }, [searchParams]);
+
   useEffect(() => {
     setSearchTerm(searchFromUrl);
   }, [searchFromUrl]);
 
-  const { user } = useAuthContext();
-  const { addToCart, addToFavorite, loginFirst } = useUserActions();
-
-  /* ------------------- FETCH CATEGORIES ------------------- */
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await axiosAuth.get("/categories/all-categories");
-        setCategories(res?.data?.data || []);
-      } catch (err) {
-        console.error("Error fetching categories:", err);
-      }
+    const updateSidebarPosition = () => {
+      setSidebarCompact(window.scrollY > 72);
     };
-    fetchCategories();
+
+    updateSidebarPosition();
+    window.addEventListener("scroll", updateSidebarPosition, { passive: true });
+    return () => window.removeEventListener("scroll", updateSidebarPosition);
   }, []);
 
-  /* ------------------- FETCH PRODUCTS ------------------- */
+  const { user } = useAuthContext();
+  const { addToCart, addToFavorite, removeFavorite } = useUserActions();
+
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
         const res = await axiosAuth.get("/products/all");
-        setProducts(res?.data?.data || []);
+        setProducts(getResponseItems(res?.data?.data));
       } catch (err) {
         console.error("Error fetching products:", err);
         setProducts([]);
@@ -68,42 +107,273 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  /* ------------------- HANDLERS ------------------- */
+  useEffect(() => {
+    const fetchPopularProducts = async () => {
+      try {
+        const res = await axiosAuth.get("/products/popular");
+        setPopularProducts(getResponseItems(res?.data?.data));
+      } catch (err) {
+        console.error("Error fetching popular products:", err);
+        setPopularProducts([]);
+      }
+    };
+    fetchPopularProducts();
+  }, []);
+
+  // Fetch discounted prices + discount percentages for badges
+  useEffect(() => {
+    const fetchDiscounts = async () => {
+      if (!products.length) {
+        setDiscountedPrices({});
+        setDiscountPercentages({});
+        return;
+      }
+
+      const productIds = [...new Set([
+        ...products.map(p => p.id),
+        ...popularProducts.map(p => p.id)
+      ].filter(Boolean))];
+
+      const promises = productIds.map(async (pid) => {
+        let discounted = null;
+        let pct = null;
+        try {
+          const [priceRes, promoRes] = await Promise.all([
+            axiosAuth.get(`/promotions/product/${pid}/discounted-price`).catch(() => ({ data: null })),
+            axiosAuth.get(`/promotions/product/${pid}`).catch(() => ({ data: null }))
+          ]);
+
+          // discounted price
+          const data = priceRes?.data?.data;
+          if (typeof data === "number") discounted = data;
+          else if (data && typeof data === "object") {
+            discounted = data.discountedPrice ?? data.price ?? data.finalPrice ?? data.discounted_price ?? null;
+          }
+
+          // promotion percentage for badge
+          const promo = promoRes?.data?.data;
+          if (promo && typeof promo === "object") {
+            const raw = promo.discountPercentage ?? promo.discount_percentage ?? promo.discountPercent ?? promo.discount_percent ?? null;
+            if (typeof raw === "number" && raw > 0) pct = Math.round(raw);
+          }
+        } catch {
+          // ignore individual product errors
+        }
+        return [pid, { discountedPrice: discounted != null ? Number(discounted) : null, discountPercentage: pct }];
+      });
+
+      const results = await Promise.all(promises);
+      const priceMap = {};
+      const pctMap = {};
+      results.forEach(([id, info]) => {
+        if (info.discountedPrice != null) priceMap[id] = info.discountedPrice;
+        if (info.discountPercentage != null) pctMap[id] = info.discountPercentage;
+      });
+      setDiscountedPrices(priceMap);
+      setDiscountPercentages(pctMap);
+    };
+
+    fetchDiscounts();
+  }, [products, popularProducts]);
+
+  // Fetch user's favorites for dynamic heart color (exact same as homepage)
+  useEffect(() => {
+    const fetchUserFavorites = async () => {
+      if (!user?.id) {
+        setFavoriteIds(new Set());
+        return;
+      }
+      try {
+        const res = await axiosAuth.get(`/favorites/user/${user.id}`, { withCredentials: true });
+        const favs = res.data?.data || [];
+        const ids = new Set(
+          favs
+            .map((f) => f.product?.id ?? f.productId ?? f.id)
+            .filter(Boolean)
+            .map(Number)
+        );
+        setFavoriteIds(ids);
+      } catch {
+        setFavoriteIds(new Set());
+      }
+    };
+    fetchUserFavorites();
+  }, [user]);
+
   const handleAddToCart = async (productId) => {
     await addToCart(productId, 1);
   };
 
-  const handleFavorite = async (productId) => {
-    await addToFavorite(productId);
-  };
+  const handleFavorite = useCallback(async (productId) => {
+    if (!user) {
+      // You can add login redirect here if needed, but keeping minimal for now
+      await addToFavorite(productId);
+      return;
+    }
 
-  /* ------------------- FILTER & GROUP PRODUCTS ------------------- */
+    const pid = Number(productId);
+    const isFavorited = favoriteIds.has(pid);
+
+    try {
+      if (isFavorited) {
+        await removeFavorite(pid);
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          next.delete(pid);
+          return next;
+        });
+      } else {
+        await addToFavorite(pid);
+        setFavoriteIds((prev) => new Set(prev).add(pid));
+      }
+    } catch {
+      // errors handled inside the hook
+    }
+  }, [user, addToFavorite, removeFavorite, favoriteIds]);
+
+  // Open promotion modal (same as homepage)
+  const openPromotionModal = useCallback(async (product) => {
+    setPromoLoading(true);
+    try {
+      const res = await axiosAuth.get(`/promotions/product/${product.id}`);
+      const promotion = res?.data?.data || null;
+      setPromoModal({ product, promotion });
+    } catch {
+      setPromoModal({ product, promotion: null });
+    } finally {
+      setPromoLoading(false);
+    }
+  }, []);
+
   const getGroupedAndFilteredProducts = () => {
-    let filtered = products;
+    const { popular: popularFilter = [] } = urlFilters;
+    const isPopularFilterActive = popularFilter.length > 0;
 
-    // Filter by search term (name or brand)
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      const getBrand = (p) =>
-        typeof p?.brand === "string"
-          ? p.brand
-          : p?.brand?.name;
-      filtered = filtered.filter(
-        (p) =>
-          p?.name?.toLowerCase().includes(term) ||
-          getBrand(p)?.toLowerCase().includes(term)
-      );
+    const { brands, rating, ageRange, skinType } = urlFilters;
+    const hasOtherFilters = brands.length > 0 || rating.length > 0 || ageRange.length > 0 || skinType.length > 0;
+
+    const getPriceRating = (() => {
+      const prices = products.map((p) => Number(p?.price) || 0).sort((a, b) => a - b);
+      if (prices.length === 0) return () => 3;
+      const p40 = prices[Math.floor(prices.length * 0.4)];
+      const p80 = prices[Math.floor(prices.length * 0.8)];
+      return (price) => {
+        if (price >= p80) return 5;
+        if (price >= p40) return 4;
+        return 3;
+      };
+    })();
+
+    const ageRangeCycle = [
+      "10 - 20 years",
+      "20 - 30 years",
+      "20 - 30 years",
+      "20 - 30 years",
+      "20 - 30 years",
+      "30 - 40 years",
+      "30 - 40 years",
+      "30 - 40 years",
+      "40 - 50 years",
+      "40 - 50 years",
+    ];
+
+    const skinTypeCycle = ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"];
+
+    const matchesUrlFilters = (p) => {
+      if (!hasOtherFilters) return true;
+      const stableIdx = (p?.id || 0) % ageRangeCycle.length;
+      const productAgeRange = ageRangeCycle[stableIdx];
+      const productSkinType = skinTypeCycle[stableIdx];
+      const productRating = getPriceRating(Number(p?.price) || 0);
+      const brandName = (getBrand(p) || "").trim().toLowerCase();
+
+      const matchesBrand = brands.some((b) => b.trim().toLowerCase() === brandName);
+      const matchesRating = rating.includes(String(productRating));
+      const matchesAge = ageRange.includes(productAgeRange);
+      const matchesSkin = skinType.includes(productSkinType);
+
+      const activeMatches = [];
+      if (brands.length > 0) activeMatches.push(matchesBrand);
+      if (rating.length > 0) activeMatches.push(matchesRating);
+      if (ageRange.length > 0) activeMatches.push(matchesAge);
+      if (skinType.length > 0) activeMatches.push(matchesSkin);
+
+      return activeMatches.some((m) => m);
+    };
+
+    let filtered;
+
+    if (isPopularFilterActive) {
+      // Always include popular products (union mode when other filters are used)
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        filtered = popularProducts.filter(
+          (p) => p?.name?.toLowerCase().includes(term) || getBrand(p)?.toLowerCase().includes(term),
+        );
+      } else {
+        filtered = [...popularProducts];
+      }
+
+      const popularIds = new Set(filtered.map((p) => p?.id));
+
+      if (hasOtherFilters) {
+        let extras = products.filter(matchesUrlFilters);
+
+        if (searchTerm.trim()) {
+          const term = searchTerm.trim().toLowerCase();
+          extras = extras.filter(
+            (p) => p?.name?.toLowerCase().includes(term) || getBrand(p)?.toLowerCase().includes(term),
+          );
+        }
+
+        for (let p of extras) {
+          if (p?.id && !popularIds.has(p.id)) {
+            filtered.push(p);
+          }
+        }
+      }
+    } else {
+      // Normal behavior on full catalog
+      filtered = [...products];
+
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        filtered = filtered.filter(
+          (p) => p?.name?.toLowerCase().includes(term) || getBrand(p)?.toLowerCase().includes(term),
+        );
+      }
+
+      if (hasOtherFilters) {
+        filtered = filtered.filter(matchesUrlFilters);
+      }
     }
 
-    // Filter by selected category from dropdown
-    if (selectedCategory) {
-      const categoryId = Number(selectedCategory);
-      filtered = filtered.filter((p) => p.category?.id === categoryId);
+    if (sortBy === "price-high") {
+      filtered.sort((a, b) => (Number(b?.price) || 0) - (Number(a?.price) || 0));
+    } else if (sortBy === "price-low") {
+      filtered.sort((a, b) => (Number(a?.price) || 0) - (Number(b?.price) || 0));
+    } else if (sortBy === "new") {
+      filtered.sort((a, b) => (b?.id || 0) - (a?.id || 0));
+    } else if (sortBy === "recommended") {
+      filtered.sort((a, b) => (b?.name?.length || 0) - (a?.name?.length || 0));
     }
 
-    // Group filtered products by category
+    if (isPopularFilterActive) {
+      return { "Most Popular": filtered };
+    }
+
+    if (sortBy === "price-high" || sortBy === "price-low" || sortBy === "recommended" || sortBy === "new") {
+      const categoryLabels = {
+        "price-high": "Price High to Low",
+        "price-low": "Price Low to High",
+        recommended: "Recommended",
+        new: "What's New",
+      };
+      return { [categoryLabels[sortBy]]: filtered };
+    }
+
     return filtered.reduce((acc, product) => {
-      const categoryName = product.category?.name || "Uncategorized";
+      const categoryName = getCategoryName(product);
       if (!acc[categoryName]) acc[categoryName] = [];
       acc[categoryName].push(product);
       return acc;
@@ -111,118 +381,272 @@ const Products = () => {
   };
 
   const groupedProducts = getGroupedAndFilteredProducts();
-  
-  // Sort categories by the number of products in descending order
-  const sortedCategories = Object.entries(groupedProducts).sort(
-    (a, b) => b[1].length - a[1].length
-  );
+
+  const sortedCategories = Object.entries(groupedProducts).sort((a, b) => b[1].length - a[1].length);
 
   const hasProducts = sortedCategories.length > 0;
 
   return (
     <>
       <Navbar alwaysVisible={true} />
-      <main className="pt-[9rem] px-4 sm:px-6 pb-16 bg-white font-[Poppins,sans-serif]">
-        {/* ===== Filter Section ===== */}
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center mb-12">
-          <h1 className="text-4xl font-bold text-[#eb61a2]">Our Products</h1>
-          <div className="flex flex-wrap items-center gap-4 mt-6 lg:mt-0">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="py-3 px-5 rounded-xl border-2 border-gray-300 text-base cursor-pointer focus:outline-none focus:border-[#eb61a2] focus:ring-4 focus:ring-pink-100 transition"
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat?.id} value={cat?.id}>
-                  {cat?.name || "Unnamed Category"}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder="Search by name or brand..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="py-3 px-5 rounded-xl border-2 border-gray-300 text-base placeholder-gray-500 focus:outline-none focus:border-[#eb61a2] focus:ring-4 focus:ring-pink-100 transition"
-            />
-          </div>
+      <main className="min-h-screen pt-[8rem] px-0 pb-16 bg-[#F7F7F7] font-[Poppins,sans-serif] overflow-x-hidden">
+        {/* ===== Hero Section ===== */}
+        <div className="w-full -mt-[4rem]">
+          <h1 className="w-full h-[9rem] flex items-end justify-center max-[750px]:justify-end text-4xl font-bold  bg-[#F7F7F7] text-[#EB61A2] pb-[19px] max-[750px]:pr-4 max-[750px]:text-[1.8rem] border-b border-[#f0f0f0]">
+            Our Products
+          </h1>
         </div>
 
-        {/* ===== Products by Category ===== */}
-        {loading ? (
-          <Loading />
-        ) : !hasProducts ? (
-          <p className="text-center text-gray-500 text-lg mt-20">No products found.</p>
-        ) : (
-          <div className="max-w-7xl mx-auto space-y-16">
-            {sortedCategories.map(([categoryName, productsInCategory]) => (
-              <section key={categoryName}>
-                <h2 className="text-2xl font-bold text-gray-800 mb-8 border-b-[3px] border-[#000000] opacity-[.7] inline-block">
-                  {categoryName}
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 z-[1]">
-                  {productsInCategory.map((p) => {
-                    const brand = typeof p?.brand === "string" ? p.brand : p?.brand?.name ?? "";
-                    const desc = p?.description?.trim() || "No description";
-                    return (
-                      <div
-                        key={p?.id}
-                        className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
-                      >
-                        <div className="relative h-[200px] bg-gray-100">
-                          <Image
-                            src={getProductImageUrl(p, ThirdImage)}
-                            alt={p?.name || "Product"}
-                            fill
-                            className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
-                            sizes="(max-width: 600px) 50vw, 200px"
-                            unoptimized
-                            onClick={() => router.push(`/product_details?productId=${p.id}`)}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleFavorite(p.id)}
-                            className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 text-[#e53e3e] hover:bg-red-50 transition-colors"
-                          >
-                            <FaHeart className="text-sm" />
-                          </button>
-                        </div>
-                        <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
-                          {brand && (
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
-                              {brand}
-                            </span>
-                          )}
-                          <h3 className="text-sm font-semibold text-gray-800 truncate" title={p?.name}>
-                            {p?.name || "No Name"}
-                          </h3>
-                          <p className="text-xs text-gray-500 truncate" title={desc}>
-                            {desc}
-                          </p>
-                          <p className="text-sm font-bold text-[#2563eb] mt-1">
-                            {formatPrice(p?.price)}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => handleAddToCart(p.id)}
-                            className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
-                          >
-                            <FaCartPlus className="text-base" /> Add to Cart
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+        {/* ===== Main Content with Fixed Left Sidebar ===== */}
+        <div className="flex">
+          {/* Fixed Left Sidebar */}
+           <aside
+             className={`fixed left-0 w-[220px] lg:w-[260px] bg-white/95 backdrop-blur border-r border-gray-200 transition-[top,height] duration-200 ease-out ${
+               sidebarCompact ? "top-12 h-[calc(100vh-3rem)]" : "top-[8rem] h-[calc(100vh-8rem)]"
+             }`}
+           >
+            <div className="flex h-full flex-col px-7">
+              <div className="flex items-center justify-between py-6 border-b border-gray-200">
+                <h3 className="text-[1.15rem] font-bold text-gray-900">Refine</h3>
+                <button
+                  type="button"
+                  onClick={() => setSortBy("all")}
+                  className="text-xs text-gray-500 underline underline-offset-2 hover:text-[#d13e82]"
+                >
+                  Clear all
+                </button>
+              </div>
+              <div className="flex items-center justify-between py-5">
+                <p className="text-sm font-bold text-gray-900">Sort By</p>
+                <span className="text-lg leading-none text-gray-900">-</span>
+              </div>
+              <div className="flex-1 overflow-y-auto pb-4 [scrollbar-width:thin] [scrollbar-color:#d1d5db_transparent]">
+                {[
+                  { value: "all", label: "All Products" },
+                  { value: "recommended", label: "Recommended" },
+                  { value: "new", label: "What's New" },
+                  { value: "price-high", label: "Price High to Low" },
+                  { value: "price-low", label: "Price Low to High" },
+                ].map((option) => (
+                  <div
+                    key={option.value}
+                    onClick={() => setSortBy(option.value)}
+                    className={`mb-3 flex cursor-pointer items-center gap-2.5 text-sm transition-colors ${
+                      sortBy === option.value
+                        ? "text-[#d13e82] font-semibold"
+                        : "text-gray-700 hover:text-[#d13e82]"
+                    }`}
+                  >
+                    <div
+                      className={`h-4 w-4 flex-shrink-0 border ${
+                        sortBy === option.value ? "border-[#d13e82] bg-[#d13e82]" : "border-gray-300 bg-white"
+                      }`}
+                    />
+                    <span className="leading-snug">{option.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          {/* Products Area */}
+           <div className="flex-1 ml-[220px] lg:ml-[260px] px-4 lg:px-8">
+            {loading ? (
+              <Loading />
+            ) : !hasProducts ? (
+              <p className="text-center text-gray-500 text-lg mt-20">No products found.</p>
+            ) : (
+              <div className="mx-auto max-w-[1120px] space-y-16 pt-10">
+                {sortedCategories.map(([categoryName, productsInCategory]) => (
+                  <section key={categoryName}>
+                    <div className="mb-9 flex items-center gap-4 text-gray-900">
+                      <h2 className="text-lg font-bold">{categoryName}</h2>
+                      <span className="text-sm text-gray-400">|</span>
+                      <p className="text-sm">
+                        <span className="font-bold">{productsInCategory.length}</span> items
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {productsInCategory.map((p) => {
+                        const brand = getBrand(p);
+                        const desc = p?.description?.trim() || "No description";
+                        return (
+                           <div
+                             key={p.id}
+                             className="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] z-[100]"
+                           >
+                            <div className="relative h-[200px] bg-gray-100">
+                              <Image
+                                src={getProductImageUrl(p)}
+                                alt={p?.name || "Product"}
+                                fill
+                                className="object-cover cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+                                sizes="(max-width: 600px) 50vw, 200px"
+                                unoptimized
+                                onClick={() => router.push(`/product_details?productId=${p.id}`)}
+                              />
+
+                              {/* Discount % badge (only if active promotion with percentage) */}
+                              {discountPercentages[p?.id] != null && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openPromotionModal(p);
+                                  }}
+                                  className="absolute top-2 left-2 bg-[#eb61a2] text-white text-[12px] font-bold px-2.5 py-0.5 rounded-full shadow hover:bg-[#c8538a] active:scale-95 transition-all flex items-center gap-1 z-10"
+                                  title="View promotion details"
+                                >
+                                  {discountPercentages[p.id]}%
+                                </button>
+                              )}
+
+                               <button
+                                 type="button"
+                                 className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                                 onClick={() => handleFavorite(p.id)}
+                               >
+                                 <FaHeart 
+                                   className={`text-sm ${favoriteIds.has(p.id) ? 'text-[#F83E94]' : 'text-[#2F2F2F]'}`} 
+                                 />
+                               </button>
+                            </div>
+                            <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
+                              {brand && (
+                                <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+                                  {brand}
+                                </span>
+                              )}
+                              <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={p?.name}>
+                                {p?.name || "No Name"}
+                              </h3>
+                              <p className="text-xs text-gray-500 truncate opacity-80" title={desc}>
+                                {desc}
+                              </p>
+                               <ProductPrice
+                                 price={p?.price}
+                                 discountedPrice={discountedPrices[p?.id]}
+                                 className="mt-1"
+                                 centered
+                               />
+                              <button
+                                type="button"
+                                className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"
+                                onClick={() => handleAddToCart(p.id)}
+                              >
+                                <FaCartPlus className="text-base" /> Add to Cart
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
+
+      {/* PROMOTION MODAL - same as homepage */}
+      {promoModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPromoModal(null)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-[#eb61a2] text-white px-6 py-4 flex items-center justify-between">
+              <div className="font-bold text-lg">Special Promotion</div>
+              <button
+                onClick={() => setPromoModal(null)}
+                className="text-white/90 hover:text-white text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6">
+              {promoLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-8 h-8 border-4 border-[#eb61a2] border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : promoModal.promotion ? (
+                <>
+                  <div className="flex gap-4 items-start">
+                    <div className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100">
+                      <Image
+                        src={getProductImageUrl(promoModal.product)}
+                        alt={promoModal.product?.name}
+                        width={80}
+                        height={80}
+                        className="object-cover w-full h-full"
+                        unoptimized
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-xl text-gray-900 leading-tight">
+                        {promoModal.product?.name}
+                      </div>
+                      <div className="text-[#eb61a2] font-extrabold text-4xl mt-1">
+                        {typeof promoModal.promotion?.discountPercentage === 'number'
+                          ? promoModal.promotion.discountPercentage
+                          : '?'}% OFF
+                      </div>
+                    </div>
+                  </div>
+
+                  {promoModal.promotion.description && (
+                    <p className="mt-4 text-sm text-gray-600 leading-relaxed">
+                      {promoModal.promotion.description}
+                    </p>
+                  )}
+
+                  <div className="mt-4 text-xs text-gray-500">
+                    {promoModal.promotion.startDate || promoModal.promotion.start_date ? (
+                      <>Valid from <span className="font-medium text-gray-700">{new Date(promoModal.promotion.startDate || promoModal.promotion.start_date).toLocaleDateString()}</span></>
+                    ) : null}
+                    {(promoModal.promotion.endDate || promoModal.promotion.end_date) && (
+                      <> until <span className="font-medium text-gray-700">{new Date(promoModal.promotion.endDate || promoModal.promotion.end_date).toLocaleDateString()}</span></>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-lg font-semibold text-[#eb61a2]">Limited-time offer</p>
+                  <p className="text-sm text-gray-500 mt-1">Special discount is currently active on this product.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t p-4 flex gap-3">
+              <button
+                onClick={() => setPromoModal(null)}
+                className="flex-1 py-3 rounded-2xl border text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  const pid = promoModal.product?.id;
+                  setPromoModal(null);
+                  router.push(`/product_details?productId=${pid}`);
+                }}
+                className="flex-1 py-3 rounded-2xl bg-[#eb61a2] text-white font-semibold hover:bg-[#c8538a] active:scale-[0.985] transition"
+              >
+                View Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );
 };
 
-export default Products;  
+export default Products;

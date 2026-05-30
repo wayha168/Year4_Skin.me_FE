@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FaCartPlus, FaHeart } from "react-icons/fa";
 import { getProductImageUrl } from "../../app/lib/productImage";
-import { formatPrice } from "../../app/lib/formatPrice";
+import ProductPrice from "../ProductPrice/ProductPrice";
 
 const ThirdImage = "/assets/third_image.png";
 
@@ -14,7 +14,7 @@ function getBrand(product) {
   return product?.brand?.name ?? "";
 }
 
-const ProductCard = ({ product, onAddToCart, onFavorite }) => {
+const ProductCard = ({ product, onAddToCart, onFavorite, discountedPrice }) => {
   const router = useRouter();
   const brand = getBrand(product);
   const description = product?.description?.trim() || "No description";
@@ -40,21 +40,23 @@ const ProductCard = ({ product, onAddToCart, onFavorite }) => {
         </button>
       </div>
 
-      <div className="flex flex-col flex-1 p-4 gap-1 min-w-0">
+      <div className="flex flex-col flex-1 p-4 gap-1 min-w-0 text-center">
         {brand && (
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
+          <span className="opacity-70 text-xs font-medium text-gray-500 uppercase tracking-wide truncate">
             {brand}
           </span>
         )}
-        <h3 className="text-sm font-semibold text-gray-800 truncate" title={product?.name}>
+        <h3 className="text-[1.15rem] font-bold text-gray-800 truncate" title={product?.name}>
           {product?.name || "No Name"}
         </h3>
-        <p className="text-xs text-gray-500 truncate" title={description}>
+        <p className="text-xs text-gray-500 truncate opacity-80" title={description}>
           {description}
         </p>
-        <p className="text-sm font-bold text-[#2563eb] mt-1">
-          {formatPrice(product?.price)}
-        </p>
+        <ProductPrice 
+          price={product?.price} 
+          discountedPrice={discountedPrice} 
+          centered
+        />
         <button
           type="button"
           className="mt-3 w-full bg-[#d13e82] text-white text-sm font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#c32c70] transition-colors"

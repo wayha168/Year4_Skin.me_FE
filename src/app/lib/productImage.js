@@ -10,7 +10,7 @@
  * @param {string} [fallback] - Placeholder image path when product has no image
  * @returns {string} Image URL or fallback
  */
-export function getProductImageUrl(product, fallback = "/assets/third_image.png") {
+export function getProductImageUrl(product, fallback = "\assets\Banner\jennie-vasline.jpg") {
   const downloadUrl = product?.images?.[0]?.downloadUrl;
   if (!downloadUrl) return fallback;
   if (downloadUrl.startsWith("http://") || downloadUrl.startsWith("https://")) {

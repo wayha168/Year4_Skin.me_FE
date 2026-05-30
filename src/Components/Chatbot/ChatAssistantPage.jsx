@@ -1,30 +1,18 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
-import {
-  FaArrowUp,
-  FaImage,
-  FaPaperclip,
-  FaPlus,
-  FaSpinner,
-  FaTrashAlt,
-} from "react-icons/fa";
+import axiosAuth from "../../app/lib/api/axiosConfig";
+import useAuthContext from "../../app/lib/Authentication/AuthContext";
+import { FaArrowUp, FaEdit, FaImage, FaPaperclip, FaPlus, FaSpinner, FaTrashAlt } from "react-icons/fa";
 import { FaWandSparkles } from "react-icons/fa6";
 import { CHATBOT_API_BASE } from "../../app/lib/api/config";
-
-const QUICK_PROMPTS = [
-  "Suggest a skincare routine for sensitive skin.",
-  "What ingredients help with acne and dark spots?",
-  "Please analyze my skin image and explain what you see.",
-  "Recommend products for dry skin and redness.",
-];
 
 const WELCOME_MESSAGE =
   "Hello! I’m Skin.me Assistant. I can help with skincare questions, product guidance, and skin image analysis.";
 
-const ERROR_MESSAGE =
-  "Sorry, I couldn't respond just now. Please try again in a moment and I’ll help you.";
+const ERROR_MESSAGE = "Sorry, I couldn't respond just now. Please try again in a moment and I’ll help you.";
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
@@ -64,7 +52,7 @@ function formatAssistantHtml(text) {
   const escaped = escapeHtml(text);
   const withLinks = escaped.replace(
     /(https?:\/\/[^\s<]+)/g,
-    '<a href="$1" target="_blank" rel="noreferrer" class="text-[#b5487f] underline break-all">$1</a>'
+    '<a href="$1" target="_blank" rel="noreferrer" class="text-[#b5487f] underline break-all">$1</a>',
   );
   return withLinks.replace(/\n/g, "<br />");
 }
@@ -146,32 +134,257 @@ function extractReply(payload) {
 }
 
 export default function ChatAssistantPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuthContext();
+
+  // Load chat history from backend (like ChatGPT)
+  const loadChatHistory = useCallback(async () => {
+    if (!user?.id) return [];
+
+    try {
+      const res = await axiosAuth.get(`/chat-activity?userId=${user.id}`);
+      const activities = res.data?.data || res.data || [];
+
+      // Group by sessionId (treating each session as one chat)
+      const grouped = {};
+      activities.forEach((act) => {
+        const sid = act.sessionId || act.chatId || act.conversationId || act.id;
+        if (!sid) return;
+
+        if (!grouped[sid]) {
+          grouped[sid] = {
+            id: sid,
+            title: act.title || "Untitled Chat",
+            messages: [],
+          };
+        }
+
+        // If the activity stores full messages array
+        if (Array.isArray(act.messages) && act.messages.length > 0) {
+          grouped[sid].messages = act.messages;
+          if (act.title) grouped[sid].title = act.title;
+        }
+        // If it stores individual messages
+        else if (act.prompt || act.message) {
+          grouped[sid].messages.push({
+            id: act.id || `msg-${Date.now()}`,
+            role: "user",
+            text: act.prompt || act.message,
+            time: act.createdAt
+              ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "",
+          });
+          if (act.response) {
+            grouped[sid].messages.push({
+              id: `assistant-${act.id || Date.now()}`,
+              role: "assistant",
+              text: act.response,
+              time: act.createdAt
+                ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : "",
+            });
+          }
+        }
+      });
+
+      return Object.values(grouped).sort((a, b) => b.id.localeCompare(a.id)); // newest first
+    } catch (err) {
+      if (err.response?.status === 404) {
+        // Expected for now — the GET endpoint for chat history doesn't exist yet
+        // console.log("No chat history found yet (404 from backend)");
+      } else {
+        console.error("Failed to load chat history:", err);
+      }
+      return [];
+    }
+  }, [user?.id]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login?redirect=/chatbot");
+    }
+  }, [user, authLoading, router]);
+
   const composerInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const endRef = useRef(null);
 
-  const [messages, setMessages] = useState(() => [
-    {
-      id: "welcome",
-      role: "assistant",
-      text: WELCOME_MESSAGE,
-      html: formatAssistantHtml(WELCOME_MESSAGE),
-      images: [],
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    },
-  ]);
+  // Multi-chat history loaded from backend (ChatGPT style)
+  const [chats, setChats] = useState([]);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  const currentChat = chats.find((c) => c.id === currentChatId);
+  const messages = currentChat?.messages || [];
+
+  // Load chat history from backend on mount (ChatGPT behavior)
+  useEffect(() => {
+    const initChats = async () => {
+      if (!user?.id || historyLoaded) return;
+
+      const savedChats = await loadChatHistory();
+
+      if (savedChats.length > 0) {
+        setChats(savedChats);
+        setCurrentChatId(savedChats[0].id);
+      } else {
+        // No history → create default welcome chat
+        const welcomeChat = {
+          id: Date.now().toString(),
+          title: "New Chat",
+          messages: [
+            {
+              id: "welcome",
+              role: "assistant",
+              text: WELCOME_MESSAGE,
+              html: formatAssistantHtml(WELCOME_MESSAGE),
+              images: [],
+              time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ],
+        };
+        setChats([welcomeChat]);
+        setCurrentChatId(welcomeChat.id);
+      }
+
+      setHistoryLoaded(true);
+    };
+
+    if (user && !authLoading) {
+      initChats();
+    }
+  }, [user, authLoading, historyLoaded, loadChatHistory]);
+
+  // Create new chat (ChatGPT style - save previous first)
+  const createNewChat = async () => {
+    if (currentChat) {
+      await saveChatToBackend(currentChat);
+    }
+
+    const newChat = {
+      id: Date.now().toString(),
+      title: "New Chat",
+      messages: [
+        {
+          id: "welcome",
+          role: "assistant",
+          text: WELCOME_MESSAGE,
+          html: formatAssistantHtml(WELCOME_MESSAGE),
+          images: [],
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ],
+    };
+
+    setChats((prev) => [newChat, ...prev]);
+    setCurrentChatId(newChat.id);
+    setInput("");
+    setSelectedImage(null);
+  };
+
+  // Switch to existing chat
+  const switchChat = async (chatId) => {
+    if (currentChatId !== chatId && currentChat) {
+      await saveChatToBackend(currentChat);
+    }
+    setCurrentChatId(chatId);
+    setInput("");
+    setSelectedImage(null);
+  };
+
+  // Delete a chat
+  const deleteChat = (chatId) => {
+    if (chats.length === 1) return; // Don't delete the last chat
+
+    const newChats = chats.filter((c) => c.id !== chatId);
+    setChats(newChats);
+
+    if (currentChatId === chatId) {
+      setCurrentChatId(newChats[0].id);
+    }
+  };
+
+  // === Rename Chat (ChatGPT style) ===
+  const startRenaming = (chat) => {
+    setEditingChatId(chat.id);
+    setEditingTitle(chat.title);
+  };
+
+  const saveRename = async () => {
+    if (!editingChatId) return;
+
+    const newTitle = editingTitle.trim() || "Untitled Chat";
+
+    setChats((prev) => prev.map((chat) => (chat.id === editingChatId ? { ...chat, title: newTitle } : chat)));
+
+    // Save the whole conversation with the updated title
+    const chatToUpdate = chats.find((c) => c.id === editingChatId);
+    if (chatToUpdate) {
+      await saveChatToBackend({
+        ...chatToUpdate,
+        title: newTitle,
+      });
+    }
+
+    setEditingChatId(null);
+    setEditingTitle("");
+  };
+
+  const cancelRename = () => {
+    setEditingChatId(null);
+    setEditingTitle("");
+  };
+
+  // Save entire conversation to main backend (chat-activity)
+  const saveChatToBackend = async (chatToSave) => {
+    if (!user?.id || !chatToSave) return;
+
+    // Only save chats that have real user interaction
+    const hasUserMessage = chatToSave.messages.some((m) => m.role === "user");
+    if (!hasUserMessage) return;
+
+    try {
+      await axiosAuth.post("/chat-activity", {
+        userId: user.id,
+        sessionId: chatToSave.id,
+        title: chatToSave.title || "Untitled Chat",
+        messages: chatToSave.messages,
+        savedAt: new Date().toISOString(),
+      });
+      // console.log("✅ Chat saved to backend:", chatToSave.id);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        // Expected for now — backend POST /chat-activity route not implemented yet
+        // console.log("⚠️ Chat save skipped (404 - /chat-activity endpoint not ready)");
+      } else {
+        console.error("Failed to save chat to backend:", err.response?.data || err.message);
+      }
+    }
+  };
+
   const selectedImagePreview = useMemo(
     () => (selectedImage ? URL.createObjectURL(selectedImage) : null),
-    [selectedImage]
+    [selectedImage],
   );
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, selectedImagePreview]);
+
+  // Save current chat when leaving the page (whole conversation at once)
+  useEffect(() => {
+    return () => {
+      if (currentChat && user?.id) {
+        saveChatToBackend(currentChat);
+      }
+    };
+  }, [currentChat, user]);
 
   const clearSelectedImage = () => {
     setSelectedImage(null);
@@ -204,7 +417,7 @@ export default function ChatAssistantPage() {
       {
         headers: { "Content-Type": "application/json" },
         timeout: 30000,
-      }
+      },
     );
 
     return extractReply(response.data);
@@ -238,7 +451,19 @@ export default function ChatAssistantPage() {
       localImage: selectedImagePreview,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Update current chat messages
+    setChats((prevChats) =>
+      prevChats.map((chat) =>
+        chat.id === currentChatId
+          ? {
+              ...chat,
+              title: chat.title === "New Chat" ? trimmed.slice(0, 30) : chat.title,
+              messages: [...chat.messages, userMessage],
+            }
+          : chat,
+      ),
+    );
+
     setInput("");
     setLoading(true);
 
@@ -251,30 +476,49 @@ export default function ChatAssistantPage() {
         : await sendText(trimmed);
 
       const responseText = result.text || ERROR_MESSAGE;
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          text: responseText,
-          html: formatAssistantHtml(responseText),
-          images: result.images || [],
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+
+      const assistantMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        text: responseText,
+        html: formatAssistantHtml(responseText),
+        images: result.images || [],
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === currentChatId ? { ...chat, messages: [...chat.messages, assistantMessage] } : chat,
+        ),
+      );
     } catch (error) {
       console.error("Chat assistant error:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-error-${Date.now()}`,
-          role: "assistant",
-          text: ERROR_MESSAGE,
-          html: formatAssistantHtml(ERROR_MESSAGE),
-          images: [],
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+
+      const rawError = error?.response?.data?.message || error?.message || "";
+      let displayError = ERROR_MESSAGE;
+
+      if (
+        rawError.toLowerCase().includes("does not support image") ||
+        rawError.toLowerCase().includes("image input")
+      ) {
+        displayError =
+          "Sorry, the current AI model doesn't support image analysis right now. Please try asking a text question instead.";
+      }
+
+      const errorMessage = {
+        id: `assistant-error-${Date.now()}`,
+        role: "assistant",
+        text: displayError,
+        html: formatAssistantHtml(displayError),
+        images: [],
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === currentChatId ? { ...chat, messages: [...chat.messages, errorMessage] } : chat,
+        ),
+      );
     } finally {
       setLoading(false);
       composerInputRef.current?.focus();
@@ -322,18 +566,78 @@ export default function ChatAssistantPage() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-[28px] border border-[#f0d7e3] bg-white/85 p-5 shadow-[0_16px_32px_rgba(83,33,58,0.06)] backdrop-blur">
-          <p className="text-sm font-semibold text-[#1f2937]">Helpful starters</p>
-          <div className="mt-4 space-y-3">
-            {QUICK_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => handleSend(prompt)}
-                className="w-full rounded-2xl border border-[#f0d7e3] bg-[#fffafc] px-4 py-3 text-left text-sm leading-6 text-[#4b5563] transition hover:border-[#eb61a2] hover:bg-[#fff2f8]"
+        {/* Chat History */}
+        <div className="mt-5 rounded-[28px] border border-[#f0d7e3] bg-white/85 p-5 shadow-[0_16px_32px_rgba(83,33,58,0.06)] backdrop-blur flex-1 overflow-y-auto">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-[#1f2937]">Chat History</p>
+            <button
+              onClick={createNewChat}
+              className="text-xs px-3 py-1 rounded-full bg-[#eb61a2] text-white hover:bg-[#d94d8c] transition"
+            >
+              + New
+            </button>
+          </div>
+
+          <div className="space-y-1">
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                onClick={() => {
+                  if (editingChatId !== chat.id) switchChat(chat.id);
+                }}
+                onDoubleClick={() => startRenaming(chat)}
+                className={`group flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition ${
+                  currentChatId === chat.id ? "bg-[#fff2f8] border border-[#eb61a2]" : "hover:bg-[#fff8fb]"
+                }`}
               >
-                {prompt}
-              </button>
+                <div className="flex-1 min-w-0">
+                  {editingChatId === chat.id ? (
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={saveRename}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveRename();
+                        if (e.key === "Escape") cancelRename();
+                      }}
+                      autoFocus
+                      className="w-full text-sm font-medium bg-white border border-[#eb61a2] rounded px-2 py-1 focus:outline-none"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-[#1f2937] truncate">{chat.title}</p>
+                  )}
+                  <p className="text-[11px] text-[#6b7280]">{chat.messages.length} messages</p>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  {/* Pencil icon for rename on hover */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startRenaming(chat);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-[#eb61a2] p-1 transition"
+                    title="Rename chat"
+                  >
+                    <FaEdit className="text-xs" />
+                  </button>
+
+                  {chats.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteChat(chat.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 p-1"
+                      title="Delete chat"
+                    >
+                      <FaTrashAlt className="text-xs" />
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -499,9 +803,7 @@ export default function ChatAssistantPage() {
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   placeholder={
-                    selectedImage
-                      ? "Add a note for this skin image..."
-                      : "Message Skin.me Assistant..."
+                    selectedImage ? "Add a note for this skin image..." : "Message Skin.me Assistant..."
                   }
                   className="max-h-40 min-h-[48px] flex-1 resize-none bg-transparent px-2 py-3 text-sm text-[#1f2937] outline-none placeholder:text-[#94a3b8]"
                   onKeyDown={(event) => {

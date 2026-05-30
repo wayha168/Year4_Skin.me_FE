@@ -1170,37 +1170,32 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
           <div>
             <label className={labelClass}>Pay by <span className="text-[#eb61a2]">*</span></label>
             <div className="flex flex-wrap gap-3 mt-2">
-              {paymentOptions.map((opt, idx) => (
-                <button
-                  key={`${opt.id}-${idx}`}
-                  type="button"
-                  onClick={() => setPaymentType(opt.id)}
-                  className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 bg-white transition-all min-w-[100px] ${effectivePaymentId === opt.id
-                      ? "border-[#eb61a2] ring-2 ring-[#eb61a2]/30 shadow-md"
-                      : "border-[#e5e7eb] hover:border-[#d1d5db] hover:bg-[#fafafa]"
-                    }`}
-                  aria-pressed={effectivePaymentId === opt.id}
-                  aria-label={`Pay with ${opt.label}`}
-                >
-                  {opt.image ? (
-                    <img
-                      src={opt.image}
-                      alt={opt.label}
-                      className="h-8 w-auto object-contain max-h-10"
-                    />
-                  ) : (
-                    <div className="flex h-8 min-w-8 items-center justify-center rounded-lg bg-[#fdf2f8] px-2 text-xs font-bold text-[#be185d]">
-                      {opt.label.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                  <span className="text-xs font-medium text-[#374151] text-center leading-tight">{opt.label}</span>
-                  {opt.isKhqr && !String(opt.label).toLowerCase().includes("khqr") ? (
-                    <span className="rounded-full bg-[#fff1f6] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#be185d]">
-                      KHQR
-                    </span>
-                  ) : null}
-                </button>
-              ))}
+               {PAYMENT_OPTIONS.map((opt) => {
+                 const isSelected = paymentType === opt.id;
+                 return (
+                   <button
+                     key={opt.id}
+                     type="button"
+                     onClick={() => setPaymentType(opt.id)}
+                     className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all min-w-[100px] ${
+                       isSelected
+                         ? "border-black bg-black ring-2 ring-black/30 shadow-md"
+                         : "border-black bg-black"
+                     }`}
+                     aria-pressed={isSelected}
+                     aria-label={`Pay with ${opt.label}`}
+                   >
+                     <img
+                       src={opt.image}
+                       alt={opt.label}
+                       className="h-8 w-auto object-contain max-h-10"
+                     />
+                     <span className="text-xs font-medium text-white">
+                       {opt.label}
+                     </span>
+                   </button>
+                 ); 
+               })}
             </div>
             {!paymentType && (
               <p className="text-xs text-[#6b7280] mt-1.5">Select a payment method above</p>

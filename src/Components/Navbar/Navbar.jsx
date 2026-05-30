@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { FaStar, FaRegStar } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import LoginFirst from "../LoginFirst/LoginFirst";
@@ -17,35 +18,148 @@ const Loading = dynamic(() => import("../Loading/Loading"), {
 
 const Navbar = ({ alwaysVisible = false }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthContext();
+  const pathname = usePathname();
 
-  const [visible, setVisible] = useState(true);
+  const [translateY, setTranslateY] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isSmallMobile, setIsSmallMobile] = useState(false);
+  const [isTinyMobile, setIsTinyMobile] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchProducts, setSearchProducts] = useState([]);
   const [searchProductsLoading, setSearchProductsLoading] = useState(false);
+  const [navProducts, setNavProducts] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [hoveredFilter, setHoveredFilter] = useState(null);
 
   const navRef = useRef(null);
   const searchInputRef = useRef(null);
   const searchResultsRef = useRef(null);
+  const filterRefs = useRef({});
 
   // Initialize screen size
   useEffect(() => {
     setIsClient(true);
     setIsMobile(window.innerWidth <= 1030);
     setIsSmallMobile(window.innerWidth <= 510);
+    setIsTinyMobile(window.innerWidth <= 770);
   }, []);
 
-  // Resize handler
+  // Fetch brands for the product filter row.
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const res = await axiosAuth.get("/products/all");
+        const data = res?.data?.data;
+        const fetchedProducts = Array.isArray(data?.content)
+          ? data.content
+          : Array.isArray(data)
+            ? data
+            : [];
+        setNavProducts(fetchedProducts);
+        const brandSet = new Set();
+        fetchedProducts.forEach(p => {
+          const brandName = typeof p?.brand === "string"
+            ? p.brand
+            : p?.brand?.name ?? p?.brandName ?? p?.brand_name;
+          if (brandName) brandSet.add(brandName);
+        });
+        setBrands([...brandSet]);
+      } catch (err) {
+        console.error("Error fetching brands:", err);
+      }
+    };
+    fetchBrands();
+  }, []);
+
+  // Read URL params for filters
+  const urlFilters = useMemo(() => {
+    const params = {};
+    params.brand = searchParams.get("brand")?.split(",") || [];
+    params.rating = searchParams.get("rating")?.split(",") || [];
+    params.ageRange = searchParams.get("ageRange")?.split(",") || [];
+    params.skinType = searchParams.get("skinType")?.split(",") || [];
+    params.popular = searchParams.get("popular")?.split(",") || [];
+    return params;
+  }, [searchParams]);
+
+  // Handle filter selection with URL update
+  const handleFilterSelect = useCallback((filterType, value) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const current = params.get(filterType)?.split(",") || [];
+    const newValues = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    newValues.length ? params.set(filterType, newValues.join(",")) : params.delete(filterType);
+    const query = params.toString();
+    router.push(query ? `/products?${query}` : "/products");
+  }, [router, searchParams]);
+
+  // Compute selected filters for display
+  const selectedFilters = useMemo(() => {
+    const filters = [];
+    if (urlFilters.brand.length > 0) {
+      urlFilters.brand.forEach(b => {
+        filters.push({
+          label: `Brand: ${b}`,
+          remove: () => handleFilterSelect('brand', b)
+        });
+      });
+    }
+    if (urlFilters.rating.length > 0) {
+      urlFilters.rating.forEach(r => {
+        filters.push({
+          label: `Rating: ${r} Stars`,
+          remove: () => handleFilterSelect('rating', r)
+        });
+      });
+    }
+    if (urlFilters.ageRange.length > 0) {
+      urlFilters.ageRange.forEach(a => {
+        filters.push({
+          label: `Age Range: ${a}`,
+          remove: () => handleFilterSelect('ageRange', a)
+        });
+      });
+    }
+    if (urlFilters.skinType.length > 0) {
+      urlFilters.skinType.forEach(s => {
+        filters.push({
+          label: `Skin Type: ${s}`,
+          remove: () => handleFilterSelect('skinType', s)
+        });
+      });
+    }
+    if (urlFilters.popular.length > 0) {
+      filters.push({
+        label: "Most Popular",
+        remove: () => handleFilterSelect('popular', 'true')
+      });
+    }
+    return filters;
+  }, [urlFilters, handleFilterSelect]);
+
+  // Clear all filters
+  const clearAllFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('brand');
+    params.delete('rating');
+    params.delete('ageRange');
+    params.delete('skinType');
+    params.delete('popular');
+    const query = params.toString();
+    router.push(query ? `/products?${query}` : '/products');
+  }, [router, searchParams]);
+
   const handleResize = useCallback(() => {
     setIsMobile(window.innerWidth <= 1030);
     setIsSmallMobile(window.innerWidth <= 510);
-    if (window.innerWidth > 1030) setMenuOpen(false);
+    setIsTinyMobile(window.innerWidth <= 770);
   }, []);
 
   useEffect(() => {
@@ -62,15 +176,28 @@ const Navbar = ({ alwaysVisible = false }) => {
     };
   }, [handleResize]);
 
-  // Keep navbar always visible when scrolling
-  const handleScroll = useCallback(() => {
-    setVisible(true);
-  }, []);
-
+  // Scroll behavior: smooth hide/show based on scroll speed
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const delta = currentScrollY - lastScrollY;
+          // Adjust translateY based on scroll delta for both directions
+          setTranslateY(prev => Math.max(-80, Math.min(0, prev - delta)));
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+  }, [translateY]);
 
   // Close menu and search when clicking outside
   const handleClickOutside = useCallback((e) => {
@@ -166,79 +293,84 @@ const Navbar = ({ alwaysVisible = false }) => {
     [safeNavigate]
   );
 
-  return (
+  const megaProducts = useMemo(() => navProducts.slice(0, 2), [navProducts]);
+  const filterValues = useMemo(() => ({
+    Rating: ["5", "4", "3"],
+    "Age Range": ["10 - 20 years", "20 - 30 years", "30 - 40 years", "40 - 50 years"],
+    "Skin Type": ["Oily", "Dry", "Combination", "Sensitive", "Acne-prone"],
+  }), []);
+
+return (
     <>
+      {/* NAVBAR WRAPPER - contains both navbar and filter row */}
+      <div
+        className="fixed left-0 top-0 w-full z-[9999] transition-transform duration-50 ease-out"
+        style={{ transform: `translateY(${translateY}px)` }}
+      >
       {/* NORMAL NAVBAR */}
       <nav
-        className={`fixed left-0 w-full bg-[#FFD0ED] shadow-xl transition-all duration-300 z-[9999] h-14 ${visible ? "top-0" : "-top-32"
-          }`}
+        className="w-full bg-white shadow-xl h-20"
       >
         <div
           ref={navRef}
-          className="max-w-[1280px] mx-auto px-4 flex items-center justify-between h-full relative"
+          className="max-w-[1280px] mx-auto pl-[13px] pr-4 flex items-center justify-between h-full relative"
         >
-          {/* LEFT: Nav icons (Home, Products, About Us) */}
-          {!isSmallMobile && (
-            <div
-              className={`flex items-center gap-6 min-w-0 flex-1 justify-start ${menuOpen && isMobile
-                ? "flex-col absolute left-4 top-14 bg-[#eac1da] py-4 rounded-lg z-10"
-                : "hidden lg:flex"
-                }`}
-            >
-              <Link
-                href="/"
-                onClick={() => safeNavigate("/")}
-                className="text-black/80 hover:text-[#eb61a2] transition-colors p-1"
-                title="Home"
-              >
-                <i className="fa-solid fa-house text-xl"></i>
-              </Link>
-              <Link
-                href="/products"
-                onClick={() => safeNavigate("/products")}
-                className="text-black/80 hover:text-[#eb61a2] transition-colors p-1"
-                title="Products"
-              >
-                <i className="fa-solid fa-shop text-xl"></i>
-              </Link>
-              <Link
-                href="/about-us"
-                onClick={() => safeNavigate("/about-us")}
-                className="text-black/80 hover:text-[#eb61a2] transition-colors p-1"
-                title="About Us"
-              >
-                <i className="fa-solid fa-circle-info text-xl"></i>
-              </Link>
-            </div>
-          )}
-
-          {/* HAMBURGER (tablet only) */}
-          {!isSmallMobile && (
-            <div
-              className="block lg:hidden text-2xl cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 z-20"
-              onClick={toggleMenu}
-            >
-              <i className="fa-solid fa-bars text-gray-700"></i>
-            </div>
-          )}
-
-          {/* CENTER: Logo (hidden when search open) or Search form + results */}
+          {/* LEFT: Logo */}
           {!searchOpen && (
             <Link
               href="/"
               onClick={(e) => {
                 e.preventDefault();
-                safeNavigate("/");
+                if (window.location.pathname === '/') {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                  safeNavigate("/");
+                }
               }}
-              className={`flex flex-col items-center no-underline select-none absolute left-1/2 -translate-x-1/2 text-gray-600 hover:text-[#eb61a2] transition-colors ${isSmallMobile ? "mx-auto" : ""}`}
+              className="flex flex-col items-start no-underline select-none text-[#eb61a2] flex-shrink-0 max-[770px]:items-center max-[770px]:w-full"
             >
-              <span className="text-2xl font-bold tracking-tight leading-none uppercase">
+              <span className="text-[40px] font-bold tracking-tight leading-none uppercase" style={{ fontSize: '40px' }}>
                 SKIN.ME
               </span>
-              <span className="text-[10px] opacity-90 mt-0.5 tracking-wide ml-10">
+              <span className="text-[10px] opacity-90 mt-0.5 tracking-wide text-black">
                 @Home Of Your Care
               </span>
             </Link>
+          )}
+
+          {/* CENTER: Nav icons (Home, Products, About Us) */}
+          {!isSmallMobile && !searchOpen && !isTinyMobile && (
+            <div
+              className={`flex items-center gap-11 max-[1000px]:-ml-16 ${menuOpen && isMobile
+                ? "flex-col absolute left-4 top-16 bg-white py-4 rounded-lg z-10 px-6"
+                : "absolute left-1/2 -translate-x-1/2"
+                }`}
+            >
+              <Link
+                href="/"
+                onClick={() => safeNavigate("/")}
+                className="text-black/80 hover:text-[#eb61a2] transition-none p-0"
+                title="Home"
+              >
+                <Image src="/assets/NavbarIcons/Icons Home.svg" alt="Home" width={38} height={38} />
+              </Link>
+              <Link
+                href="/products"
+                onClick={() => safeNavigate("/products")}
+                className="text-black/80 hover:text-[#eb61a2] transition-none p-0"
+                title="Products"
+              >
+                <Image src="/assets/NavbarIcons/Icons Products.svg" alt="Products" width={38} height={38} />
+              </Link>
+              <Link
+                href="/about-us"
+                onClick={() => safeNavigate("/about-us")}
+                className="text-black/80 hover:text-[#eb61a2] transition-none p-0"
+                title="About Us"
+              >
+                <Image src="/assets/NavbarIcons/Icons About Us.svg" alt="About Us" width={38} height={38} />
+              </Link>
+            </div>
           )}
 
           {searchOpen && !isSmallMobile && (
@@ -248,9 +380,9 @@ const Navbar = ({ alwaysVisible = false }) => {
             >
               <form
                 onSubmit={handleSearchSubmit}
-                className="flex items-center gap-2 bg-white rounded-xl border-2 border-gray-200 shadow-lg pl-4 pr-2 py-2.5 min-h-[48px]"
+                className="flex items-center gap-2 bg-white rounded-xl border-2 border-gray-200 shadow-lg pl-[15px] pr-2 py-2.5 min-h-[48px]"
               >
-                <i className="fa-solid fa-magnifying-glass text-gray-500 text-lg"></i>
+                <i className="fa-solid fa-magnifying-glass text-gray-500 text-xl"></i>
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -334,47 +466,47 @@ const Navbar = ({ alwaysVisible = false }) => {
           )}
 
           {/* RIGHT: Search icon (when closed), Favorite, Bag, Profile */}
-          {!isSmallMobile && (
+          {!isSmallMobile && !isTinyMobile && (
             <div
               className={`flex items-center gap-3 min-w-0 flex-1 justify-end ${menuOpen && isMobile
-                ? "flex-col absolute right-4 bg-[#eac1da] top-14 py-4 rounded-lg z-10"
-                : "hidden lg:flex"
+                ? "flex-col absolute right-4 bg-white top-14 py-4 rounded-lg z-10"
+                : "hidden md:flex"
                 }`}
             >
               {!searchOpen && (
                 <button
                   type="button"
                   onClick={openSearch}
-                  className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                  className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                   title="Search products"
                 >
-                  <i className="fa-solid fa-magnifying-glass text-lg"></i>
+                  <Image src="/assets/NavbarIcons/Icons Search.svg" alt="Search" width={32} height={32} />
                 </button>
               )}
               <Link
                 href="/favorites"
                 onClick={handleFavoriteClick}
-                className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                 title="Favorites"
               >
-                <i className="fa-solid fa-heart text-lg"></i>
+                <Image src="/assets/NavbarIcons/Icons Favorite.svg" alt="Favorites" width={38} height={38} />
               </Link>
               <Link
                 href="/bag_page"
                 onClick={handleBagClick}
-                className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                className="text-gray-600 hover:text-[#eb61a2] transition-none p-0"
                 title="Bag"
               >
-                <i className="fa-solid fa-bag-shopping text-lg"></i>
+                <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={36} height={36} />
               </Link>
               {user ? (
                 <Link
                   href="/profile"
                   onClick={() => safeNavigate("/profile")}
-                  className="text-gray-600 hover:text-[#eb61a2] transition-colors p-1.5"
+                  className="text-gray-600 hover:text-[#eb61a2] transition-colors pt-1.5 pr-1.5 pb-1.5 pl-[.7px]"
                   title="Profile"
                 >
-                  <i className="fa-solid fa-user text-lg"></i>
+                  <Image src="/assets/NavbarIcons/Icons Profile.svg" alt="Profile" width={35} height={35} />
                 </Link>
               ) : (
                 <>
@@ -388,7 +520,7 @@ const Navbar = ({ alwaysVisible = false }) => {
                   <Link
                     href="/signup"
                     onClick={() => safeNavigate("/signup")}
-                    className="px-5 py-2 text-sm font-semibold bg-[#eb61a2] text-white rounded-lg hover:bg-[#d0578f]"
+                    className="px-5 py-2 text-sm font-semibold border-2 border-[#eb61a2] bg-[#eb61a2] text-white rounded-lg hover:bg-[#d0578f] hover:border-[#d0578f]"
                   >
                     Sign Up
                   </Link>
@@ -396,51 +528,308 @@ const Navbar = ({ alwaysVisible = false }) => {
               )}
             </div>
           )}
-        </div>
-      </nav>
+</div>
+       </nav>
 
-      {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px): Home, Products, Favorite, Cart, Profile */}
+{/* Filter Row - appears below navbar on products page */}
+        {pathname === '/products' && (
+         <div
+           className="relative w-full bg-white/95 backdrop-blur border-t border-b border-gray-100 shadow-sm"
+           onMouseLeave={() => setHoveredFilter(null)}
+         >
+            <div className="max-w-7xl mx-auto flex items-center justify-center gap-10 max-[1000px]:gap-8 max-[770px]:gap-5 max-[700px]:gap-3 h-12 px-4">
+             {["Brand", "Rating", "Age Range", "Skin Type"].map((filter) => (
+               <div
+                 key={filter}
+                 className="h-full flex items-center"
+                 onMouseEnter={() => setHoveredFilter(filter)}
+                 ref={(el) => (filterRefs.current[filter] = el)}
+               >
+                  <button
+                    className={`flex h-full items-center gap-1.5 border-b-2 text-[0.82rem] font-medium transition-colors max-[510px]:text-xs ${
+                      hoveredFilter === filter
+                        ? "border-[#a3d331] text-gray-900"
+                        : "border-transparent text-gray-600 hover:text-[#eb61a2]"
+                    }`}
+                    type="button"
+                  >
+                   <span>{filter}</span>
+                   <i className="fa-solid fa-chevron-down text-xs"></i>
+                 </button>
+               </div>
+              ))}
+              {/* Selected Filters - only show if there are selected filters */}
+              {selectedFilters.length > 0 && (
+                <div className="h-full flex items-center">
+                <div
+                  onMouseEnter={() => setHoveredFilter('Selected')}
+                  ref={(el) => (filterRefs.current['Selected'] = el)}
+                >
+                  <button
+                    className={`flex h-12 items-center gap-1.5 border-b-2 text-[0.82rem] font-medium transition-colors max-[510px]:text-xs ${
+                      hoveredFilter === "Selected"
+                        ? "border-[#a3d331] text-[#eb61a2]"
+                        : "border-transparent text-[#eb61a2] hover:text-[#c32c70]"
+                    }`}
+                    type="button"
+                  >
+                    <span className="text-[#eb61a2]">Selected</span>
+                    <i className="fa-solid fa-chevron-down text-xs"></i>
+                  </button>
+                </div>
+              </div>
+              )}
+            </div>
+            {hoveredFilter && (
+              <div className="absolute left-0 top-full z-[10000] w-full bg-white shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+                <div className="mx-auto grid max-w-7xl grid-cols-[1fr_1fr_1fr_1.6fr] gap-10 px-8 py-8">
+                  <div>
+                    <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">
+                      {hoveredFilter === "Selected" ? "Selected Filters" : hoveredFilter}
+                    </h3>
+                    <div className="mt-3 flex flex-col gap-2">
+                      {hoveredFilter === "Brand" && (
+                        brands.length > 0 ? (
+                          brands.slice(0, 8).map((brand) => (
+                            <button
+                              key={brand}
+                              onClick={() => handleFilterSelect("brand", brand)}
+                              className={`text-left text-sm font-semibold transition-colors hover:text-[#eb61a1] ${
+                                urlFilters.brand.includes(brand) ? "text-[#eb61a1]" : "text-gray-900"
+                              }`}
+                            >
+                              {brand}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No brands available</p>
+                        )
+                      )}
+                      {hoveredFilter === "Rating" && filterValues.Rating.map((stars) => (
+                        <button
+                          key={stars}
+                          onClick={() => handleFilterSelect("rating", stars)}
+                          className={`flex items-center gap-2 text-left text-sm font-semibold transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.rating.includes(stars) ? "text-[#eb61a1]" : "text-gray-900"
+                          }`}
+                        >
+                          <span className="flex">
+                            {[1, 2, 3, 4, 5].map((i) =>
+                              i <= Number(stars)
+                                ? <FaStar key={i} className="text-xs" />
+                                : <FaRegStar key={i} className="text-xs" />
+                            )}
+                          </span>
+                          {stars} Stars
+                        </button>
+                      ))}
+                      {hoveredFilter === "Age Range" && filterValues["Age Range"].map((ageRange) => (
+                        <button
+                          key={ageRange}
+                          onClick={() => handleFilterSelect("ageRange", ageRange)}
+                          className={`text-left text-sm font-semibold transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.ageRange.includes(ageRange) ? "text-[#eb61a1]" : "text-gray-900"
+                          }`}
+                        >
+                          {ageRange}
+                        </button>
+                      ))}
+                      {hoveredFilter === "Skin Type" && filterValues["Skin Type"].map((skinType) => (
+                        <button
+                          key={skinType}
+                          onClick={() => handleFilterSelect("skinType", skinType)}
+                          className={`text-left text-sm font-semibold transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.skinType.includes(skinType) ? "text-[#eb61a1]" : "text-gray-900"
+                          }`}
+                        >
+                          {skinType}
+                        </button>
+                      ))}
+                      {hoveredFilter === "Selected" && (
+                        <>
+                          <button
+                            onClick={clearAllFilters}
+                            className="text-left text-sm font-bold text-red-500 hover:text-red-600"
+                          >
+                            Clear All
+                          </button>
+                          {selectedFilters.map((filter, idx) => (
+                            <button
+                              key={idx}
+                              onClick={filter.remove}
+                              className="text-left text-sm font-semibold text-gray-900 hover:text-[#eb61a1]"
+                            >
+                              {filter.label}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">Popular Brands</h3>
+                    <div className="mt-3 grid grid-cols-1 gap-2">
+                      {brands.slice(8, 16).map((brand) => (
+                        <button
+                          key={brand}
+                          onClick={() => handleFilterSelect("brand", brand)}
+                          className={`text-left text-sm transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.brand.includes(brand) ? "font-semibold text-[#eb61a1]" : "text-gray-700"
+                          }`}
+                        >
+                          {brand}
+                        </button>
+                      ))}
+                     </div>
+                     <div className="mt-3 pt-2 border-t border-gray-100">
+                       <button
+                         onClick={() => handleFilterSelect("popular", "true")}
+                         className={`text-left text-sm transition-colors hover:text-[#eb61a1] ${
+                           urlFilters.popular.includes("true") ? "font-semibold text-[#eb61a1]" : "text-gray-700"
+                         }`}
+                       >
+                         Most Popular
+                       </button>
+                     </div>
+                   </div>
+ 
+                   <div>
+                     <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">Skin Type</h3>
+                    <div className="mt-3 flex flex-col gap-2">
+                      {filterValues["Skin Type"].map((skinType) => (
+                        <button
+                          key={skinType}
+                          onClick={() => handleFilterSelect("skinType", skinType)}
+                          className={`text-left text-sm transition-colors hover:text-[#eb61a1] ${
+                            urlFilters.skinType.includes(skinType) ? "font-semibold text-[#eb61a1]" : "text-gray-700"
+                          }`}
+                        >
+                          {skinType}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-8">
+                    {megaProducts.map((product) => (
+                      <button
+                        key={product.id}
+                        type="button"
+                        onClick={() => goToProduct(product.id)}
+                        className="text-left"
+                      >
+                        <div className="relative h-52 w-full overflow-hidden bg-gray-100">
+                          <Image
+                            src={getProductImageUrl(product)}
+                            alt={product?.name || "Product"}
+                            fill
+                            className="object-cover transition-transform duration-300 hover:scale-[1.03]"
+                            sizes="260px"
+                            unoptimized
+                          />
+                        </div>
+                        <p className="mt-3 line-clamp-2 text-sm font-medium text-gray-900">
+                          {product?.name || "Product"}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+       {/* 🚀 SMALL MOBILE BOTTOM NAVBAR (< 510px): Home, Products, Favorite, Cart, Profile */}
       {isSmallMobile && (
-        <div className="fixed bottom-0 left-0 right-0 w-full bg-[#FFD0ED] h-16 shadow-xl z-[99999] flex justify-between items-center text-gray-600 px-2 sm:px-4">
+        <div className="fixed bottom-0 left-0 right-0 w-full bg-white h-20 shadow-xl z-[99999] flex justify-between items-center text-gray-600 px-2 sm:px-4">
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={() => safeNavigate("/")}
             title="Home"
           >
-            <i className="fa-solid fa-house text-xl" />
+            <Image src="/assets/NavbarIcons/Icons Home.svg" alt="Home" width={38} height={38} />
           </button>
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={() => safeNavigate("/products")}
             title="Products"
           >
-            <i className="fa-solid fa-shop text-xl" />
+            <Image src="/assets/NavbarIcons/Icons Products.svg" alt="Products" width={38} height={38} />
           </button>
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={handleFavoriteClick}
             title="Favorites"
           >
-            <i className="fa-solid fa-heart text-xl" />
+            <Image src="/assets/NavbarIcons/Icons Favorite.svg" alt="Favorites" width={38} height={38} />
           </button>
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={handleBagClick}
             title="Cart"
           >
-            <i className="fa-solid fa-bag-shopping text-xl" />
+            <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={36} height={36} />
           </button>
           <button
             type="button"
-            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-colors"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
             onClick={() => safeNavigate(user ? "/profile" : "/login")}
             title="Profile"
           >
-            <i className={`fa-solid ${user ? "fa-user" : "fa-right-to-bracket"} text-xl`} />
+            <Image src="/assets/NavbarIcons/Icons Profile.svg" alt="Profile" width={35} height={35} />
+          </button>
+        </div>
+      )}
+
+      {/* 🚀 TINY MOBILE BOTTOM NAVBAR (< 770px): Home, Products, Favorite, Cart, Profile */}
+      {isTinyMobile && !isSmallMobile && (
+        <div className="fixed bottom-0 left-0 right-0 w-full bg-white h-20 shadow-xl z-[99999] flex justify-between items-center text-gray-600 px-2 sm:px-4">
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={() => safeNavigate("/")}
+            title="Home"
+          >
+            <Image src="/assets/NavbarIcons/Icons Home.svg" alt="Home" width={38} height={38} />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={() => safeNavigate("/products")}
+            title="Products"
+          >
+            <Image src="/assets/NavbarIcons/Icons Products.svg" alt="Products" width={38} height={38} />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={handleFavoriteClick}
+            title="Favorites"
+          >
+            <Image src="/assets/NavbarIcons/Icons Favorite.svg" alt="Favorites" width={38} height={38} />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={handleBagClick}
+            title="Cart"
+          >
+            <Image src="/assets/NavbarIcons/Icons Bage.svg" alt="Bag" width={36} height={36} />
+          </button>
+          <button
+            type="button"
+            className="flex-1 flex items-center justify-center py-2 min-w-0 text-inherit bg-transparent border-none cursor-pointer hover:text-[#eb61a2] transition-none"
+            onClick={() => safeNavigate(user ? "/profile" : "/login")}
+            title="Profile"
+          >
+            <Image src="/assets/NavbarIcons/Icons Profile.svg" alt="Profile" width={35} height={35} />
           </button>
         </div>
       )}

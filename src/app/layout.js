@@ -1,6 +1,7 @@
 import "./globals.css";
 import { AuthProvider } from "./lib/Authentication/AuthContext";
 import ToastProvider from "./components/ToastProvider";
+import DiscountModal from "../Components/DiscountModal/Modal";
 
 export const viewport = {
   width: "device-width",
@@ -31,6 +32,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           {children}
           <ToastProvider />
+          <DiscountModal />
         </AuthProvider>
       </body>
     </html>

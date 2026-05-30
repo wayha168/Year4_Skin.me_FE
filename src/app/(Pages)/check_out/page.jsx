@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import Navbar from "../../../Components/Navbar/Navbar";
 import Footer from "../../../Components/Footer/Footer";
-import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
 import DiliveryAndPayment from "../../../Components/DiliveryAndPayment/DiliveryAndPayment";
 import axiosAuth from "../../../app/lib/api/axiosConfig";
 import { getProductImageUrl } from "../../../app/lib/productImage";
@@ -325,7 +324,6 @@ function CheckOutContent() {
       </div>
 
       <Footer />
-      <MessageWidget />
     </>
   );
 }

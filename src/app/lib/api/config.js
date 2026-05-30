@@ -1,5 +1,5 @@
 /**
- * API configuration – no backend URL in client code.
+ * API configuration - no backend URL in client code.
  * All requests use same-origin paths; Next.js rewrites proxy to the backend.
  * Set BACKEND_URL in .env.local (server-only) for the real backend; never expose it to the client.
  */

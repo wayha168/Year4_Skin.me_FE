@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
@@ -10,6 +10,7 @@ import axiosAuth from "../../../app/lib/api/axiosConfig";
 import Loading from "../../../Components/Loading/Loading";
 import Image from "next/image";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
+import { getGoogleOAuthRedirectUri } from "../../../app/lib/Authentication/googleOAuthRedirect";
 
 function doRedirect(router, redirectTo, userData) {
   const rolesArray = Array.isArray(userData?.roles) ? userData.roles : [userData?.role].filter(Boolean);
@@ -20,7 +21,7 @@ function doRedirect(router, redirectTo, userData) {
 function LoginForm({ onGoogleClick, isGoogleLoading }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, googleLogin, error } = useAuthContext();
+  const { login, error } = useAuthContext();
 
   const popupMessage = searchParams.get("message") || "";
   const redirectTo = searchParams.get("redirect") || "";
@@ -154,11 +155,19 @@ function LoginFormWithGoogle() {
   const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_REDIRECT_URI || "postmessage";
   const redirectTo = searchParams.get("redirect") || "";
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // One auth code = one exchange; block duplicate onSuccess (e.g. dev Strict Mode) from reusing the same code.
+  const googleExchangeInFlight = useRef(false);
+
+  const googleOAuthRedirectUri = useMemo(() => getGoogleOAuthRedirectUri(), []);
 
   const loginWithGoogle = useGoogleLogin({
     flow: "auth-code",
+    redirect_uri: googleOAuthRedirectUri,
     onSuccess: async (res) => {
       if (!res?.code) return;
+      if (googleExchangeInFlight.current) return;
+      googleExchangeInFlight.current = true;
+      setLoginError("");
       setIsGoogleLoading(true);
       try {
         const userData = await googleLogin(res.code, redirectUri);
@@ -167,9 +176,14 @@ function LoginFormWithGoogle() {
         console.error("Google login error:", err);
       } finally {
         setIsGoogleLoading(false);
+        googleExchangeInFlight.current = false;
       }
     },
     onError: () => {
+      setIsGoogleLoading(false);
+      setLoginError("Unable to sign in with Google. Please try again.");
+    },
+    onNonOAuthError: () => {
       setIsGoogleLoading(false);
     },
   });

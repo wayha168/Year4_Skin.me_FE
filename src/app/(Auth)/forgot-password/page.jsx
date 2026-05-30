@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { API_BASE } from "../../lib/api/config";
 import Loading from "../../../Components/Loading/Loading";
 import MessageWidget from "../../../Components/MessageWidget/MessageWidget";
+import axiosAuth from "../../lib/api/axiosConfig";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -12,40 +12,36 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState(null);
   const [isError, setIsError] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setIsLoading(true);
-    setMessage(null);
-    setIsError(false);
+   const handleSubmit = async (e) => {
+     e.preventDefault();
+     if (!email.trim()) return;
+     setIsLoading(true);
+     setMessage(null);
+     setIsError(false);
 
-    try {
-      const url = `${API_BASE}/auth/forgot-password?email=${encodeURIComponent(email.trim())}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
+      try {
+        const res = await axiosAuth.post(`/auth/forgot-password?email=${encodeURIComponent(email.trim())}`);
+        const data = res.data;
 
-      if (res.ok) {
-        setMessage(
-          data?.message ||
-            "If an account exists for this email, we sent you a link. Check your inbox and click the link to set a new password."
-        );
-        setIsError(false);
-      } else {
-        setMessage(data?.message || "Something went wrong. Please try again.");
+        if (res.status === 200) {
+          setMessage(
+            data?.message ||
+              "If an account exists for this email, we sent you a link. Check your inbox and click the link to set a new password."
+          );
+          setIsError(false);
+        } else {
+          setMessage(data?.message || "Something went wrong. Please try again.");
+          setIsError(true);
+        }
+      } catch (err) {
+        console.error("Forgot password error:", err);
+        const message = err.response?.data?.message || err.message || "Network error. Please try again.";
+        setMessage(message);
         setIsError(true);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error("Forgot password error:", err);
-      setMessage("Network error. Please try again.");
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+   };
 
   return (
     <section className="min-h-screen bg-[#DEDEDE] flex items-center justify-center relative overflow-hidden">

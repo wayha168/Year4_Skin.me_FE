@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import axiosAuth from "../../app/lib/api/axiosConfig";
 import useAuthContext from "../../app/lib/Authentication/AuthContext";
 import { FaArrowUp, FaEdit, FaImage, FaPaperclip, FaPlus, FaSpinner, FaTrashAlt } from "react-icons/fa";
 import { FaWandSparkles } from "react-icons/fa6";
@@ -28,9 +27,7 @@ function escapeHtml(value = "") {
 function normalizeUrl(url = "") {
   if (!url) return "";
   if (/^https?:\/\//i.test(url)) return url;
-  const normalizedBase = CHATBOT_API_BASE.replace(/\/+$/, "");
-  const normalizedPath = url.startsWith("/") ? url : `/${url}`;
-  return `${normalizedBase}${normalizedPath}`;
+  return url.startsWith("/") ? url : `/${url}`;
 }
 
 function findImageUrlsInText(text = "") {
@@ -49,12 +46,21 @@ function stripImageMarkup(text = "") {
 }
 
 function formatAssistantHtml(text) {
-  const escaped = escapeHtml(text);
-  const withLinks = escaped.replace(
-    /(https?:\/\/[^\s<]+)/g,
-    '<a href="$1" target="_blank" rel="noreferrer" class="text-[#b5487f] underline break-all">$1</a>',
+  let escaped = escapeHtml(text);
+
+  // Convert markdown links [text](url) to HTML anchors
+  escaped = escaped.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noreferrer" class="text-[#b5487f] underline break-all">$1</a>'
   );
-  return withLinks.replace(/\n/g, "<br />");
+
+  // Convert plain URLs to clickable links
+  escaped = escaped.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noreferrer" class="text-[#b5487f] underline break-all">$1</a>'
+  );
+
+  return escaped.replace(/\n/g, "<br />");
 }
 
 function extractImages(payload) {
@@ -103,101 +109,36 @@ function extractImages(payload) {
 }
 
 function extractReply(payload) {
+  // API returns: { reply, options, session_id, admin_connected }
   if (typeof payload === "string") {
     return {
       text: stripImageMarkup(payload.trim()),
       images: findImageUrlsInText(payload.trim()),
+      options: [],
     };
   }
 
   if (!payload || typeof payload !== "object") {
-    return { text: "", images: [] };
+    return { text: "", images: [], options: [] };
   }
 
-  const candidates = [
-    payload.answer,
-    payload.response,
-    payload.reply,
-    payload.message,
-    payload.output,
-    payload.data?.answer,
-    payload.data?.response,
-    payload.data?.reply,
-    payload.data?.message,
-  ];
+  // Primary: look for "reply" field from chatbot API
+  let rawText = payload.reply || payload.message || payload.answer || payload.response || "";
 
-  const rawText = candidates.find((item) => typeof item === "string" && item.trim())?.trim() || "";
-  const text = stripImageMarkup(rawText);
+  if (typeof rawText !== "string") {
+    rawText = "";
+  }
+
+  const text = stripImageMarkup(rawText.trim());
   const images = [...new Set([...extractImages(payload), ...findImageUrlsInText(rawText)])];
+  const options = Array.isArray(payload.options) ? payload.options : [];
 
-  return { text, images };
+  return { text, images, options };
 }
 
 export default function ChatAssistantPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuthContext();
-
-  // Load chat history from backend (like ChatGPT)
-  const loadChatHistory = useCallback(async () => {
-    if (!user?.id) return [];
-
-    try {
-      const res = await axiosAuth.get(`/chat-activity?userId=${user.id}`);
-      const activities = res.data?.data || res.data || [];
-
-      // Group by sessionId (treating each session as one chat)
-      const grouped = {};
-      activities.forEach((act) => {
-        const sid = act.sessionId || act.chatId || act.conversationId || act.id;
-        if (!sid) return;
-
-        if (!grouped[sid]) {
-          grouped[sid] = {
-            id: sid,
-            title: act.title || "Untitled Chat",
-            messages: [],
-          };
-        }
-
-        // If the activity stores full messages array
-        if (Array.isArray(act.messages) && act.messages.length > 0) {
-          grouped[sid].messages = act.messages;
-          if (act.title) grouped[sid].title = act.title;
-        }
-        // If it stores individual messages
-        else if (act.prompt || act.message) {
-          grouped[sid].messages.push({
-            id: act.id || `msg-${Date.now()}`,
-            role: "user",
-            text: act.prompt || act.message,
-            time: act.createdAt
-              ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-              : "",
-          });
-          if (act.response) {
-            grouped[sid].messages.push({
-              id: `assistant-${act.id || Date.now()}`,
-              role: "assistant",
-              text: act.response,
-              time: act.createdAt
-                ? new Date(act.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                : "",
-            });
-          }
-        }
-      });
-
-      return Object.values(grouped).sort((a, b) => b.id.localeCompare(a.id)); // newest first
-    } catch (err) {
-      if (err.response?.status === 404) {
-        // Expected for now — the GET endpoint for chat history doesn't exist yet
-        // console.log("No chat history found yet (404 from backend)");
-      } else {
-        console.error("Failed to load chat history:", err);
-      }
-      return [];
-    }
-  }, [user?.id]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -210,7 +151,7 @@ export default function ChatAssistantPage() {
   const fileInputRef = useRef(null);
   const endRef = useRef(null);
 
-  // Multi-chat history loaded from backend (ChatGPT style)
+  // Chat state - stored in memory only (no localStorage)
   const [chats, setChats] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -223,43 +164,29 @@ export default function ChatAssistantPage() {
   const currentChat = chats.find((c) => c.id === currentChatId);
   const messages = currentChat?.messages || [];
 
-  // Load chat history from backend on mount (ChatGPT behavior)
+  // Initialize with welcome chat on mount
   useEffect(() => {
-    const initChats = async () => {
-      if (!user?.id || historyLoaded) return;
+    if (historyLoaded || !user?.id) return;
 
-      const savedChats = await loadChatHistory();
-
-      if (savedChats.length > 0) {
-        setChats(savedChats);
-        setCurrentChatId(savedChats[0].id);
-      } else {
-        // No history → create default welcome chat
-        const welcomeChat = {
-          id: Date.now().toString(),
-          title: "New Chat",
-          messages: [
-            {
-              id: "welcome",
-              role: "assistant",
-              text: WELCOME_MESSAGE,
-              html: formatAssistantHtml(WELCOME_MESSAGE),
-              images: [],
-              time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            },
-          ],
-        };
-        setChats([welcomeChat]);
-        setCurrentChatId(welcomeChat.id);
-      }
-
-      setHistoryLoaded(true);
+    const welcomeChat = {
+      id: Date.now().toString(),
+      title: "New Chat",
+      messages: [
+        {
+          id: "welcome",
+          role: "assistant",
+          text: WELCOME_MESSAGE,
+          html: formatAssistantHtml(WELCOME_MESSAGE),
+          images: [],
+          options: [],
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ],
     };
-
-    if (user && !authLoading) {
-      initChats();
-    }
-  }, [user, authLoading, historyLoaded, loadChatHistory]);
+    setChats([welcomeChat]);
+    setCurrentChatId(welcomeChat.id);
+    setHistoryLoaded(true);
+  }, [historyLoaded, user?.id]);
 
   // Create new chat (ChatGPT style - save previous first)
   const createNewChat = async () => {
@@ -341,7 +268,7 @@ export default function ChatAssistantPage() {
     setEditingTitle("");
   };
 
-  // Save entire conversation to main backend (chat-activity)
+  // Save entire conversation to localStorage (chat history)
   const saveChatToBackend = async (chatToSave) => {
     if (!user?.id || !chatToSave) return;
 
@@ -350,21 +277,43 @@ export default function ChatAssistantPage() {
     if (!hasUserMessage) return;
 
     try {
-      await axiosAuth.post("/chat-activity", {
-        userId: user.id,
-        sessionId: chatToSave.id,
-        title: chatToSave.title || "Untitled Chat",
-        messages: chatToSave.messages,
-        savedAt: new Date().toISOString(),
-      });
-      // console.log("✅ Chat saved to backend:", chatToSave.id);
-    } catch (err) {
-      if (err.response?.status === 404) {
-        // Expected for now — backend POST /chat-activity route not implemented yet
-        // console.log("⚠️ Chat save skipped (404 - /chat-activity endpoint not ready)");
+      // SSR safety check
+      if (typeof window === "undefined") return;
+
+      // Save to localStorage for persistence
+      const storageKey = `chatHistory_${user.id}`;
+      const stored = localStorage.getItem(storageKey);
+      const chats = stored ? JSON.parse(stored) : [];
+
+      // Update or add the chat
+      const existingIndex = chats.findIndex((c) => c.id === chatToSave.id);
+      if (existingIndex >= 0) {
+        chats[existingIndex] = chatToSave;
       } else {
-        console.error("Failed to save chat to backend:", err.response?.data || err.message);
+        chats.push(chatToSave);
       }
+
+      localStorage.setItem(storageKey, JSON.stringify(chats));
+
+      // Optional: Log to chatbot service (completely non-blocking)
+      // Note: Logging endpoint spec not provided, so we skip if it fails
+      // If you want to enable this, provide the exact API contract
+      // await axios.post(
+      //   `${CHATBOT_API_BASE}/v1/chat/log`,
+      //   {
+      //     user_id: Number(user.id) || user.id,
+      //     session_id: chatToSave.id,
+      //     title: chatToSave.title || "Untitled Chat",
+      //     message_count: chatToSave.messages.length,
+      //     timestamp: new Date().toISOString(),
+      //   },
+      //   {
+      //     headers: { "Content-Type": "application/json" },
+      //     timeout: 5000,
+      //   }
+      // );
+    } catch (err) {
+      console.error("Failed to save chat to localStorage:", err);
     }
   };
 
@@ -410,29 +359,78 @@ export default function ChatAssistantPage() {
     setSelectedImage(file);
   };
 
+  // Chatbot API expects payload like:
+  // {
+  //   message: string,
+  //   history?: [{ role: string, content: string }],
+  //   use_llm?: boolean,
+  //   use_database?: boolean,
+  //   session_id?: string,
+  //   user_id?: string,
+  //   user_email?: string,
+  //   user_name?: string
+  // }
   const sendText = async (message) => {
-    const response = await axios.post(
-      `${CHATBOT_API_BASE}/v1/chat`,
-      { message, query: message, prompt: message },
-      {
-        headers: { "Content-Type": "application/json" },
-        timeout: 30000,
-      },
-    );
+    if (!message?.trim()) {
+      throw new Error("Message cannot be empty");
+    }
+
+    const trimmedMessage = message.trim();
+
+    const body = {
+      message: trimmedMessage,
+    };
+
+    if (currentChatId) body.session_id = currentChatId;
+    if (user?.id) body.user_id = String(user.id);
+    if (user?.email) body.user_email = user.email;
+
+    const userName =
+      (user?.firstName && user?.lastName && `${user.firstName} ${user?.lastName}`) ||
+      user?.name ||
+      user?.email ||
+      "";
+    if (userName) body.user_name = userName;
+
+    // Build history from current chat messages (excluding welcome message)
+    const history = messages
+      .filter((m) => m.role !== "assistant" || m.id !== "welcome")
+      .map((m) => ({ role: m.role, content: m.text }));
+    if (history.length > 0) body.history = history;
+
+
+    const response = await axios.post(`${CHATBOT_API_BASE}/v1/chat`, body, {
+      headers: { "Content-Type": "application/json" },
+      timeout: 30000,
+    });
 
     return extractReply(response.data);
   };
 
   const sendImage = async (message, imageFile) => {
+    if (!message?.trim()) {
+      throw new Error("Message cannot be empty");
+    }
+    if (!imageFile) {
+      throw new Error("Image file is required");
+    }
+
     const formData = new FormData();
-    formData.append("message", message);
-    formData.append("query", message);
-    formData.append("prompt", message);
+    formData.append("message", message.trim());
+    if (currentChatId) formData.append("session_id", currentChatId);
+    if (user?.id) formData.append("user_id", String(user.id));
+    if (user?.email) formData.append("user_email", user.email);
+    if (user?.firstName && user?.lastName) {
+      formData.append("user_name", `${user.firstName} ${user.lastName}`);
+    } else if (user?.name) {
+      formData.append("user_name", user.name);
+    } else if (user?.email) {
+      formData.append("user_name", user.email);
+    }
     formData.append("image", imageFile);
-    formData.append("file", imageFile);
+
 
     const response = await axios.post(`${CHATBOT_API_BASE}/v1/chat/with-image`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
       timeout: 45000,
     });
 
@@ -451,7 +449,6 @@ export default function ChatAssistantPage() {
       localImage: selectedImagePreview,
     };
 
-    // Update current chat messages
     setChats((prevChats) =>
       prevChats.map((chat) =>
         chat.id === currentChatId
@@ -494,12 +491,22 @@ export default function ChatAssistantPage() {
     } catch (error) {
       console.error("Chat assistant error:", error);
 
-      const rawError = error?.response?.data?.message || error?.message || "";
-      let displayError = ERROR_MESSAGE;
+      if (error?.response?.data) {
+        console.error("❌ API Response:", error.response.data);
+      }
+
+      const rawError =
+        error?.response?.data?.message || error?.response?.data?.detail || error?.message || "";
+      const rawErrorStr = Array.isArray(rawError)
+        ? rawError.map((e) => (typeof e === "string" ? e : e?.msg || JSON.stringify(e))).join(", ")
+        : typeof rawError === "string"
+          ? rawError
+          : "";
+      let displayError = rawErrorStr || ERROR_MESSAGE;
 
       if (
-        rawError.toLowerCase().includes("does not support image") ||
-        rawError.toLowerCase().includes("image input")
+        rawErrorStr.toLowerCase().includes("does not support image") ||
+        rawErrorStr.toLowerCase().includes("image input")
       ) {
         displayError =
           "Sorry, the current AI model doesn't support image analysis right now. Please try asking a text question instead.";
@@ -546,18 +553,7 @@ export default function ChatAssistantPage() {
           <div className="mt-6 space-y-3">
             <button
               type="button"
-              onClick={() =>
-                setMessages([
-                  {
-                    id: "welcome",
-                    role: "assistant",
-                    text: WELCOME_MESSAGE,
-                    html: formatAssistantHtml(WELCOME_MESSAGE),
-                    images: [],
-                    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                  },
-                ])
-              }
+              onClick={createNewChat}
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1f2937] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#111827]"
             >
               <FaPlus />

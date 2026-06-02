@@ -148,7 +148,6 @@ const ProfilePage = () => {
       try {
         const res = await axiosAuth.get("/promotions/active/type/PRODUCT_DISCOUNT");
         const activePromos = res.data?.data || [];
-        console.log("[Profile Discounts] Active PRODUCT_DISCOUNT promotions from backend:", activePromos);
 
         activePromos.forEach((promo) => {
           const pid = promo.productId ?? promo.product?.id;

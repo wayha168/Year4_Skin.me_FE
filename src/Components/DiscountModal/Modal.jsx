@@ -110,7 +110,6 @@ export default function DiscountModal() {
     try {
       const response = await axiosAuth.get("/promotions/all");
 
-      // console.log("[DiscountModal] Raw API response:", JSON.stringify(response?.data, null, 2));
 
       const raw = response?.data;
       const payload = raw?.data ?? raw;

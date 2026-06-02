@@ -31,10 +31,18 @@ function normalizeUrl(url = "") {
 }
 
 function findImageUrlsInText(text = "") {
+  // Don't extract product URLs as images
+  const productUrlPattern = /https?:\/\/skinme\.store\/product_details\?productId=\d+/gi;
+  const productUrls = text.match(productUrlPattern) || [];
+  
   const directMatches = text.match(/https?:\/\/[^\s<>"']+\.(?:png|jpg|jpeg|gif|webp|bmp|svg)/gi) || [];
   const htmlMatches = [...text.matchAll(/src=["']([^"']+)["']/gi)].map((match) => match[1]);
-  const markdownMatches = [...text.matchAll(/!\[[^\]]*]\(([^)]+)\)/gi)].map((match) => match[1]);
-
+  
+  // Markdown images but exclude product URLs
+  const markdownMatches = [...text.matchAll(/!\[[^\]]*\]\(([^)]+)\)/gi)]
+    .map((match) => match[1])
+    .filter(url => !productUrls.includes(url));
+  
   return [...new Set([...directMatches, ...htmlMatches, ...markdownMatches].map(normalizeUrl))];
 }
 
@@ -48,19 +56,34 @@ function stripImageMarkup(text = "") {
 function formatAssistantHtml(text) {
   let escaped = escapeHtml(text);
 
-  // Convert markdown links [text](url) to HTML anchors
-  escaped = escaped.replace(
+  // Process lines with product URLs followed by product name and price
+  // Format: "https://skinme.store/product_details?productId=17 — Product Name — Price"
+  const lines = escaped.split("\n");
+  const processedLines = lines.map((line) => {
+    // Match: product URL followed by em-dash/dash and product info
+    const match = line.match(/(https?:\/\/skinme\.store\/product_details\?productId=(\d+))\s*[—-]\s*(.+)$/i);
+    if (match) {
+      const fullUrl = match[1];
+      const productId = match[2];
+      const productInfo = match[3].trim();
+      return `<div class="border-b border-[#f0d7e3] py-2 last:border-0"><a href="/product_details?productId=${productId}" class="block font-semibold text-[#1f2937] hover:text-[#b5487f]">${productInfo}</a></div>`;
+    }
+    return line;
+  });
+  
+  // Convert other markdown links [text](url) to HTML anchors
+  let result = processedLines.join("\n").replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     '<a href="$2" target="_blank" rel="noreferrer" class="text-[#b5487f] underline break-all">$1</a>'
   );
 
-  // Convert plain URLs to clickable links
-  escaped = escaped.replace(
-    /(https?:\/\/[^\s<]+)/g,
+  // Convert other plain URLs to clickable links (non-product URLs)
+  result = result.replace(
+    /(https?:\/\/(?!skinme\.store\/product_details)[^\s<]+)/g,
     '<a href="$1" target="_blank" rel="noreferrer" class="text-[#b5487f] underline break-all">$1</a>'
   );
 
-  return escaped.replace(/\n/g, "<br />");
+  return result.replace(/\n/g, "<br />");
 }
 
 function extractImages(payload) {
@@ -113,16 +136,16 @@ function extractReply(payload) {
   if (typeof payload === "string") {
     return {
       text: stripImageMarkup(payload.trim()),
-      images: findImageUrlsInText(payload.trim()),
+      images: [],
+      productIds: [],
       options: [],
     };
   }
 
   if (!payload || typeof payload !== "object") {
-    return { text: "", images: [], options: [] };
+    return { text: "", images: [], productIds: [], options: [] };
   }
 
-  // Primary: look for "reply" field from chatbot API
   let rawText = payload.reply || payload.message || payload.answer || payload.response || "";
 
   if (typeof rawText !== "string") {
@@ -130,10 +153,18 @@ function extractReply(payload) {
   }
 
   const text = stripImageMarkup(rawText.trim());
-  const images = [...new Set([...extractImages(payload), ...findImageUrlsInText(rawText)])];
+  
+  // Extract productIds and match them with images if available from API
+  const productIds = payload.productIds && Array.isArray(payload.productIds) 
+    ? payload.productIds 
+    : [...rawText.matchAll(/productId=(\d+)/gi)].map(m => m[1]);
+  
+  // Extract images - check payload for image fields that might have product context
+  let images = [...new Set([...extractImages(payload), ...findImageUrlsInText(rawText)])];
+  
   const options = Array.isArray(payload.options) ? payload.options : [];
 
-  return { text, images, options };
+  return { text, images, productIds, options };
 }
 
 export default function ChatAssistantPage() {
@@ -164,10 +195,35 @@ export default function ChatAssistantPage() {
   const currentChat = chats.find((c) => c.id === currentChatId);
   const messages = currentChat?.messages || [];
 
-  // Initialize with welcome chat on mount
+  // Load chat history from localStorage
   useEffect(() => {
-    if (historyLoaded || !user?.id) return;
+    if (typeof window === "undefined" || !user?.id) return;
+    
+    const storageKey = `chatHistory_${user.id}`;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      try {
+        const parsedHistory = JSON.parse(stored);
+        if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+          setChats(parsedHistory);
+          if (!currentChatId) {
+            setCurrentChatId(parsedHistory[0].id);
+          }
+          setHistoryLoaded(true);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse chat history:", e);
+      }
+    }
+    setHistoryLoaded(true);
+  }, [user?.id]);
 
+  // Initialize with welcome chat only if no history exists
+  useEffect(() => {
+    if (historyLoaded && (!user?.id || chats.length === 0)) return;
+    if (chats.length > 0) return;
+    
     const welcomeChat = {
       id: Date.now().toString(),
       title: "New Chat",
@@ -178,6 +234,7 @@ export default function ChatAssistantPage() {
           text: WELCOME_MESSAGE,
           html: formatAssistantHtml(WELCOME_MESSAGE),
           images: [],
+          productIds: [],
           options: [],
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
@@ -185,8 +242,7 @@ export default function ChatAssistantPage() {
     };
     setChats([welcomeChat]);
     setCurrentChatId(welcomeChat.id);
-    setHistoryLoaded(true);
-  }, [historyLoaded, user?.id]);
+  }, [historyLoaded, user?.id, chats.length]);
 
   // Create new chat (ChatGPT style - save previous first)
   const createNewChat = async () => {
@@ -480,6 +536,7 @@ export default function ChatAssistantPage() {
         text: responseText,
         html: formatAssistantHtml(responseText),
         images: result.images || [],
+        productIds: result.productIds || [],
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
@@ -518,6 +575,7 @@ export default function ChatAssistantPage() {
         text: displayError,
         html: formatAssistantHtml(displayError),
         images: [],
+        productIds: [],
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
@@ -699,28 +757,33 @@ export default function ChatAssistantPage() {
                     }}
                   />
 
-                  {Array.isArray(message.images) && message.images.length > 0 && (
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      {message.images.map((imageUrl) => (
-                        <a
-                          key={imageUrl}
-                          href={imageUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="group overflow-hidden rounded-3xl border border-[#f0d7e3] bg-[#fff8fb]"
-                        >
-                          <img
-                            src={imageUrl}
-                            alt="Assistant response visual"
-                            className="h-52 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                          />
-                          <div className="border-t border-[#f0d7e3] px-4 py-3 text-xs font-medium text-[#b5487f]">
-                            Open image
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  )}
+{Array.isArray(message.images) && message.images.length > 0 && (
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        {message.images.map((imageUrl, idx) => {
+                          // Extract ALL productIds from text and match by index
+                          const allProductIds = message.text ? [...message.text.matchAll(/productId=(\d+)/gi)].map(m => m[1]) : [];
+                          const productId = allProductIds[idx];
+                          return (
+                            <a
+                              key={imageUrl}
+                              href={productId ? `/product_details?productId=${productId}` : imageUrl}
+                              target={productId ? undefined : "_blank"}
+                              rel={productId ? undefined : "noreferrer"}
+                              className="group overflow-hidden rounded-3xl border border-[#f0d7e3] bg-[#fff8fb]"
+                            >
+                              <img
+                                src={imageUrl}
+                                alt="Product"
+                                className="h-52 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                              />
+                              <div className="border-t border-[#f0d7e3] px-4 py-3 text-xs font-medium text-[#b5487f]">
+                                {productId ? "View Product" : "Open image"}
+                              </div>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
 
                   <div
                     className={`mt-3 text-right text-[11px] ${

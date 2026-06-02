@@ -1035,9 +1035,9 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
                     key={option.id}
                     type="button"
                     onClick={() => setDeliveryOption(option.id)}
-                    className={`rounded-2xl border p-4 text-left transition ${deliveryOption === option.id
-                        ? "border-[#eb61a2] bg-[#fff1f6] shadow-[0_8px_24px_rgba(235,97,162,0.12)]"
-                        : "border-[#e5e7eb] bg-white hover:border-[#d1d5db]"
+                    className={`rounded-2xl border-4 p-4 text-left transition ${deliveryOption === option.id
+                        ? "border-[#eb61a1] bg-[#fff1f6] shadow-[0_8px_24px_rgba(235,97,162,0.12)]"
+                        : "border-[#e5e7eb] bg-white hover:border-[#eb61a1]"
                       }`}
                     aria-pressed={deliveryOption === option.id}
                   >
@@ -1177,11 +1177,11 @@ export default function DiliveryAndPayment({ onClose, totalPrice, embedded = fal
                       key={opt.id}
                       type="button"
                       onClick={() => setPaymentType(opt.id)}
-                      className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all min-w-[100px] ${
-                        isSelected
-                          ? "border-black bg-black ring-2 ring-black/30 shadow-md"
-                          : "border-black bg-black"
-                      }`}
+className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-4 transition-all min-w-[100px] ${
+                          isSelected
+                            ? "border-[#eb61a1] bg-black ring-2 ring-[#eb61a1]/30 shadow-md"
+                            : "border-black bg-black"
+                        }`}
                       aria-pressed={isSelected}
                       aria-label={`Pay with ${opt.label}`}
                     >

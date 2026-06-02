@@ -141,17 +141,27 @@ export default function Page() {
   const [aboutRef, aboutVisible] = useScrollAnimation();
 
   const timeAgo = (dateString) => {
-    if (!dateString) return "Recently";
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (!dateString) return "Recently";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
-    if (diffDays < 30)
-      return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) !== 1 ? "s" : ""} ago`;
-    return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} ago`;
-  };
+  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+  if (diffDays < 30)
+    return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) !== 1 ? "s" : ""} ago`;
+  return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) !== 1 ? "s" : ""} ago`;
+};
+
+const getInitials = (name) => {
+  if (!name) return "?";
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  if (words.length === 1) {
+    return words[0].slice(0, 2).toUpperCase();
+  }
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+};
 
   useEffect(() => {
     const handlePageShow = (event) => {
@@ -744,7 +754,9 @@ export default function Page() {
                     className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[240px] max-[600px]:p-4 flex-shrink-0"
                   >
                     <div className="flex items-center gap-3 max-[600px]:gap-2">
-                      
+                      <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                        {getInitials(feedback?.userDisplayName || recItem.name || "Customer")}
+                      </div>
                       <div>
                         <p className="font-bold text-[#3C3C3C] text-sm max-[600px]:text-xs">
                           {feedback?.userDisplayName || recItem.name || "Customer"}

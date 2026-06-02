@@ -735,7 +735,7 @@ export default function Page() {
                 const text = feedback?.comment?.trim() || "Recommended skincare product";
                 const recItem = ImagesInRecommendation[idx] || {};
                 const product = productById.get(feedback?.productId);
-                const reviewerImage = feedback?.imageUrl || recItem.image || getProductImageUrl(product);
+                // const reviewerImage = feedback?.imageUrl || recItem.image || getProductImageUrl(product);
                 const feedbackKey = feedback.id ?? `feedback-${idx}`;
                 const isExpanded = expandedFeedbackId === feedbackKey;
                 return (
@@ -744,14 +744,7 @@ export default function Page() {
                     className="testimonial-card bg-white rounded-2xl p-6 shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-[#ffd6ec] flex flex-col gap-4 w-[350px] max-[1000px]:w-[300px] max-[600px]:w-[240px] max-[600px]:p-4 flex-shrink-0"
                   >
                     <div className="flex items-center gap-3 max-[600px]:gap-2">
-                      <Image
-                        src={reviewerImage}
-                        alt={feedback?.userDisplayName || "Customer"}
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 max-[600px]:w-9 max-[600px]:h-9 rounded-full object-cover flex-shrink-0"
-                        unoptimized
-                      />
+                      
                       <div>
                         <p className="font-bold text-[#3C3C3C] text-sm max-[600px]:text-xs">
                           {feedback?.userDisplayName || recItem.name || "Customer"}

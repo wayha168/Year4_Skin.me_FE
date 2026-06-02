@@ -79,16 +79,14 @@ const ProfilePage = () => {
   }, [userId]);
 
   const fetchOrders = useCallback(async () => {
-    if (!userId) return;
-    try {
-      const res = await axiosAuth.get("/orders/all", { withCredentials: true });
-      const allOrders = res.data?.data || [];
-      const myOrders = allOrders.filter((o) => Number(o.userId) === Number(userId));
-      setOrders(myOrders);
-    } catch {
-      setOrders([]);
-    }
-  }, [userId]);
+  if (!userId) return;
+  try {
+    const res = await axiosAuth.get(`/orders/user/${userId}`, { withCredentials: true });
+    setOrders(res.data?.data || []);
+  } catch {
+    setOrders([]);
+  }
+}, [userId]);
 
   const handleRemoveFavorite = useCallback(
     async (productId) => {
@@ -455,7 +453,7 @@ const ProfilePage = () => {
                           className="flex flex-wrap items-center justify-between gap-2 py-3 px-4 bg-gray-50 rounded-lg text-sm"
                         >
                           <span className="font-mono text-gray-700">
-                            #{index + 1} — {displayUser?.email || "—"}
+                            #{o.orderId ?? o.id ?? index + 1}
                           </span>
                           <span
                             className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
